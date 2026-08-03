@@ -1,0 +1,22 @@
+# This repo tracks only CLAUDE.md, skills/, commands/, and README.md.
+# Everything else is runtime state Claude Code generates locally.
+*
+
+!.gitignore
+!CLAUDE.md
+!LICENSE
+!README.md
+!commands/
+!commands/**
+!skills/
+!skills/**
+
+!.claude/CLAUDE.md
+!.claude/commands/
+!.claude/commands/**
+!.claude/skills/
+!.claude/skills/**
+
+!tmp/.gitkeep
+!old/
+!old/**
