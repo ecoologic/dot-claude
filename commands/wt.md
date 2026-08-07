@@ -100,7 +100,7 @@ Worktree created:
 ```
 
 2. State that subsequent work should happen from `WORKTREE_DIR`.
-3. Do not perform any other setup
+3. Do not perform any setup -- if a related `script/*.sh` exists, offer to run it
 4. Start interpreting the prompt <instructions for the session on that branch> (the session continues in the new worktree)
 
 ## Important Notes

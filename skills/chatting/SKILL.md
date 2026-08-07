@@ -23,9 +23,7 @@ ACTIVE EVERY RESPONSE once triggered. No revert after many turns. No filler drif
 
 ## Clarity rules
 
-1. ALWAYS mention every skill you load saying: `❗LOADING SKILL: {name}❗`
 1. ALWAYS be clear when making assumptions saying: `❗❗ASSUMPTION: {brief description}❗❗`
-1. ALWAYS be clear when needing user input saying: `❓❓❓USER: {question}❓❓❓`
 1. ALWAYS print the meaning of initials and acronyms the first time you use them, in this format `CVE (Common Vulnerabilities and Exposures)`
 
 ## Brevity rules

@@ -10,8 +10,9 @@ description: MUST use in plan mode when writing plans
 1. Producing a plan is _not at all required_, we only do it once the process is clear, if not, we work on clarifying it
 1. If the scope is too big and the details of the plan are getting lost, propose to scope down only the first step, or divide the plan in multiple milestone that we can plan into details with ease
 1. If the scope is not clear enough to create a plan, don't do it, let's discuss the points that need clarification
+1. NEVER offer to proceed to implementation, I'll tell you that when I decide that the plan is ready
 
-### When is a plan too big
+### When is a plan too big?
 
 1. If you struggle even a little to define clear diagrams
 1. If it's more than one feature
@@ -24,9 +25,21 @@ description: MUST use in plan mode when writing plans
 
 ## YAGNI
 
+Check existing rules, and focus particularly on these aspects:
+
 Plans should solve today's requirements with minimal complexity.
 
 Do not plan speculative features, abstractions, or scalability work without concrete evidence they are needed. Over-planning increases cost, coordination, and divergence from real requirements.
+
+## DRY (Don't Repeat Yourself)
+
+Check existing rules, and focus particularly on these aspects:
+
+As much as possible of the existing code should be reused, everything we plan to write should either be:
+
+1. Semantically focused on the goal
+1. Extraction of logic to reuse
+1. General supporting logic, to be stored where it makes more semantic sense (not lazily close to where it is used)
 
 ## Thinking
 
@@ -37,7 +50,13 @@ Do not plan speculative features, abstractions, or scalability work without conc
 
 ## Output document
 
-Accuracy here is paramount. Include these H2 sections at the top of the plan:
+1. You are allowed to create and edit documents (eg: `*.md`) in plan mode
+1. Omit empty sections. Speculations NEED to be marked TODO in the plan
+1. Accuracy here is paramount
+
+Ask the user what the title should be, offer three short options
+
+Include these H2 sections at the top of the plan:
 
 1. Goal
   - One brief paragraph for the problem
@@ -53,8 +72,13 @@ Accuracy here is paramount. Include these H2 sections at the top of the plan:
   - Follow the format in the **api skill**
 1. DB migrations
   - Full SQL
-1. Happy path automated test
-  - Follow the format in the **testing skill**
+1. Happy path automated tests:
+  - Print in spec style reported output:
+    Ie: `- {Class}#{method} when {xxx} returns {y}` or `- {Component} when {context} renders {result}`
+    Nest common elements with indentation; eg: don't repeat `{Class}#{method}`, indent one for class and one for method
+    No implementation needed
+  - Tests the stated outcome and _important and complex_ internals, not just the easy cosmetics
+  - We're here highlighting the most relevant for the feature; implementation should also include sad paths
 1. Current weaknesses & risks
   - This critically at the problem and the latest proposed solution and find edge cases that we might need to consider now, or address as a second iteration
   - Will the plan work? Is there any hard blocker?
@@ -68,6 +92,8 @@ Accuracy here is paramount. Include these H2 sections at the top of the plan:
   - If the user decided but there's no reason in the conversation, say: "User decision." then you are allowed to elaborate with your speculations
   - Includes all the considered options, their tradeoffs, risks and WHY we picked one solution over another
   - Resolved weaknesses & Risks (from the section above)
-1. Any other section you reckon will be useful for implementation
-
-Omit empty sections. Speculations NEED to be resolved through user communication, NOT ignored.
+1. AI section
+  - **Any other section you reckon will be useful for implementation**
+  - IMPORTANT! the format for the doc is so that the user can understand the plan, but you're equally involved! You should record any information that is missing to implement the plan successfully
+1. A list of all infraction to the DRY section, or a brief section confirming you verified that none is present
+1. Update the project `./CONTEXT.md` with new and updated definitions, you have permissions even in plan mode
