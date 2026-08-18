@@ -10,6 +10,8 @@
 !commands/**
 !skills/
 !skills/**
+!output-styles/
+!output-styles/**
 
 !.claude/CLAUDE.md
 !.claude/commands/
