@@ -6,21 +6,20 @@ description: MUST USE when writing mermaid diagrams; Write accurate and complete
 # How to write all diagrams
 
 1. Diagrams must be detailed and logically correct, so they require full understanding
-1. All domain module/classes/libs/services involved MUST be present in the diagram
-  - Start with the relative `path/file-name.extension` (when local), then the name of the element, eg: `src/fs/file.ts Class`, `Stripe API`
-  - Utils, non-domain logic or implementation details can be omitted for clarity, provided the diagram still clearly expresses _how_ the goal is achieved
-1. Arrows description should be: API calls, methods invocations and functions, a separate text line _can_ add intent and notes _if needed_
-1. Don't override colors, it breaks dark mode
+1. Arrows description should be: API calls, methods invocations and functions, a separate text line _can_ add intent and notes _if needed_; don't use prose when you can use a method call
+1. If you use colors, you MUST specify light and dark mode
+1. Use blue for new and planned elements
+1. ONLY display information that is relevant to context, not everything needs to be rendered 
+1. Use UML
+1. Beware of character escaping in mermaid
 
 ## Legend
 
-After, outside of the diagram, ONLY for existing code, add a legend list with the most important functions in the diagram arrows linked to their code location:
+Right after, outside of the diagram, add a legend and list with the most important elements and their code location. The text of the link but be verbatim what's in the diagram
 
 Example:
 
 1. [User#email](./api/user.py:123)
 
-## Sequence diagrams
+Telegraphically explain choices like dotted lines and the use of blue for planned elements.
 
-1. Actors should be shown both at the top and bottom
-1. All function calls to each actor MUST be present, eg: `readFile(fileName)`, `GET /users`

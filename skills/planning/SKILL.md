@@ -31,6 +31,8 @@ Plans should solve today's requirements with minimal complexity.
 
 Do not plan speculative features, abstractions, or scalability work without concrete evidence they are needed. Over-planning increases cost, coordination, and divergence from real requirements.
 
+If the goal is a refactor, NO new feature should be added, if the plan is for testing, nothing else should be added, etc.
+
 ## DRY (Don't Repeat Yourself)
 
 Check existing rules, and focus particularly on these aspects:
@@ -47,6 +49,12 @@ As much as possible of the existing code should be reused, everything we plan to
 1. Unless answering a direct question, drastically limit conversation, express yourself through the plan
   - This doesn't mean to add your thinking to the plan
   - If relevant, add our conclusions to the decision registry section
+
+## User requests
+
+1. The user can make mistakes and get confused, your job is to clarify and find the correct solution, not to blindly follow the user
+1. If the user asks to change existing interfaces beyond the scope of the plan, explain and ask for confirmation
+1. NEVER persist in the plan back and forth with the user, resolving confusion and me correcting your misunderstanding doesn't belong in the plan
 
 ## Output document
 
@@ -79,21 +87,28 @@ Include these H2 sections at the top of the plan:
     No implementation needed
   - Tests the stated outcome and _important and complex_ internals, not just the easy cosmetics
   - We're here highlighting the most relevant for the feature; implementation should also include sad paths
-1. Current weaknesses & risks
+1. Current weaknesses & risks (ordered numbered list)
   - This critically at the problem and the latest proposed solution and find edge cases that we might need to consider now, or address as a second iteration
   - Will the plan work? Is there any hard blocker?
   - Are we including any work that is not necessary to achieve the goal?
+  - Close with: open/accepted/mitigated, and a sentence solution
 1. Architecture
   - Design patterns, good practices, smells to avoid, relevant for a quality solution
   - Any relevant information that still needs to be expressed for the implementation to result in a quality solution
-1. Decision registry table
-  - The _only_ place allowed to store historical information about the evolution of the plan, all the rest of the plan must NOT be concerned with "how we got here", but only with how to _efficiently_ implement the final plan
-  - All options that were considered, mostly through user interaction, but add your comparisons if important
-  - If the user decided but there's no reason in the conversation, say: "User decision." then you are allowed to elaborate with your speculations
-  - Includes all the considered options, their tradeoffs, risks and WHY we picked one solution over another
-  - Resolved weaknesses & Risks (from the section above)
+1. Implementation steps (ordered numbered list)
+  - Break down into small tasks, you'll implement them, so write them in a way that you can understand and implement them
+  - Look for opportunities to parallelize work
+  - Ask yourself if `./CONTEXT.md`, `./README.md`, `./CONTRIBUTING.md` etc need to be updated, and if so, add it to the steps
 1. AI section
   - **Any other section you reckon will be useful for implementation**
   - IMPORTANT! the format for the doc is so that the user can understand the plan, but you're equally involved! You should record any information that is missing to implement the plan successfully
 1. A list of all infraction to the DRY section, or a brief section confirming you verified that none is present
-1. Update the project `./CONTEXT.md` with new and updated definitions, you have permissions even in plan mode
+1. Decision registry table
+  - The _only_ place allowed to store historical information about the evolution of the plan, all the rest of the plan must NOT be concerned with "how we got here", but only with how to _efficiently_ implement the final plan
+  - Me correcting your misunderstandings doesn't belong in the decision registry
+  - Keep entries at plan altitude: a wording/naming back-and-forth during the conversation is not a decision worth persisting, even here — only record it if it actually changed the approach
+  - All options that were considered, mostly through user interaction, but add your comparisons if important
+  - If the user decided but there's no reason in the conversation, say: "User decision." then you are allowed to elaborate with your speculations
+  - Includes all the considered options, their tradeoffs, risks and WHY we picked one solution over another
+  - Resolved weaknesses & Risks (from the section above)
+1. A brief sentence confirming that the plan is ready, and suggest what model and effort are most suited
