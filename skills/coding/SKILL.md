@@ -84,6 +84,7 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regex, one u
 1. NEVER `jamwordstogether`, `separateEachWord` one word in English, one word in code
 1. NEVER use cheap tricks like `user1,user2`: _what_ makes them different? Be specific! (eg: `subjectUser,maliciousUser`, `pendingTask,doneTask`)
 1. NEVER create magic numbers, extract to const with domain oriented names (eg: `YES debounceMs, NO time,twoSeconds`)
+1. Keep code and comments in sync, consider if they can be removed
 
 ## Domain Driven Development (DDD)
 

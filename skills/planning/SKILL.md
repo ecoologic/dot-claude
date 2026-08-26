@@ -23,26 +23,6 @@ description: MUST use in plan mode when writing plans
 1. ALWAYS incorporate the **coding skill** into implementation plans
 1. When APIs are involved, incorporate the **api skill** into API-related planning decisions
 
-## YAGNI
-
-Check existing rules, and focus particularly on these aspects:
-
-Plans should solve today's requirements with minimal complexity.
-
-Do not plan speculative features, abstractions, or scalability work without concrete evidence they are needed. Over-planning increases cost, coordination, and divergence from real requirements.
-
-If the goal is a refactor, NO new feature should be added, if the plan is for testing, nothing else should be added, etc.
-
-## DRY (Don't Repeat Yourself)
-
-Check existing rules, and focus particularly on these aspects:
-
-As much as possible of the existing code should be reused, everything we plan to write should either be:
-
-1. Semantically focused on the goal
-1. Extraction of logic to reuse
-1. General supporting logic, to be stored where it makes more semantic sense (not lazily close to where it is used)
-
 ## Thinking
 
 1. Interactions with the user in chat should use the **chat skill** and be brief
