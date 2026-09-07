@@ -10,13 +10,14 @@ ALWAYS Aggressively optimize towards extensibility, NOT for immediate task compl
 ## Paradigms
 
 1. Prefer _declarative_ style over imperative
-1. Prefer functional or object-oriented (best suited in each case) over procedural
+1. Prefer functional or object-oriented (best suited in each case) over procedural or imperative
 
 ## Simplicity (Keep It Simple Stupid!)
 
-1. Defensive coding: AVOID at all cost, ALWAYS test at the edges and assume verified elsewhere
+1. Defensive coding: AVOID at all cost
+1. ALWAYS check at the edges (eg: API) and assume valid elsewhere (eg: DB)
 1. Belt and harness: only where it matters the most, and MUST be _explicitly_ agreed with the user
-1. Prefer explicit data flow over hidden mutable state
+1. Prefer immutable explicit data flow over hidden mutable state
 1. NEVER write functions longer than 40 lines, extract to local functions
 
 ## Readability
@@ -85,6 +86,16 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regex, one u
 1. NEVER use cheap tricks like `user1,user2`: _what_ makes them different? Be specific! (eg: `subjectUser,maliciousUser`, `pendingTask,doneTask`)
 1. NEVER create magic numbers, extract to const with domain oriented names (eg: `YES debounceMs, NO time,twoSeconds`)
 1. Keep code and comments in sync, consider if they can be removed
+
+## Comments
+
+1. Be pragmatic and telegraphic, one example max
+1. Limit comments to doc generation (classes, methods etc)
+1. Prefer clear self-explanatory code over comments
+1. ONLY sparsely comment the WHY on code snippets that have obscure/ambiguous meaning
+1. NEVER write a comment that describes the history of the change, ONLY WHY it's relevant NOW
+1. One example for regexp
+
 
 ## Domain Driven Development (DDD)
 

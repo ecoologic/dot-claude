@@ -17,6 +17,7 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 4. Find the repository's PR template and fill only the sections that carry information.
 5. List the API, export and migration changes when the branch has any.
 6. Append a UML diagram of the change when the diff is above 100 lines.
+8. Talks ELI5 using the output style
 7. Push the branch and create the PR as a draft, then report its URL.
 
 ## Implementation Steps

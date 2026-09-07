@@ -41,6 +41,7 @@ description: MUST use in plan mode when writing plans
 1. You are allowed to create and edit documents (eg: `*.md`) in plan mode
 1. Omit empty sections. Speculations NEED to be marked TODO in the plan
 1. Accuracy here is paramount
+1. Enforce your output style
 
 Ask the user what the title should be, offer three short options
 
@@ -75,14 +76,6 @@ Include these H2 sections at the top of the plan:
 1. Architecture
   - Design patterns, good practices, smells to avoid, relevant for a quality solution
   - Any relevant information that still needs to be expressed for the implementation to result in a quality solution
-1. Implementation steps (ordered numbered list)
-  - Break down into small tasks, you'll implement them, so write them in a way that you can understand and implement them
-  - Look for opportunities to parallelize work
-  - Ask yourself if `./CONTEXT.md`, `./README.md`, `./CONTRIBUTING.md` etc need to be updated, and if so, add it to the steps
-1. AI section
-  - **Any other section you reckon will be useful for implementation**
-  - IMPORTANT! the format for the doc is so that the user can understand the plan, but you're equally involved! You should record any information that is missing to implement the plan successfully
-1. A list of all infraction to the DRY section, or a brief section confirming you verified that none is present
 1. Decision registry table
   - The _only_ place allowed to store historical information about the evolution of the plan, all the rest of the plan must NOT be concerned with "how we got here", but only with how to _efficiently_ implement the final plan
   - Me correcting your misunderstandings doesn't belong in the decision registry
@@ -91,4 +84,15 @@ Include these H2 sections at the top of the plan:
   - If the user decided but there's no reason in the conversation, say: "User decision." then you are allowed to elaborate with your speculations
   - Includes all the considered options, their tradeoffs, risks and WHY we picked one solution over another
   - Resolved weaknesses & Risks (from the section above)
-1. A brief sentence confirming that the plan is ready, and suggest what model and effort are most suited
+1. Implementation steps (ordered numbered list)
+  - Break down into small tasks, you'll implement them, so write them in a way that you can understand and implement them
+  - Look for opportunities to parallelize work
+  - Ask yourself if `./CONTEXT.md`, `./README.md`, `./CONTRIBUTING.md` etc need to be updated, and if so, add it to the steps
+1. A list of all infraction to the DRY section, or a brief section confirming you verified that none is present
+1. A brief sentence confirming whether the plan is ready, and suggest what model and effort are most suited
+1. AI section
+  - **Any other section you reckon will be useful for implementation**
+  - IMPORTANT! the format for the doc is so that the user can understand the plan, but you're equally involved! You should record any information that is missing to implement the plan successfully
+  - Consider the model in charge of implementation will be a little less capable than you
+  - Plan for multi-agent implementation
+  - Look for the available skills both global and specific to the folders the plan will touch, and load them when needed, and instruct sub-agents to do the same

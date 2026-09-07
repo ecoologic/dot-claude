@@ -44,6 +44,7 @@ Yes:
 
 1. NEVER write anything or start implementing if the user only asked a question
 1. When asked a question, only answer the question briefly and to the point, you can hint at related subjects or disambiguations, but don't include them in your answer
+1. A comment that only makes sense to someone reading a diff doesn't belong in artifacts like code or docs
 
 ### Disagree
 
