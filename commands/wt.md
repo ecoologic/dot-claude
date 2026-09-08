@@ -5,12 +5,12 @@ argument-hint: <branch-name> <instructions for the session on that branch>
 
 # Create Git Worktree
 
-Create a git worktree as a sibling of the current project using the folder name `{project-initials}-{sanitised-branch}`. `project-initials` means the initials of the project folder, and `sanitised-branch` means the branch name with `/` replaced by `-`. After creation, continue work from that new folder.
+Create a git worktree as a sibling of the current project using the folder name `{project-initials}-{sanitised-branch}`. `project-initials` means the initials of the main project (the primary repository the worktree belongs to, not the folder you happen to be running from), and `sanitised-branch` means the branch name with `/` replaced by `-`. After creation, continue work from that new folder.
 
 ## What This Command Does
 
-1. Resolve the current repository root and project folder name.
-2. Build the sibling worktree path as `{project-initials}-{sanitised-branch}`, where the project initials come from the project folder name and the sanitised branch replaces `/` with `-`.
+1. Resolve the main repository root (not the current worktree's own root) and its folder name.
+2. Build the sibling worktree path as `{project-initials}-{sanitised-branch}`, where the project initials come from the main repository's folder name and the sanitised branch replaces `/` with `-`.
 3. Create the worktree for the existing local branch, or create the branch from `origin/<branch>` when that remote branch exists, otherwise from `origin/main`.
 4. Report the new path and treat that folder as the working directory from that point on.
 
@@ -28,7 +28,7 @@ When this command is invoked with `<branch-name>`:
 
 ### 1. Validate arguments and repository state
 
-1. Require exactly one argument: `<branch-name>`.
+1. Require `<branch-name>`; anything after it is `<instructions>` for the session in the new worktree.
 2. If no branch name is provided, stop and ask for it.
 3. Run:
 
@@ -40,17 +40,22 @@ git rev-parse --show-toplevel
 
 ### 2. Resolve the sibling worktree path
 
-1. Treat the `git rev-parse --show-toplevel` result as `PROJECT_DIR`.
-2. Compute `PROJECT_NAME` as the basename of `PROJECT_DIR`.
+1. Resolve the main repository root as `MAIN_REPO_DIR`, the parent of the shared `.git` directory — not `git rev-parse --show-toplevel`, which returns the *current* worktree's own path when run from inside a linked worktree:
+
+```bash
+MAIN_REPO_DIR="$(dirname "$(git rev-parse --git-common-dir)")"
+```
+
+2. Compute `PROJECT_NAME` as the basename of `MAIN_REPO_DIR`.
 3. Compute `PROJECT_PREFIX` as the initials of `PROJECT_NAME`. Example: `foo-bar` becomes `fb`.
 4. Treat the command argument as `BRANCH` exactly as passed. Do not shorten it. Do not rewrite it. Do not prefix it.
 5. Compute `SANITISED_BRANCH` by replacing every `/` in `BRANCH` with `-`.
-6. Compute the worktree path as a sibling of `PROJECT_DIR`:
+6. Compute the worktree path as a sibling of `MAIN_REPO_DIR`:
 
 ```bash
 PROJECT_PREFIX="$(printf '%s' "$PROJECT_NAME" | tr '-' '\n' | sed '/^$/d; s/^\(.\).*$/\1/' | tr -d '\n')"
 SANITISED_BRANCH="${BRANCH//\//-}"
-WORKTREE_DIR="$(dirname "$PROJECT_DIR")/${PROJECT_PREFIX}-${SANITISED_BRANCH}"
+WORKTREE_DIR="$(dirname "$MAIN_REPO_DIR")/${PROJECT_PREFIX}-${SANITISED_BRANCH}"
 ```
 
 7. If `WORKTREE_DIR` already exists, report the path and stop. Do not overwrite it.
@@ -106,14 +111,8 @@ Worktree created:
 ## Important Notes
 
 1. **NEVER** create the worktree inside the repository. Always create it as a sibling directory.
-2. **ALWAYS** prefix the folder name with the initials of the project folder. Example: `foo-bar` becomes `fb`.
-3. **SANITISE ONLY** the folder name branch segment by replacing `/` with `-`.
-4. **KEEP** `BRANCH` unchanged for git operations. Do not shorten it. Do not rewrite it. Do not prefix it.
-5. **USE** `git worktree add -f` for existing local branches so the current branch is supported.
-6. **BASE** new local branches on `origin/<branch>` when that remote branch exists.
-7. **FALL BACK** to `origin/main` when the branch does not yet exist locally or on `origin`.
-8. **DO NOT** create symlinks, copy files, run setup steps, or clean anything up.
-9. **DO NOT** do anything beyond creating the sibling worktree and reporting the resulting directory.
+2. **DO NOT** create symlinks, copy files, run setup steps, or clean anything up.
+3. **DO NOT** do anything beyond creating the worktree and reporting it, then continue with `<instructions>`.
 
 ## Error Handling
 

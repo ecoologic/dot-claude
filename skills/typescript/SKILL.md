@@ -31,16 +31,7 @@ const isAdmin = (user: User): user is Admin => user.role === "admin";
 
 ## NEVER use enums
 
-Prefer union types and `as const` objects; example:
-
-```ts
-const Role = {
-  Admin: 'admin',
-  User: 'user',
-} as const
-
-type Role = typeof Role[keyof typeof Role];
-```
+Prefer union types derived from `as const` arrays; see "Const assertions for literal unions" below.
 
 ## Make Illegal States Un-representable
 
@@ -104,7 +95,7 @@ function processStatus(status: Status): string {
 }
 ```
 
-## Runtime Validation with Zod
+## Runtime Validation with Zod 4
 
 1. Define schemas as single source of truth; infer TypeScript types with `z.infer<>`. Avoid duplicating types and schemas.
 1. Use `safeParse` for user input where failure is expected; use `parse` at trust boundaries where invalid data is a bug.
@@ -115,8 +106,8 @@ function processStatus(status: Status): string {
 import { z } from "zod";
 
 const UserSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
+  id: z.uuid(),
+  email: z.email(),
   name: z.string().min(1),
   createdAt: z.string().transform((s) => new Date(s)),
 });

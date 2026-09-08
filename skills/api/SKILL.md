@@ -35,7 +35,6 @@ Examples:
 
 ```sh
 GET /users?filter[firstName]="${firstName}"
-GET /users?filter[firstName]="${firstName}"
 POST /users Body: { "firstName": "${firstName}" }
 ```
 

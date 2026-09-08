@@ -1,10 +1,12 @@
 # Dot Claude
 
-Note that this is the `~/.claude` folder, therefore this project manages the global Claude configuration to work in every project. Don't confuse this project rules with _every project_ rules. For example, we might have local rules about writing skills in this project, that we don't need in every project. Likewise `~/.claude/.claude` will be the folder to improve this project, not every project.
+This is `~/.claude` under version control, so skills, commands, output styles and global rules sync across machines. Claude Code also writes its runtime state (sessions, caches, history) into this folder; that state is untracked.
 
-## Features
+## Layout
 
-* Lightweight
-* Customised
-* Multi-platform
-* Skills, commands and rules
+1. `CLAUDE.md`: global rules, loaded in every Claude Code session on this machine
+1. `.claude/CLAUDE.md`: rules for editing this repository only
+1. `commands/`: slash commands, invoked by name (eg: `/wt`)
+1. `skills/`: standing rules, auto-applied when their description matches the task
+1. `output-styles/`: selectable writing styles
+1. `old/`: retired commands kept for reference, not loaded

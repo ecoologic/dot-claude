@@ -5,18 +5,17 @@ description: MUST use for code, ALWAYS produce quality code in all languages
 
 # How to code
 
-ALWAYS Aggressively optimize towards extensibility, NOT for immediate task completion.
+ALWAYS optimise to ease future change (structure, naming, cohesion), NOT for speed of completion.
 
 ## Paradigms
 
 1. Prefer _declarative_ style over imperative
 1. Prefer functional or object-oriented (best suited in each case) over procedural or imperative
+1. Protect the final user! (eg: production regression, poor UX)
 
 ## Simplicity (Keep It Simple Stupid!)
 
-1. Defensive coding: AVOID at all cost
-1. ALWAYS check at the edges (eg: API) and assume valid elsewhere (eg: DB)
-1. Belt and harness: only where it matters the most, and MUST be _explicitly_ agreed with the user
+1. Belt and braces: only where it matters the most, and MUST be _explicitly_ agreed with the user
 1. Prefer immutable explicit data flow over hidden mutable state
 1. NEVER write functions longer than 40 lines, extract to local functions
 
@@ -57,7 +56,7 @@ _KNOWLEDGE_ should not be repeated and dispersed across multiple files, it shoul
 
 1. NEVER mix business logic with infrastructure concerns
 1. ALWAYS separate concerns by abstraction layer (domain, math, file-system, HTTP, DB, UI)
-1. ALWAYS keep each function operating at a single semantic level; extract lower-level operations into dedicated, well-named, functions (note: might be an chance of reuse)
+1. ALWAYS keep each function operating at a single semantic level; extract lower-level operations into dedicated, well-named, functions (note: might be a chance of reuse)
 1. ALWAYS keep function names semantically aligned with their implementation
 1. Every module owns exactly one responsibility
 
@@ -67,37 +66,35 @@ Example: Email validation:
 1. The function that checks a valid email
 1. The type guard
 
-All belong in the same file (cohesion). NOT a file mixing unrelated regex, one unrelated types etc.
+All belong in the same file (cohesion). NOT a file mixing unrelated regexes, unrelated types, etc.
 
 ## Confident code
 
+1. Defensive coding: AVOID at all cost
 1. Validate and sanitize data at trust boundaries (eg: HTTP, queues, external APIs, files)
-1. Inside trusted layers, rely on validated types instead of defensive re-validation
+1. Inside trusted layers (eg: DB), rely on validated types instead of defensive re-validation
 1. Prefer normalized data shapes and safe defaults to excessive null checks
 1. Avoid nullable types unless absence is semantically meaningful; every state should represent a distinct meaning
 
 ## Naming
 
 1. Principle of Least Astonishment (POLA): A function's name must be a faithful summary of its primary action. If the code does it, the name should say it
-1. NEVER use synonyms, one concept, one name
+1. NEVER use synonyms, one concept must have ONLY one name
 1. Long names are great, names should be accurate and precise
 1. NEVER abbreviate, eg: `NO org -> YES organization`
 1. NEVER `jamwordstogether`, `separateEachWord` one word in English, one word in code
 1. NEVER use cheap tricks like `user1,user2`: _what_ makes them different? Be specific! (eg: `subjectUser,maliciousUser`, `pendingTask,doneTask`)
 1. NEVER create magic numbers, extract to const with domain oriented names (eg: `YES debounceMs, NO time,twoSeconds`)
-1. Keep code and comments in sync, consider if they can be removed
 
 ## Comments
 
-1. Be pragmatic and telegraphic, one example max
-1. Limit comments to doc generation (classes, methods etc)
-1. Prefer clear self-explanatory code over comments
-1. ONLY sparsely comment the WHY on code snippets that have obscure/ambiguous meaning
-1. NEVER write a comment that describes the history of the change, ONLY WHY it's relevant NOW
-1. One example for regexp
+1. Limit comments to doc generation (classes, methods etc), NO inline comments, white clearer code, or extract to intention-revealing functions
+1. Be _telegraphic_, just a brief example, variable value, input->output
+1. NEVER mention the history of the change, let git handle that
+1. Keep code and comments in sync, consider if they can be removed or the code can be rewritten to be self-explanatory
+1. Brutally delete/trim low value existing comments
 
-
-## Domain Driven Development (DDD)
+## Domain-Driven Design (DDD)
 
 1. NEVER create files named after technical categories like `*-types.ts`, `constants.ts`, or `hooks.tsx`
 1. ALWAYS extract when the abstraction has a clear domain meaning or is reused by multiple domain concepts

@@ -5,7 +5,7 @@ description: MUST use in plan mode when writing plans
 
 # How to plan
 
-## Exist gate
+## Entry gate
 
 1. Producing a plan is _not at all required_, we only do it once the process is clear, if not, we work on clarifying it
 1. If the scope is too big and the details of the plan are getting lost, propose to scope down only the first step, or divide the plan in multiple milestone that we can plan into details with ease
@@ -25,7 +25,7 @@ description: MUST use in plan mode when writing plans
 
 ## Thinking
 
-1. Interactions with the user in chat should use the **chat skill** and be brief
+1. Interactions with the user in chat should follow the active output style and be brief
 1. Unless answering a direct question, drastically limit conversation, express yourself through the plan
   - This doesn't mean to add your thinking to the plan
   - If relevant, add our conclusions to the decision registry section
@@ -34,7 +34,6 @@ description: MUST use in plan mode when writing plans
 
 1. The user can make mistakes and get confused, your job is to clarify and find the correct solution, not to blindly follow the user
 1. If the user asks to change existing interfaces beyond the scope of the plan, explain and ask for confirmation
-1. NEVER persist in the plan back and forth with the user, resolving confusion and me correcting your misunderstanding doesn't belong in the plan
 
 ## Output document
 
@@ -45,7 +44,7 @@ description: MUST use in plan mode when writing plans
 
 Ask the user what the title should be, offer three short options
 
-Include these H2 sections at the top of the plan:
+The plan consists of these H2 sections, in order:
 
 1. Goal
   - One brief paragraph for the problem
@@ -68,11 +67,19 @@ Include these H2 sections at the top of the plan:
     No implementation needed
   - Tests the stated outcome and _important and complex_ internals, not just the easy cosmetics
   - We're here highlighting the most relevant for the feature; implementation should also include sad paths
-1. Current weaknesses & risks (ordered numbered list)
-  - This critically at the problem and the latest proposed solution and find edge cases that we might need to consider now, or address as a second iteration
+1. Current weaknesses & risks (table)
+  - Look critically at the problem and the latest proposed solution and find edge cases that we might need to consider now, or address as a second iteration
   - Will the plan work? Is there any hard blocker?
   - Are we including any work that is not necessary to achieve the goal?
-  - Close with: open/accepted/mitigated, and a sentence solution
+  - One row per risk, ordered by impact, biggest first
+  - Columns:
+
+    | Column | Content |
+    | --- | --- |
+    | Risk | Short title, max 5 words |
+    | Details | ELI5 (Explain Like I am 5): what breaks, and when. Plain words. Max 2 sentences |
+    | Impact | T-shirt size: XS, S, M, L, XL |
+    | Resolution | Status, then a one-sentence solution. Status is one of: open, accepted, mitigated, postponed, resolved |
 1. Architecture
   - Design patterns, good practices, smells to avoid, relevant for a quality solution
   - Any relevant information that still needs to be expressed for the implementation to result in a quality solution
@@ -88,7 +95,7 @@ Include these H2 sections at the top of the plan:
   - Break down into small tasks, you'll implement them, so write them in a way that you can understand and implement them
   - Look for opportunities to parallelize work
   - Ask yourself if `./CONTEXT.md`, `./README.md`, `./CONTRIBUTING.md` etc need to be updated, and if so, add it to the steps
-1. A list of all infraction to the DRY section, or a brief section confirming you verified that none is present
+1. A list of every DRY infraction found (per the coding skill), or a brief confirmation that none is present
 1. A brief sentence confirming whether the plan is ready, and suggest what model and effort are most suited
 1. AI section
   - **Any other section you reckon will be useful for implementation**

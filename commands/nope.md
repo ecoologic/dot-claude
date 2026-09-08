@@ -1,7 +1,7 @@
 ---
 description: Audit the previous response against all loaded rules and surface violations
 argument-hint: [hint about what went wrong]
-allowed-tools: [Read, Glob, Grep]
+allowed-tools: Read, Glob, Grep
 ---
 
 # Nope — Rule Violation Audit

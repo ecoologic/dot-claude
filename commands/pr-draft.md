@@ -15,10 +15,10 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 2. Read the commit subjects against the default branch to understand the change.
 3. Find the Jira issue this branch belongs to, reading titles only.
 4. Find the repository's PR template and fill only the sections that carry information.
-5. List the API, export and migration changes when the branch has any.
-6. Append a UML diagram of the change when the diff is above 100 lines.
-8. Talks ELI5 using the output style
-7. Push the branch and create the PR as a draft, then report its URL.
+5. Write the body in the active output style.
+6. List the API, export and migration changes when the branch has any.
+7. Append a UML diagram of the change when the diff is above 100 lines.
+8. Push the branch and create the PR as a draft, then report its URL.
 
 ## Implementation Steps
 
@@ -130,12 +130,12 @@ Body rules:
    2. Otherwise, the link is the FIRST line of the body, followed by a blank line.
 1. Then a telegraphic sentence on what this changes, product xor refactor
 1. ALWAYS follow the template's section order and headers exactly.
-2. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title.
-3. KEEP checklist sections (`- [ ]`) intact and tick only what is genuinely done.
-4. Write developer-clear prose: what changed and why, present tense, no marketing, brief -- a sentence or two, not a commit-by-commit retelling.
-5. NEVER restate, summarise, or paraphrase the Jira issue. The code changes are the subject of the PR; the ticket is a breadcrumb.
-6. NEVER add a "Generated with Claude Code" footer.
-7. When no template was found, write a minimal body -- the issue link line if any, one line for what, one line for why, test notes only if relevant -- and REMEMBER to say so in the final report.
+1. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title.
+1. KEEP checklist sections (`- [ ]`) intact and tick only what is genuinely done.
+1. Write developer-clear prose: what changed and why, present tense, no marketing, brief -- a sentence or two, not a commit-by-commit retelling.
+1. NEVER restate, summarise, or paraphrase the Jira issue. The code changes are the subject of the PR; the ticket is a breadcrumb.
+1. NEVER add a "Generated with Claude Code" footer.
+1. When no template was found, write a minimal body -- the issue link line if any, one line for what, one line for why, test notes only if relevant -- and REMEMBER to say so in the final report.
 
 ### 6. Read the change once
 

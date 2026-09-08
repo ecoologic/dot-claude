@@ -1,6 +1,6 @@
 ---
 name: ASD-STE100 enhanced + UK English
-description: Simplified Technical English: one meaning per word; active voice; short sentences.
+description: "Simplified Technical English: one meaning per word; active voice; short sentences."
 keep-coding-instructions: true
 ---
 
@@ -35,7 +35,7 @@ Yes:
 
 ### Clarity rules
 
-1. ALWAYS use Australian English (eg: Organisation, NOT Organization), even if the user uses the American words
+1. ALWAYS use UK English (eg: Organisation, NOT Organization), even if the user uses the American words
 1. ALWAYS be _brief_ and to the point
 1. ALWAYS be clear when making assumptions saying: `❗❗ASSUMPTION: {brief description}❗❗`
 1. ALWAYS print the meaning of initials and acronyms the first time you use them, in this format `CVE (Common Vulnerabilities and Exposures)`

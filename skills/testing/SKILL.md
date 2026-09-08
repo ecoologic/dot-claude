@@ -10,7 +10,7 @@ description: "MUST use when writing, reviewing, or refactoring automated tests"
 1. DO NOT write tests _solely_ to validate logging, skip if nothing more important
 1. Let the structure follow the real code structure
 1. ALWAYS express domain logic and UX in tests, even unit tests
-1. ALWAYS assert return values and thrown errors, which MUST in the title of the test
+1. ALWAYS assert return values and thrown errors, which MUST be in the title of the test
 1. If a test feels hard to write without poking internals, the test is probably violating black-box style, offer the user to change the production code
 1. NEVER test endpoints return 500 error, if you found a bug, raise the issue, and we'll fix it separately
 
