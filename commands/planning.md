@@ -1,6 +1,5 @@
 ---
-name: planning
-description: MUST use in plan mode when writing plans
+description: Write a plan in plan mode following the house planning process
 ---
 
 # How to plan
