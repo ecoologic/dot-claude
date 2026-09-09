@@ -1,9 +1,9 @@
 ---
-name: api
-description: MUST use for writing APIs, ALWAYS produce RESTful APIs
+name: http-apis
+description: MUST use for writing HTTP APIs, ALWAYS produce RESTful APIs
 ---
 
-# How to write APIs
+# How to write HTTP APIs
 
 1. ALWAYS apply RESTful standards for JSON APIs
 1. ALWAYS keep the handler/controller focused on HTTP and authentication, delegate the rest (particularly domain logic)
@@ -14,6 +14,12 @@ description: MUST use for writing APIs, ALWAYS produce RESTful APIs
 1. ALWAYS consider authentication needs
 1. NEVER trust outside data, always sanitise and normalize here at the edge
 1. ALWAYS validate user input here at the edge, then type it confidently
+
+## Service layer
+
+1. Service layer extract the domain logic alone, it never talks HTTP or authentication
+1. Let the route handler be the only one that knows about HTTP and authentication
+
 
 ## Error handling
 

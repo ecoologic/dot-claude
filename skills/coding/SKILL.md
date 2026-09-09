@@ -75,6 +75,7 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regexes, unr
 1. Inside trusted layers (eg: DB), rely on validated types instead of defensive re-validation
 1. Prefer normalized data shapes and safe defaults to excessive null checks
 1. Avoid nullable types unless absence is semantically meaningful; every state should represent a distinct meaning
+1. NEVER rescue general exceptions, always catch and handle specific errors
 
 ## Naming
 
@@ -85,6 +86,7 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regexes, unr
 1. NEVER `jamwordstogether`, `separateEachWord` one word in English, one word in code
 1. NEVER use cheap tricks like `user1,user2`: _what_ makes them different? Be specific! (eg: `subjectUser,maliciousUser`, `pendingTask,doneTask`)
 1. NEVER create magic numbers, extract to const with domain oriented names (eg: `YES debounceMs, NO time,twoSeconds`)
+1. Principle of Least Surprise (POLS): Many meanings, for example `User#list: User[]`
 
 ## Comments
 

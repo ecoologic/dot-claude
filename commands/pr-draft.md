@@ -15,7 +15,7 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 2. Read the commit subjects against the default branch to understand the change.
 3. Find the Jira issue this branch belongs to, reading titles only.
 4. Find the repository's PR template and fill only the sections that carry information.
-5. Write the body in the active output style.
+5. Write the body in the active output style, opening it with a TLDR.
 6. List the API, export and migration changes when the branch has any.
 7. Append a UML diagram of the change when the diff is above 100 lines.
 8. Push the branch and create the PR as a draft, then report its URL.
@@ -115,19 +115,24 @@ Sources for BOTH the title and the body are ONLY: the commit subjects (step 2), 
 
 Title: derive from the branch name when it carries meaning (`feat/user-export` becomes `Add user export`), otherwise from the single commit subject, otherwise from the Jira issue title when known. ALWAYS strip the `feat/`, `fix/`, `chore/` prefix.
 
-Title rules:
+#### Title rules
 
 1. Avoid conventional commits prefixes
 1. Be telegraphic, a few words, take inspiration from the branch name
 1. For connected PRs in different repos, use the same prefix
-1. When `ISSUE_KEY` is known, prefix the title with the bare Jira issue key and one space: `PROP-5000 Add user export`. Nothing else -- no brackets, no summary, no URL in the title. This is the ONLY place Jira connects to the title.
-1. Strip any key already embedded in the branch name so it appears exactly once.
 
-Body rules:
+#### TLDR rules
+
+1. ALWAYS open the body with a `## TLDR` section, before every other section -- before the template's own first section and before the Jira link line.
+1. Write 1 to 3 numbered lines, telegraphic: what changes for the user or why it matters.
+1. Draw it ONLY from the commit subjects, the Jira issue title, and this conversation. The diff is not read yet at this point -- NEVER wait for step 6 to write the TLDR.
+1. NEVER repeat the title verbatim, NEVER name files or symbols, NEVER restate the Jira issue.
+
+#### Body rules
 
 1. When `ISSUE_KEY` is known, the link is the bare markdown `[PROP-5000](https://<site-host>/browse/PROP-5000)` -- no heading, no bold, no label, no issue summary, no `Closes`/`Fixes` keyword.
    1. When the template has a section whose header names the ticket (matching, case-insensitively, on `ticket`, `jira`, `issue`, or `story`), the link goes THERE and NOWHERE else: replace an empty placeholder (`-`, `N/A`, or blank) with it, or add it as that section's first line when the section already holds content.
-   2. Otherwise, the link is the FIRST line of the body, followed by a blank line.
+   2. Otherwise, the link is the first line AFTER the `## TLDR` section, followed by a blank line.
 1. Then a telegraphic sentence on what this changes, product xor refactor
 1. ALWAYS follow the template's section order and headers exactly.
 1. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title.
@@ -135,7 +140,18 @@ Body rules:
 1. Write developer-clear prose: what changed and why, present tense, no marketing, brief -- a sentence or two, not a commit-by-commit retelling.
 1. NEVER restate, summarise, or paraphrase the Jira issue. The code changes are the subject of the PR; the ticket is a breadcrumb.
 1. NEVER add a "Generated with Claude Code" footer.
-1. When no template was found, write a minimal body -- the issue link line if any, one line for what, one line for why, test notes only if relevant -- and REMEMBER to say so in the final report.
+1. When no template was found, write a minimal body -- the `## TLDR` section, the issue link line if any, one line for what, one line for why, test notes only if relevant -- and REMEMBER to say so in the final report.
+
+The body therefore opens like this:
+
+```markdown
+## TLDR
+
+1. Users export their own data as CSV from the account page.
+2. Adds one endpoint and one table; existing exports are untouched.
+
+[PROP-5000](https://acme.atlassian.net/browse/PROP-5000)
+```
 
 ### 6. Read the change once
 
@@ -272,12 +288,10 @@ Write the body to a temporary file first so quoting cannot mangle it.
 ## Important Notes
 
 1. **NEVER** commit, amend, or stash. A dirty tree is a hard stop.
-2. **NEVER** force-push.
+2. **NEVER** force-push unless explicitly told
 3. **NEVER** mark the PR ready for review. It stays a draft.
 4. **NEVER** write to Jira -- no transitions, no comments, no field edits. This command reads only.
-5. **NEVER** invent an endpoint, export, or DDL statement that no diff line supports.
 6. **DO NOT** do anything beyond pushing the branch and opening the draft PR.
-7. Non-GitHub remotes are unsupported. Report and stop.
 
 ## Error Handling
 

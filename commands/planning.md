@@ -4,19 +4,6 @@ description: Write a plan in plan mode following the house planning process
 
 # How to plan
 
-## Entry gate
-
-1. Producing a plan is _not at all required_, we only do it once the process is clear, if not, we work on clarifying it
-1. If the scope is too big and the details of the plan are getting lost, propose to scope down only the first step, or divide the plan in multiple milestone that we can plan into details with ease
-1. If the scope is not clear enough to create a plan, don't do it, let's discuss the points that need clarification
-1. NEVER offer to proceed to implementation, I'll tell you that when I decide that the plan is ready
-
-### When is a plan too big?
-
-1. If you struggle even a little to define clear diagrams
-1. If it's more than one feature
-1. Comparatively, the size of a CRUD endpoint (ui, api, db) should be as big a plan should go, and no further
-
 ## Related skills
 
 1. ALWAYS incorporate the **coding skill** into implementation plans
@@ -33,6 +20,11 @@ description: Write a plan in plan mode following the house planning process
 
 1. The user can make mistakes and get confused, your job is to clarify and find the correct solution, not to blindly follow the user
 1. If the user asks to change existing interfaces beyond the scope of the plan, explain and ask for confirmation
+
+## Exit gate
+
+1. The next step is to finalize the plan, not to implement it
+1. NEVER offer to proceed to implementation, I'll tell you that when I decide that the plan is ready
 
 ## Output document
 
