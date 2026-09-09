@@ -23,3 +23,14 @@ Example:
 
 Telegraphically explain choices like dotted lines and the use of blue for planned elements.
 
+## Validate before delivering
+
+ALWAYS render every mermaid block with the CLI after the last edit; never deliver an unrendered diagram.
+
+1. Extract each block to a `.mmd` in the scratchpad:
+   `awk '/^```mermaid/{n++; f=1; next} /^```/{f=0} f{print > ("diagram" n ".mmd")}' <file>.md`
+1. Render with explicit paths (mmdc exists only under nvm v26.5.0):
+   `/Users/erik.trapin/.nvm/versions/node/v26.5.0/bin/node /Users/erik.trapin/.nvm/versions/node/v26.5.0/bin/mmdc -i in.mmd -o out.svg`
+1. On failure, grep the output for `Parse error`, fix, re-render until every block passes
+
+Known traps: `;` inside sequence-diagram message text ends the statement (use commas or "then"); `#`, `:` and `()` in node labels need quoting.

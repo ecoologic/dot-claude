@@ -2,6 +2,8 @@
 
 This is `~/.claude` under version control, so skills, commands, output styles and global rules sync across machines. Claude Code also writes its runtime state (sessions, caches, history) into this folder; that state is untracked.
 
+This is a public repo for the good of humanity.
+
 ## Layout
 
 1. `CLAUDE.md`: global rules, loaded in every Claude Code session on this machine
