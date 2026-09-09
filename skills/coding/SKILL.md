@@ -90,7 +90,9 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regexes, unr
 
 ## Comments
 
-1. Limit comments to doc generation (classes, methods etc), NO inline comments, white clearer code, or extract to intention-revealing functions
+1. Comments ONLY doc generation (classes, methods, functions, constants) and ONLY when needed
+1. NO inline comments, instead, white clearer code, or extract to intention-revealing elements
+1. Edge cases NEED intention-revealing extractions, and you can explain WHY in a doc sentence
 1. Be _telegraphic_, just a brief example, variable value, input->output
 1. NEVER mention the history of the change, let git handle that
 1. Keep code and comments in sync, consider if they can be removed or the code can be rewritten to be self-explanatory

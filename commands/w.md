@@ -1,6 +1,7 @@
 ---
 description: Force-invoke a skill for the rest of the session, optionally propagating it to subagents
 argument-hint: <skill> [<skill>...] [sa]
+disable-model-invocation: true
 ---
 
 1. Parse `$ARGUMENTS`: skill name(s) + optional trailing `sa` token (sets sa mode; persists rest of session, unions across `/w` calls, never auto-deactivates). No args → stop, ask which skill(s), don't guess.

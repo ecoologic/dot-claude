@@ -3,6 +3,7 @@ description: Push the current branch and open a draft PR following the repo temp
 allowed-tools: Bash, Read, Glob, Grep, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__getJiraIssue
 model: haiku
 effort: xhigh
+disable-model-invocation: true
 ---
 
 # Draft Pull Request
@@ -133,14 +134,12 @@ Title: derive from the branch name when it carries meaning (`feat/user-export` b
 1. When `ISSUE_KEY` is known, the link is the bare markdown `[PROP-5000](https://<site-host>/browse/PROP-5000)` -- no heading, no bold, no label, no issue summary, no `Closes`/`Fixes` keyword.
    1. When the template has a section whose header names the ticket (matching, case-insensitively, on `ticket`, `jira`, `issue`, or `story`), the link goes THERE and NOWHERE else: replace an empty placeholder (`-`, `N/A`, or blank) with it, or add it as that section's first line when the section already holds content.
    2. Otherwise, the link is the first line AFTER the `## TLDR` section, followed by a blank line.
-1. Then a telegraphic sentence on what this changes, product xor refactor
 1. ALWAYS follow the template's section order and headers exactly.
-1. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title.
+1. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title. The TLDR carries the description -- do NOT add prose sentences to other template sections just to fill them.
 1. KEEP checklist sections (`- [ ]`) intact and tick only what is genuinely done.
-1. Write developer-clear prose: what changed and why, present tense, no marketing, brief -- a sentence or two, not a commit-by-commit retelling.
 1. NEVER restate, summarise, or paraphrase the Jira issue. The code changes are the subject of the PR; the ticket is a breadcrumb.
 1. NEVER add a "Generated with Claude Code" footer.
-1. When no template was found, write a minimal body -- the `## TLDR` section, the issue link line if any, one line for what, one line for why, test notes only if relevant -- and REMEMBER to say so in the final report.
+1. When no template was found, write a minimal body -- the `## TLDR` section, the issue link line if any -- and REMEMBER to say so in the final report.
 
 The body therefore opens like this:
 

@@ -1,6 +1,7 @@
 ---
 description: Quick Q&A — answer a question in the shortest possible form
 argument-hint: <question>
+disable-model-invocation: true
 ---
 
 # Quick Answer

@@ -1,6 +1,7 @@
 ---
 description: Create a sibling git worktree named <project-initials>-<sanitised-branch>
 argument-hint: <branch-name> <instructions for the session on that branch>
+disable-model-invocation: true
 ---
 
 # Create Git Worktree
