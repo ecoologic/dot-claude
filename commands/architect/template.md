@@ -18,11 +18,13 @@ The architecture consists of these H2 sections, in order:
 
 ## Sequence diagram
 
-- Use mermaid and the **diagrams skill** to complete them
+- The `uml-diagram` agent draws it, in mode `design`, form `sequence`
+- Paste what it returns verbatim, NEVER draw it yourself
 
 ## Class diagram
 
-- Use mermaid and the **diagrams skill** to complete them
+- The `uml-diagram` agent draws it, in mode `design`, form `class`
+- Paste what it returns verbatim, NEVER draw it yourself
 
 ## API endpoints
 

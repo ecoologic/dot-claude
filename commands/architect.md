@@ -16,7 +16,18 @@ disable-model-invocation: true
 
 1. ALWAYS incorporate the **coding skill** into design decisions
 1. When APIs are involved, incorporate the **api skill** into API-related design decisions
-1. Use the **diagrams skill** for every mermaid diagram
+1. The `uml-diagram` agent owns the mermaid diagrams, see **Diagrams**
+
+## Diagrams
+
+1. The `uml-diagram` agent draws the Sequence diagram and the Class diagram, NEVER draw them yourself
+1. Call the `Agent` tool with `subagent_type: "uml-diagram"`, once per section, every time the design changes what that diagram shows
+1. The prompt carries these, and nothing else:
+   1. The mode: `design`, and the form: `sequence` or `class`
+   1. The current design text the diagram depends on
+   1. The repository paths of the existing code the design touches
+1. Paste what the agent returns VERBATIM under the section heading. The agent validates its own diagram, do NOT edit it
+1. When the agent reports the section is undiagrammable, omit the section and say why in one clause
 
 ## Thinking
 

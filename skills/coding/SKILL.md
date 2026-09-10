@@ -1,6 +1,6 @@
 ---
 name: coding
-description: MUST use for code, ALWAYS produce quality code in all languages
+description: MUST use to write and review code, together with the language and the framework skill, ALWAYS produce quality code in all languages
 ---
 
 # How to code
@@ -97,6 +97,11 @@ All belong in the same file (cohesion). NOT a file mixing unrelated regexes, unr
 1. NEVER mention the history of the change, let git handle that
 1. Keep code and comments in sync, consider if they can be removed or the code can be rewritten to be self-explanatory
 1. Brutally delete/trim low value existing comments
+
+## Refactors
+
+1. Means internal changes ONLY, not public APIs or lib interfaces
+1. MUST be isolated work
 
 ## Domain-Driven Design (DDD)
 

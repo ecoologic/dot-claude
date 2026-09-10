@@ -1,6 +1,6 @@
 ---
-description: Push the current branch and open a draft PR following the repo template
-allowed-tools: Bash, Read, Glob, Grep, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__getJiraIssue
+description: Push the current branch, then open a draft PR or update the existing one, following the repo template
+allowed-tools: Bash, Read, Glob, Grep, Agent, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__getJiraIssue
 model: haiku
 effort: xhigh
 disable-model-invocation: true
@@ -8,18 +8,23 @@ disable-model-invocation: true
 
 # Draft Pull Request
 
-Push the current branch and open a draft PR (Pull Request) on GitHub, with a body that follows the repository's own PR template.
+Push the current branch and open a draft PR (Pull Request) on GitHub, with a body that follows the repository's own PR template. When a PR already exists for the branch, update it instead.
 
 ## What This Command Does
 
-1. Refuse to run unless the working tree is clean and no PR exists for the branch.
-2. Read the commit subjects against the default branch to understand the change.
-3. Find the Jira issue this branch belongs to, reading titles only.
-4. Find the repository's PR template and fill only the sections that carry information.
-5. Write the body in the active output style, opening it with a TLDR.
-6. List the API, export and migration changes when the branch has any.
-7. Append a UML diagram of the change when the diff is above 100 lines.
-8. Push the branch and create the PR as a draft, then report its URL.
+1. Preflight. A dirty tree, the default branch, or a missing `gh` is a hard stop. An existing PR switches CREATE mode to UPDATE mode.
+2. Gather context from the branch name and the commit subjects -- never the diff.
+3. Resolve the Jira issue, reading titles only.
+4. Find the repository's PR template.
+5. Write the title, and the description as a numbered TLDR.
+6. Read the diff ONCE, and only as deeply as its size warrants.
+7. Add `### APIs` and `### Migrations` when the branch moves an interface.
+8. Ask a subagent for a UML diagram when the change is large; it lands as `### Changes`.
+9. Complete the rest of the template mechanically -- the ticket link, the checklists.
+10. Rebase onto the default branch, push, then create the draft PR or update the existing one.
+11. Report.
+
+Steps 5 to 8 write INSIDE the template's description section, and nowhere else. Step 9 is the ONLY step that touches anything outside it.
 
 ## Implementation Steps
 
@@ -57,13 +62,13 @@ If the output is not empty, list the dirty files and STOP. Do NOT commit. Do NOT
 gh auth status
 ```
 
-6. No PR exists for the branch:
+6. An existing PR on the branch selects the mode:
 
 ```bash
 gh pr view --json url -q .url
 ```
 
-If it prints a URL, report it and STOP.
+If it prints a URL, record it as `PR_URL` and run in UPDATE mode. Otherwise run in CREATE mode. Every other step is the same in both modes.
 
 ### 2. Gather context
 
@@ -71,140 +76,102 @@ If it prints a URL, report it and STOP.
 git log --oneline "origin/$DEFAULT_BRANCH..HEAD"
 ```
 
-These commit subjects are ONE of the three sources for the title and body -- see step 5. Do NOT read the diff here; the diff is read once, later, in step 6.
+The branch name and these commit subjects are the ONLY sources for the title (step 5) and the description's numbered list (step 5). Do NOT read the diff here -- it is read once, in step 6, and it feeds steps 7 and 8 alone.
 
-### 3. Find the Jira issue
+Note whether the branch name or any commit subject carries a Jira key, e.g. `PROP-1234`.
 
-This step is cheap and quiet. Spend at most a few tool calls on it, read titles only, and NEVER let it change the PR body's substance.
+### 3. Resolve the Jira issue
 
-1. If `BRANCH` or any commit subject contains an issue key (`[A-Z][A-Z0-9]+-\d+`), take that key and skip the search. Confirm it with `getJiraIssue`, requesting `fields: ["summary", "issuetype", "parent", "status"]`.
+1. A key found in step 2 IS the key. Fetch its title only -- never its description, comments, or subtasks.
+2. No key there: search Jira using the branch's own words, and read titles only.
+3. Still nothing: fall back to the current epic, `PROP-5036`. NEVER ask the user which issue to use.
+4. Record the key as `ISSUE_KEY`. Step 9 puts it under `## Tickets & Documentation`.
 
-2. Otherwise resolve the site with `getAccessibleAtlassianResources` and search the user's in-progress work with `searchJiraIssuesUsingJql`:
+### 4. Find the PR template
 
-```
-cloudId:     <id or hostname from getAccessibleAtlassianResources>
-jql:         assignee = currentUser() AND statusCategory = "In Progress" ORDER BY updated DESC
-fields:      ["summary", "issuetype", "parent", "status"]
-maxResults:  50
-```
+Look in this order, first hit wins: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/`, `docs/`, the repository root.
 
-If that returns nothing, widen ONCE to `assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC` and stop there.
+Read it whole before writing anything. Its headers, its order and its comments are the contract: you fill it in, you do not redesign it. When there is no template, write a minimal body -- a `## Description` section and nothing else -- and say so in the report.
 
-3. Choose the most specific issue whose SUMMARY describes the change in this branch:
-   1. Prefer a sub-task over its task, a task over its story, a story over its epic.
-   2. Use the parent ONLY when no child of it matches the branch.
-   3. When a candidate's `parent` field names an epic, that epic is context for the choice, not a second thing to link.
-4. Match on summaries, the branch name, and the commit subjects. Do NOT open descriptions, comments, acceptance criteria, or linked pages -- titles carry enough signal and anything more is wasted context.
-5. When exactly one candidate plainly matches, take it silently. When several match, or none does, ask ONCE with a shortlist of `KEY -- summary` lines plus a "none" option, and wait. NEVER guess a key.
-6. Record `ISSUE_KEY` and `ISSUE_URL` (`https://<site-host>/browse/<ISSUE_KEY>`). The issue summary itself is for your judgement only -- it does NOT go into the PR.
-7. When the Atlassian MCP is unavailable, unauthenticated, or errors, or when the user answers "none": continue with NO key, and say so once in the final report. NEVER block the PR on Jira.
-
-### 4. Find the template
-
-Use the first of these that exists (case-insensitive):
-
-1. `.github/pull_request_template.md`
-2. `.github/PULL_REQUEST_TEMPLATE.md`
-3. `docs/pull_request_template.md`
-4. `pull_request_template.md`
-
-If `.github/PULL_REQUEST_TEMPLATE/` is a directory, list its templates and ask which one to use.
-
-### 5. Write the title and body
-
-Sources for BOTH the title and the body are ONLY: the commit subjects (step 2), the Jira issue title (step 3), and this conversation. The diff read in step 6 feeds ONLY the `## API`, `## Migrations` and `## Changes` sections -- NEVER let it shape the title, the summary sentence, or any template section.
-
-Title: derive from the branch name when it carries meaning (`feat/user-export` becomes `Add user export`), otherwise from the single commit subject, otherwise from the Jira issue title when known. ALWAYS strip the `feat/`, `fix/`, `chore/` prefix.
+### 5. Write the title and the description
 
 #### Title rules
 
-1. Avoid conventional commits prefixes
-1. Be telegraphic, a few words, take inspiration from the branch name
-1. For connected PRs in different repos, use the same prefix
+1. NO conventional-commit prefix.
+2. Telegraphic, a few words, taking its lead from the branch name.
+3. Connected PRs in different repos share one prefix.
 
-#### TLDR rules
+#### Description rules
 
-1. ALWAYS open the body with a `## TLDR` section, before every other section -- before the template's own first section and before the Jira link line.
-1. Write 1 to 3 numbered lines, telegraphic: what changes for the user or why it matters.
-1. Draw it ONLY from the commit subjects, the Jira issue title, and this conversation. The diff is not read yet at this point -- NEVER wait for step 6 to write the TLDR.
-1. NEVER repeat the title verbatim, NEVER name files or symbols, NEVER restate the Jira issue.
-
-#### Body rules
-
-1. When `ISSUE_KEY` is known, the link is the bare markdown `[PROP-5000](https://<site-host>/browse/PROP-5000)` -- no heading, no bold, no label, no issue summary, no `Closes`/`Fixes` keyword.
-   1. When the template has a section whose header names the ticket (matching, case-insensitively, on `ticket`, `jira`, `issue`, or `story`), the link goes THERE and NOWHERE else: replace an empty placeholder (`-`, `N/A`, or blank) with it, or add it as that section's first line when the section already holds content.
-   2. Otherwise, the link is the first line AFTER the `## TLDR` section, followed by a blank line.
-1. ALWAYS follow the template's section order and headers exactly.
-1. OMIT any section with nothing substantive to say. NEVER write `N/A`, `None`, or a restatement of the title. The TLDR carries the description -- do NOT add prose sentences to other template sections just to fill them.
-1. KEEP checklist sections (`- [ ]`) intact and tick only what is genuinely done.
-1. NEVER restate, summarise, or paraphrase the Jira issue. The code changes are the subject of the PR; the ticket is a breadcrumb.
-1. NEVER add a "Generated with Claude Code" footer.
-1. When no template was found, write a minimal body -- the `## TLDR` section, the issue link line if any -- and REMEMBER to say so in the final report.
-
-The body therefore opens like this:
-
-```markdown
-## TLDR
-
-1. Users export their own data as CSV from the account page.
-2. Adds one endpoint and one table; existing exports are untouched.
-
-[PROP-5000](https://acme.atlassian.net/browse/PROP-5000)
-```
+1. Think of it as a TLDR. Write it in the active output style.
+2. A numbered list of telegraphic sentences: what changes for the user, what changes for the developer, or why it matters.
+3. NEVER repeat the title verbatim. NEVER name files or symbols. NEVER restate the Jira issue.
+4. The template asks you to justify your decisions: where the branch chose between real alternatives, give the reason in one clause. Nothing more.
+5. Replace the template's empty `-` stub with your list. Never leave it sitting above or below it.
 
 ### 6. Read the change once
 
-This is the ONLY place in the command that reads diff content. Both the interface sections (step 7) and the size-gated diagram (step 8) draw from what this step reads -- never call `git diff` for hunk content anywhere else.
+This is the ONLY place in the command that reads diff content. Steps 7 and 8 draw on what this step reads -- never call `git diff` for hunk content anywhere else. The step 8 subagent is the one exception: it reads the diff again, in its own context.
 
-1. Measure the change, ignoring lockfiles and snapshots so a dependency bump cannot trigger a diagram:
+EVERY `git diff` in this command carries the exclude pathspecs below, so lockfiles, snapshots and generated files never reach a diff, a measurement, or a section.
+
+1. Measure the change, so that a dependency bump cannot trigger a diagram:
 
 ```bash
 git diff --shortstat "origin/$DEFAULT_BRANCH...HEAD" -- . \
-  ':(exclude)**/*.lock' ':(exclude)**/package-lock.json' \
-  ':(exclude)**/pnpm-lock.yaml' ':(exclude)**/yarn.lock' \
+  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
   ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
 
 Add insertions + deletions into `DIFF_TOTAL`.
 
-2. When `DIFF_TOTAL` is above 100, read the full diff. It covers both the interface sections below and the diagram in step 8:
+2. `DIFF_TOTAL` above 100: read the full diff.
 
 ```bash
-git diff "origin/$DEFAULT_BRANCH...HEAD"
+git diff "origin/$DEFAULT_BRANCH...HEAD" -- . \
+  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
+  ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
 
-3. Otherwise (`DIFF_TOTAL` is 100 or less), narrow before reading any content. List changed paths first:
+3. `DIFF_TOTAL` of 100 or less: narrow before reading any content. List the changed paths first:
 
 ```bash
-git diff --name-only "origin/$DEFAULT_BRANCH...HEAD"
+git diff --name-only "origin/$DEFAULT_BRANCH...HEAD" -- . \
+  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
+  ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
 
-Keep only paths that can carry an interface change -- route/controller files, a package's declared public entry point (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`), and migration files (`migrations/`, `db/migrate/`, `prisma/schema.prisma`, `alembic/versions/`). When nothing matches, there are no interface changes -- skip to step 7 with nothing to report. Otherwise read only those paths:
+Keep only the paths that can carry an interface change -- route and controller files, a package's declared public entry point (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`), and migrations (`migrations/`, `db/migrate/`, `prisma/schema.prisma`, `alembic/versions/`). When nothing matches, there is no interface change: skip to step 8 with nothing to report. Otherwise read only those paths:
 
 ```bash
 git diff "origin/$DEFAULT_BRANCH...HEAD" -- $CANDIDATE_PATHS
 ```
 
-4. Whichever diff was read, it feeds step 7. A `DIFF_TOTAL` of 100 or less means step 8 draws no diagram, regardless of what step 7 finds.
+4. A `DIFF_TOTAL` of 300 or less means step 8 draws no diagram, whatever step 7 found.
 
-### 7. API and Migrations sections
+### 7. The APIs and Migrations subsections
 
 Build these from the diff read in step 6 -- NEVER from commit subjects, the Jira issue, or guesswork.
 
-1. Method uppercase; path exactly as it resolves at runtime, including the router's mount prefix, NOT the fragment written in the handler file. When a route file's mount point isn't in the diff, `grep` for where it's mounted before printing the path.
-2. Path params in `{braces}` whatever the framework wrote -- `:id`, `<int:id>`, `[id]`, `{id}` all become `{id}`.
+1. Method uppercase; the path exactly as it resolves at runtime, mount prefix included, NOT the fragment written in the handler file. When a route file's mount point isn't in the diff, `grep` for where it is mounted before printing the path.
+2. Path params in `{braces}`, whatever the framework wrote: `:id`, `<int:id>`, `[id]`, `{id}` all become `{id}`.
 3. `Body:` and query params appear ONLY when they changed; follow the **api** skill's endpoint usage format.
-4. Mark each line `+` added, `~` changed, `-` removed. Use `~` when the method and path survive but the contract moves: request body, query params, response shape, status codes, auth.
+4. Mark every line `+` added, `~` changed, `-` removed. `~` is for a method and path that survive while the contract moves: request body, query params, response shape, status codes, auth.
 5. A handler whose internals changed with no interface change is NOT listed.
-6. List changed public package exports in a second fenced block, language-tagged to the source, same `+ ~ -` markers. Only symbols reachable from a declared public entry point (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`) qualify -- an internal helper is never listed even when it happens to be exported.
-7. Migrations: canonical DDL, one statement per line, `;` terminated, forward direction only. Express ORM schema edits (Prisma, Alembic, ActiveRecord, etc.) as the equivalent DDL.
-8. OMIT an empty block; OMIT the whole section (`## API`, `## Migrations`) when every block in it is empty. NEVER write `N/A` or `No API changes`.
-9. NEVER list an endpoint, export, or statement you cannot point at a diff line for.
+6. Changed public package exports go in a second fenced block, language-tagged to the source, same `+ ~ -` markers. Only symbols reachable from a declared public entry point qualify -- an internal helper is never listed, even when it happens to be exported.
+7. Migrations: canonical DDL, one statement per line, `;` terminated, forward direction only. Express ORM schema edits (Prisma, Alembic, ActiveRecord) as the equivalent DDL.
+8. OMIT an empty block, and OMIT the whole subsection when every block in it would be empty. NEVER write `N/A` or `No API changes`.
+9. NEVER list an endpoint, an export, or a statement you cannot point at a diff line for.
 
-Place `## API` and `## Migrations`, in that order, after every section the template contains and before `## Changes`:
+They are SUBSECTIONS of the description, after its numbered list, in this order: `### APIs`, `### Migrations`, then `### Changes` from step 8.
 
 ````markdown
-## API
+## Description
+
+1. Users export their own data as CSV from the account page.
+2. Adds one endpoint and one table; existing exports are untouched.
+
+### APIs
 
 ```sh
 + POST /users/{id}/exports Body: { "format": "csv" }
@@ -218,79 +185,125 @@ Place `## API` and `## Migrations`, in that order, after every section the templ
 - export function legacyExport(): void
 ```
 
-`+` added, `~` changed, `-` removed.
-
-## Migrations
+### Migrations
 
 ```sql
-ALTER TABLE users ADD COLUMN export_format TEXT NULL;
-CREATE TABLE user_exports (id UUID PK, user_id UUID FK, created_at TIMESTAMPTZ);
-CREATE INDEX idx_user_exports_user_id ON user_exports (user_id);
+-- The branch's migrations, verbatim, in this one block
 ```
 ````
 
 ### 8. Diagram the change when it is large
 
-Run this ONLY when `DIFF_TOTAL` from step 6 is above 100. A small PR gets NO diagram -- skip the whole step silently.
-
-1. Draw from the full diff already read in step 6 -- do not read it again.
-
-2. Apply the **diagrams** skill. Read it now and follow every rule in it -- UML, method-call arrow labels, blue for new elements with BOTH light and dark mode declared, and the legend after the diagram.
-
-3. On top of that skill, for this command specifically:
-   1. Diagram ONLY what this PR changes. Unchanged classes, services, or steps appear only when an arrow to or from them is needed to make the change legible, and they are NOT blue.
-   2. Blue means added by this PR. Dotted lines mean removed or deprecated by this PR. Say so in the legend prose.
-   3. Pick the UML form from the shape of the change: `classDiagram` for new or reshaped types and their relations, `sequenceDiagram` for a changed call flow across components, `stateDiagram-v2` for a changed lifecycle. ONE diagram, one form. NEVER draw a file tree or a flowchart of the commit history.
-   4. When the change is genuinely undiagrammable -- a bulk rename, a config sweep, a formatting pass -- omit the section and say why in one clause in the final report.
-
-4. Build the legend's link base ONCE so links survive later pushes:
+1. A `DIFF_TOTAL` of 300 or less: no diagram. Skip this step.
+2. Record the SHA the diagram's permalinks will point at, BEFORE calling the agent:
 
 ```bash
-REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 SHA="$(git rev-parse HEAD)"
 ```
 
-Each legend entry links to `https://github.com/$REPO/blob/$SHA/<path>#L<line>`, and its link TEXT is verbatim the label used in the diagram.
+3. Call the `Agent` tool ONCE, `subagent_type: "uml-diagram"`, with the grand context and `SHA`.
+4. The agent returns a `### Changes` section. Paste it VERBATIM as the last subsection of the description.
+5. When the agent reports the change is undiagrammable, omit the section and say why in one clause in the report.
 
-5. Append this as the LAST section of the body -- after everything the template contains, and after `## API` / `## Migrations` when either is present:
+### 9. Complete the rest of the template
 
-````markdown
-## Changes
+Everything steps 5 to 8 AUTHOR lives inside the description section. NEVER add a prose section of your own anywhere else.
 
-```mermaid
-classDiagram
-    ...
-```
+Outside the description, fill the template in ONLY where the change answers it mechanically. Obey the template's own instruction comments -- they define its notation. Leave verbatim every item you cannot point at evidence for: an untouched template beats a guess. NEVER delete a section, an instruction comment, a legend, or a footer the template ships.
 
-1. [Exporter#toCsv](https://github.com/acme/app/blob/<SHA>/src/export/exporter.ts#L42)
-2. Blue: added by this PR. Dotted: removed by this PR.
-````
+Section by section, for the current Propel template:
 
-6. Verify the mermaid parses before creating the PR -- balanced quotes, escaped `(`, `)`, `<`, `>` in labels, no stray backticks. A broken diagram is worse than none.
+1. `## Tickets & Documentation` -- one bullet per ticket, as a full URL: `https://propel-health-ai.atlassian.net/browse/$ISSUE_KEY`. A documentation link goes here only when the branch changed that document.
+2. `## Visual Comparison/Preview (if applicable)` -- NEVER touch it. A screenshot, a GIF or a video is the author's to add.
+3. `## Testing` -- NEVER write its prose; the testing a person performed is theirs to describe. Under `#### Have tests been added/updated?`, tick `👍 Yes` when the diff adds or changes test files, or `🙅 No, they aren't needed` when the branch touches no executable code at all. Anything else: leave all three unticked.
+4. `## Checklist` -- mark an item `[N/A]` when the diff proves its condition absent: no endpoint change makes the Postman item N/A, no envar change makes the 1Password, `.env.template` and Terraform items N/A. Mark `[x]` ONLY for what the diff itself shows, e.g. `.env.template` really did change. NEVER tick an action that happens outside this repository -- a Postman collection, a 1Password entry, a companion Terraform PR -- leave it `[ ]` for the author.
 
-### 9. Push and create
+A repo whose template has other sections still obeys the paragraph above: fill what the change answers, leave the rest.
+
+### 10. Rebase, push, then create or update
+
+Write the body to a temporary file, `BODY_FILE`, first, so quoting cannot mangle it.
+
+#### Rebase and push
+
+Delegate both to a subagent -- one `Agent` call, `subagent_type: "general-purpose"` -- so a conflicting rebase or a rejected push never runs inline in this command's own shell.
+
+1. Call it ONCE with `BRANCH`, `DEFAULT_BRANCH`, and the pre-rebase `SHA` (from step 8, or the current `HEAD` when step 8 was skipped). Its task, verbatim:
+
+   1. TRY the rebase. A conflict is not fatal:
+
+   ```bash
+   git fetch origin "$DEFAULT_BRANCH"
+   git rebase "origin/$DEFAULT_BRANCH"
+   ```
+
+   2. On conflict, ABORT immediately and carry on without the rebase. NEVER resolve a conflict. NEVER commit:
+
+   ```bash
+   git rebase --abort
+   ```
+
+   3. Push. `--force-with-lease` applies ONLY when the rebase moved `HEAD`:
+
+   ```bash
+   git push -u origin "$BRANCH"                     # no rebase, or aborted
+   git push -u origin "$BRANCH" --force-with-lease  # the rebase rewrote the branch
+   ```
+
+   4. Report back: whether the rebase moved `HEAD`, the new `HEAD` SHA when it did, the conflicting files when it aborted, and whether the push succeeded.
+
+2. A rebase that moved `HEAD` orphans the step 8 permalinks -- they point at commits GitHub never sees. Repoint them with the SHA the subagent reports back, and ONLY then:
 
 ```bash
-git push -u origin "$BRANCH"
+sed -i '' "s/$SHA/$NEW_SHA/g" "$BODY_FILE"
+```
+
+#### CREATE mode
+
+```bash
 gh pr create --draft --base "$DEFAULT_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
 ```
 
-Write the body to a temporary file first so quoting cannot mangle it.
+#### UPDATE mode
 
-### 10. Report
+MERGE into the body that is already there, never overwrite it. Read it first:
 
-1. Print the PR URL.
-2. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
-3. When no issue key was resolved, add one line saying so. Otherwise say nothing about Jira.
-4. When the diff was above 100 lines but no diagram was drawn, add one clause saying why.
+```bash
+gh pr view "$PR_URL" --json body -q .body > "$OLD_BODY_FILE"
+```
+
+Build `$BODY_FILE` from `$OLD_BODY_FILE` with these rules:
+
+1. Replace the description section -- its header down to the next header of the same level -- with the one you wrote. Its `### APIs`, `### Migrations` and `### Changes` subsections go with it.
+2. When the old body has no description section, add yours as the first section and change nothing else.
+3. Keep EVERY other section byte for byte: resolved checklist items, review notes, sections a person added by hand. Step 9 fills the template items still left unresolved, and only those.
+4. Keep the Jira link where it already sits. NEVER add a second one.
+
+Then edit the PR:
+
+```bash
+gh pr edit "$PR_URL" --body-file "$BODY_FILE"
+```
+
+1. NEVER pass `--title`. A person may have renamed the PR. Report your derived title when it differs.
+2. NEVER pass `--draft` or `--ready`. The PR keeps the state it has.
+
+### 11. Report
+
+1. Print the PR URL. Say whether the command created the PR or updated it.
+2. Say what the rebase did: moved the branch, found nothing to do, or hit a conflict and you aborted it.
+3. Name the template items step 9 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
+4. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
+5. When the Jira key came from the epic fallback, say so in one line. Otherwise say nothing about Jira.
+6. When `DIFF_TOTAL` was above 300 and no diagram was drawn, add one clause saying why.
 
 ## Important Notes
 
 1. **NEVER** commit, amend, or stash. A dirty tree is a hard stop.
-2. **NEVER** force-push unless explicitly told
-3. **NEVER** mark the PR ready for review. It stays a draft.
+2. **NEVER** force-push, with one exception: the `--force-with-lease` the step 10 subagent runs, after a rebase it ran itself.
+3. **NEVER** mark the PR ready for review. A new PR stays a draft; an existing PR keeps the state it has.
 4. **NEVER** write to Jira -- no transitions, no comments, no field edits. This command reads only.
-6. **DO NOT** do anything beyond pushing the branch and opening the draft PR.
+5. **DO NOT** do anything beyond pushing the branch and opening or updating the draft PR.
 
 ## Error Handling
 
@@ -301,4 +314,4 @@ If any step fails:
 3. Stop immediately.
 4. Do not retry automatically.
 
-Jira lookup is the one exception: a failure there degrades to "no key" and the PR is still created.
+Jira is the one exception: a failure in step 3 degrades to the epic fallback, and the PR is still created.

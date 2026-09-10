@@ -105,9 +105,9 @@ Worktree created:
   branch: <BRANCH>
 ```
 
-2. State that subsequent work should happen from `WORKTREE_DIR`.
-3. Do not perform any setup -- if a related `script/*.sh` exists, offer to run it
-4. Start interpreting the prompt <instructions for the session on that branch> (the session continues in the new worktree)
+2. Switch to that folder (using the `/cd` command)
+3. Offer the user to run `./scripts/setup-worktree.sh` and state the working directory
+
 
 ## Important Notes
 
