@@ -1,6 +1,7 @@
 ---
 description: Create a sibling git worktree named <project-initials>-<sanitised-branch>
-argument-hint: <branch-name> <instructions for the session on that branch>
+argument-hint: <branch-name>
+model: haiku
 disable-model-invocation: true
 ---
 
@@ -29,7 +30,7 @@ When this command is invoked with `<branch-name>`:
 
 ### 1. Validate arguments and repository state
 
-1. Require `<branch-name>`; anything after it is `<instructions>` for the session in the new worktree.
+1. Require `<branch-name>`. Ignore anything after it.
 2. If no branch name is provided, stop and ask for it.
 3. Run:
 
@@ -113,7 +114,7 @@ Worktree created:
 
 1. **NEVER** create the worktree inside the repository. Always create it as a sibling directory.
 2. **DO NOT** create symlinks, copy files, run setup steps, or clean anything up.
-3. **DO NOT** do anything beyond creating the worktree and reporting it, then continue with `<instructions>`.
+3. **DO NOT** do anything beyond creating the worktree and reporting it.
 
 ## Error Handling
 

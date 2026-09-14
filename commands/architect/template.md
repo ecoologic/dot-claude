@@ -16,6 +16,14 @@ The architecture consists of these H2 sections, in order:
 
 - Print the structure of the relevant files in a code block like a `tree` command would do
 
+## New glossary
+
+Just a table with these columns:
+
+- Every new class, method, fn and constant
+- Description
+- Example value it holds/returns, N/A for classes
+
 ## Sequence diagram
 
 - The `uml-diagram` agent draws it, in mode `design`, form `sequence`

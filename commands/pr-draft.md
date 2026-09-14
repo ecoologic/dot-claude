@@ -21,7 +21,7 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 7. Add `### APIs` and `### Migrations` when the branch moves an interface.
 8. Ask a subagent for a UML diagram when the change is large; it lands as `### Changes`.
 9. Complete the rest of the template mechanically -- the ticket link, the checklists.
-10. Rebase onto the default branch, push, then create the draft PR or update the existing one.
+10. Push, then create the draft PR or update the existing one.
 11. Report.
 
 Steps 5 to 8 write INSIDE the template's description section, and nowhere else. Step 9 is the ONLY step that touches anything outside it.
@@ -42,8 +42,8 @@ git rev-parse --show-toplevel
 
 ```bash
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' \
-  || gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
+DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')"
+DEFAULT_BRANCH="${DEFAULT_BRANCH:-$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)}"
 ```
 
 3. Working tree clean:
@@ -220,43 +220,35 @@ Section by section, for the current Propel template:
 
 A repo whose template has other sections still obeys the paragraph above: fill what the change answers, leave the rest.
 
-### 10. Rebase, push, then create or update
+### 10. Push, then create or update
 
 Write the body to a temporary file, `BODY_FILE`, first, so quoting cannot mangle it.
 
-#### Rebase and push
+#### Push
 
-Delegate both to a subagent -- one `Agent` call, `subagent_type: "general-purpose"` -- so a conflicting rebase or a rejected push never runs inline in this command's own shell.
+This command NEVER rebases. `/recommit` is the command that restructures a branch and rebases it.
 
-1. Call it ONCE with `BRANCH`, `DEFAULT_BRANCH`, and the pre-rebase `SHA` (from step 8, or the current `HEAD` when step 8 was skipped). Its task, verbatim:
-
-   1. TRY the rebase. A conflict is not fatal:
-
-   ```bash
-   git fetch origin "$DEFAULT_BRANCH"
-   git rebase "origin/$DEFAULT_BRANCH"
-   ```
-
-   2. On conflict, ABORT immediately and carry on without the rebase. NEVER resolve a conflict. NEVER commit:
-
-   ```bash
-   git rebase --abort
-   ```
-
-   3. Push. `--force-with-lease` applies ONLY when the rebase moved `HEAD`:
-
-   ```bash
-   git push -u origin "$BRANCH"                     # no rebase, or aborted
-   git push -u origin "$BRANCH" --force-with-lease  # the rebase rewrote the branch
-   ```
-
-   4. Report back: whether the rebase moved `HEAD`, the new `HEAD` SHA when it did, the conflicting files when it aborted, and whether the push succeeded.
-
-2. A rebase that moved `HEAD` orphans the step 8 permalinks -- they point at commits GitHub never sees. Repoint them with the SHA the subagent reports back, and ONLY then:
+1. `HEAD` never moves here, so the step 8 permalinks stay valid.
+2. A branch whose history was rewritten before this command ran needs `--force-with-lease`. Test it:
 
 ```bash
-sed -i '' "s/$SHA/$NEW_SHA/g" "$BODY_FILE"
+git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1 \
+  && git merge-base --is-ancestor "origin/$BRANCH" "$BRANCH"
 ```
+
+3. It succeeds, or the remote branch does not exist yet -- push plainly:
+
+```bash
+git push -u origin "$BRANCH"
+```
+
+4. It fails -- the remote branch exists and is not an ancestor, so the history was rewritten:
+
+```bash
+git push -u origin "$BRANCH" --force-with-lease
+```
+
+5. A rejected push is a hard stop. NEVER rebase to clear it. Report it and say `/recommit` rebases the branch.
 
 #### CREATE mode
 
@@ -291,7 +283,7 @@ gh pr edit "$PR_URL" --body-file "$BODY_FILE"
 ### 11. Report
 
 1. Print the PR URL. Say whether the command created the PR or updated it.
-2. Say what the rebase did: moved the branch, found nothing to do, or hit a conflict and you aborted it.
+2. Say whether the push was plain or `--force-with-lease`.
 3. Name the template items step 9 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
 4. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
 5. When the Jira key came from the epic fallback, say so in one line. Otherwise say nothing about Jira.
@@ -300,7 +292,7 @@ gh pr edit "$PR_URL" --body-file "$BODY_FILE"
 ## Important Notes
 
 1. **NEVER** commit, amend, or stash. A dirty tree is a hard stop.
-2. **NEVER** force-push, with one exception: the `--force-with-lease` the step 10 subagent runs, after a rebase it ran itself.
+2. **NEVER** rebase. **NEVER** force-push, with one exception: the step 10 `--force-with-lease`, on a branch whose history was already rewritten.
 3. **NEVER** mark the PR ready for review. A new PR stays a draft; an existing PR keeps the state it has.
 4. **NEVER** write to Jira -- no transitions, no comments, no field edits. This command reads only.
 5. **DO NOT** do anything beyond pushing the branch and opening or updating the draft PR.
