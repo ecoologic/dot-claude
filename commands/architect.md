@@ -46,10 +46,21 @@ disable-model-invocation: true
 1. The next step is to finalise the design, not to implement it, and not to plan the work
 1. NEVER offer to proceed to implementation or to `/architect-handoff`, the user says when the design is ready
 
+## Story folder
+
+1. Every story owns one folder: `~/dev/plans/<epic>/<story-slug>/`
+1. The slug identifies the work everywhere: the folder name, the git branch, and the `/continue` argument
+1. Ask for the epic and the slug ONCE, at the point you are ready to write the document, never before
+1. Derive both from the conversation first, then ask the user to confirm or correct them in one question
+1. The slug is kebab-case, max 5 words, no dates, no ticket keys
+1. The folder already exists with a `design.md` in it → say so, then overwrite that file, never create a second folder
+1. Create the folder, then write the document as `design.md` inside it
+
 ## Output document
 
 1. Read `~/.claude/commands/architect/template.md`, it is the template for the document, follow it exactly
 1. The template file has its own frontmatter, it is not part of the document
+1. Write the document to `~/dev/plans/<epic>/<story-slug>/design.md`, see **Story folder**
 1. Omit empty sections. Speculations NEED to be marked TODO in the design
 1. Accuracy here is paramount
 1. Enforce your output style

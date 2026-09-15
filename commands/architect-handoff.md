@@ -60,13 +60,34 @@ Each returns at most 5 findings, ordered by impact, as rows in the design's Curr
 1. NEVER paraphrase or invent skill content
 1. `coding` applies to every task that writes code. `testing` applies to every task that writes tests
 
+## Git
+
+1. The orchestrator owns git. `/continue` runs every `git` command, single-threaded, after a wave joins
+1. A task packet NEVER calls `git`. Put `NEVER run any git command` in the **Out of scope** list of EVERY packet
+1. A packet writes its owned files, then reports the exact paths it wrote. Nothing else
+1. NEVER tell a packet to commit, stage, stash, branch, pull or push
+1. Parallel packets share one `.git/index`. Two concurrent `git add` calls give `fatal: Unable to create '.git/index.lock'`, and one packet's `git add -A` stages another's half-written files
+
 ## Output document
 
-1. Write a new document next to the design, named `<design-file-name>-handoff.md`
+1. The design lives in a story folder, `~/dev/plans/<epic>/<story-slug>/design.md`. Write into that same folder
+1. Write the handoff as `handoff.md`. NEVER name it after the design file
 1. Read `~/.claude/commands/architect/handoff.md`, it is the template for the document, follow it exactly
 1. The template file has its own frontmatter, it is not part of the document
 1. NEVER edit the design document
 1. Enforce your output style
+
+## Seed the progress file
+
+1. Write `progress.md` into the same story folder, AFTER the handoff is complete
+1. Read `~/.claude/commands/architect/progress.md`, it is the template for that file, follow it exactly
+1. `progress.md` already exists → STOP. Report it. Never overwrite a run in progress
+1. The **Open questions** section is not empty → do NOT seed `progress.md`. The handoff is not runnable
+1. Take `Verify` from the handoff **Final verification** VERBATIM. NEVER detect a test or lint command
+1. Ask the user ONCE whether `/recommit` runs, then record `yes` or `no`
+1. One unticked row per task, in wave order, then one unticked row each for `verify`, `simplify`, `code-review`, `recommit` (when `yes`) and `pr-draft`
+1. Row 1 is `handoff`, ticked. Its evidence is the design content hash, the wave count and the packet count
+1. `~/dev/plans` is NOT a git repository, so the design has no commit. Hash its content with `shasum -a 1 design.md`, and record the first 7 characters
 
 ## Exit gate
 
