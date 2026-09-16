@@ -8,6 +8,13 @@
 1. When working on a 3rd party integration (eg: posthog), check if there's a skill installed for that
 1. When efficient, spin up subagents to answer your questions
 
+## Asking to call `mcp__server__tool`
+
+1. ALWAYS print what and why in this format before the call:
+
+> **WHAT**: details in 20 words top
+> **WHY**: don't repeat what; 20 words top
+
 ## Plan mode
 
-1. ALWAYS print the plan path just before EOM: `Plan <"(empty)" if empty/not created>: full/path`
+1. ALWAYS print the plan path just before EOM: `Plan<" (empty)" if empty/not created>: full/path`

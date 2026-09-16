@@ -1,6 +1,6 @@
 ---
 description: Push the current branch, then open a draft PR or update the existing one, following the repo template
-allowed-tools: Bash, Read, Glob, Grep, Agent, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__getJiraIssue
+allowed-tools: Bash, Read, Glob, Grep, Agent, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__getJiraIssue
 model: haiku
 effort: xhigh
 disable-model-invocation: true
@@ -14,7 +14,7 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 
 1. Preflight. A dirty tree, the default branch, or a missing `gh` is a hard stop. An existing PR switches CREATE mode to UPDATE mode.
 2. Gather context from the branch name and the commit subjects -- never the diff.
-3. Resolve the Jira issue, reading titles only.
+3. Resolve the Jira issue from the branch itself, reading its title only.
 4. Find the repository's PR template.
 5. Write the title, and the description as a numbered TLDR.
 6. Read the diff ONCE, and only as deeply as its size warrants.
@@ -82,10 +82,13 @@ Note whether the branch name or any commit subject carries a Jira key, e.g. `PRO
 
 ### 3. Resolve the Jira issue
 
-1. A key found in step 2 IS the key. Fetch its title only -- never its description, comments, or subtasks.
-2. No key there: search Jira using the branch's own words, and read titles only.
-3. Still nothing: fall back to the current epic, `PROP-5036`. NEVER ask the user which issue to use.
-4. Record the key as `ISSUE_KEY`. Step 9 puts it under `## Tickets & Documentation`.
+The card the branch is working on, or nothing. There is no second candidate.
+
+1. A key found in step 2 IS the only candidate. Fetch its title only -- never its description, comments, or subtasks.
+2. No key there: there is no card. Record NO key and move on.
+3. Test the title against the branch's work. The card is UNRELATED when its title describes a different piece of work -- not merely a wider or narrower one. Then record NO key.
+4. NEVER search Jira for a card. NEVER fall back to an epic. NEVER ask the user which issue to use.
+5. Record the key as `ISSUE_KEY`, empty when step 2 or step 3 left you without one. Step 9 puts it under `## Tickets & Documentation`.
 
 ### 4. Find the PR template
 
@@ -213,7 +216,7 @@ Outside the description, fill the template in ONLY where the change answers it m
 
 Section by section, for the current Propel template:
 
-1. `## Tickets & Documentation` -- one bullet per ticket, as a full URL: `https://propel-health-ai.atlassian.net/browse/$ISSUE_KEY`. A documentation link goes here only when the branch changed that document.
+1. `## Tickets & Documentation` -- one bullet per ticket, as a full URL: `https://propel-health-ai.atlassian.net/browse/$ISSUE_KEY`. An empty `ISSUE_KEY` leaves the section exactly as the template ships it -- NEVER link a card the work does not answer. A documentation link goes here only when the branch changed that document.
 2. `## Visual Comparison/Preview (if applicable)` -- NEVER touch it. A screenshot, a GIF or a video is the author's to add.
 3. `## Testing` -- NEVER write its prose; the testing a person performed is theirs to describe. Under `#### Have tests been added/updated?`, tick `👍 Yes` when the diff adds or changes test files, or `🙅 No, they aren't needed` when the branch touches no executable code at all. Anything else: leave all three unticked.
 4. `## Checklist` -- mark an item `[N/A]` when the diff proves its condition absent: no endpoint change makes the Postman item N/A, no envar change makes the 1Password, `.env.template` and Terraform items N/A. Mark `[x]` ONLY for what the diff itself shows, e.g. `.env.template` really did change. NEVER tick an action that happens outside this repository -- a Postman collection, a 1Password entry, a companion Terraform PR -- leave it `[ ]` for the author.
@@ -286,7 +289,7 @@ gh pr edit "$PR_URL" --body-file "$BODY_FILE"
 2. Say whether the push was plain or `--force-with-lease`.
 3. Name the template items step 9 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
 4. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
-5. When the Jira key came from the epic fallback, say so in one line. Otherwise say nothing about Jira.
+5. When step 3 linked no card, say so in one line -- the branch carried no key, or name the card it rejected and why. Otherwise say nothing about Jira.
 6. When `DIFF_TOTAL` was above 300 and no diagram was drawn, add one clause saying why.
 
 ## Important Notes
@@ -306,4 +309,4 @@ If any step fails:
 3. Stop immediately.
 4. Do not retry automatically.
 
-Jira is the one exception: a failure in step 3 degrades to the epic fallback, and the PR is still created.
+Jira is the one exception: a failure in step 3 leaves `ISSUE_KEY` empty, and the PR is still created.
