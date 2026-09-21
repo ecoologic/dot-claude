@@ -1,21 +1,25 @@
 ---
 description: Design the technical architecture for an epic from stories, personas, and the codebase
-argument-hint: "[instructions-or-suggestions]"
+argument-hint: "[<epic-slug>] [instructions-or-suggestions]"
 allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, Skill, AskUserQuestion]
+disable-model-invocation: true
 ---
 
 # Architecture
 
 ### Pipeline I/O
 
-| Direction  | File                                     | Description                                                                                       |
-| ---------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **In**     | `./planning/<epic-slug>/idea.md`         | Raw epic idea and links to supporting artifacts                                                   |
-| **In**     | `./planning/<epic-slug>/epic.md`         | Story list from `/a-epic`                                                                         |
-| **In**     | `./planning/<epic-slug>/personas.md`     | Personas from `/a-epic`                                                                           |
-| **In/Out** | `./planning/glossary.md`                 | Shared naming baseline from `/a-global-architecture`; update durable confirmed terms and mappings |
-| **In/Out** | `./planning/global-architecture.md` | Shared repo map from `/a-global-architecture`; update only with durable cross-epic structure      |
-| **Out**    | `./planning/<epic-slug>/architecture.md` | Epic-specific architecture, critique, and change mapping                                     |
+| Direction  | File                                                                             | Description                                                       |
+| ---------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **In**     | `~/.claude/commands/a-templates/conventions.md`                                             | Shared path resolution, selector resolution, and repo conventions |
+| **In**     | `$EPIC_DIR/idea.md`                                                                | Raw epic idea and links to supporting artifacts                   |
+| **In**     | `$EPIC_DIR/epic.md`                                                                | Story list and touched repos from `/a-epic`                       |
+| **In**     | `$EPIC_DIR/personas.md`                                                           | Personas from `/a-epic`                                            |
+| **In**     | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
+| **Out**    | `$EPIC_DIR/architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
+| **Out**    | `<repo>/CONTEXT.md`, per touched repo                                             | Durable confirmed terms                                            |
+
+`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
 ## Purpose
 
@@ -31,10 +35,10 @@ It is the first epic-specific step that may inspect the codebase.
 ## Source Of Truth
 
 For product intent and scope, trust sources in this order:
-1. `./planning/<epic-slug>/epic.md`
-2. `./planning/<epic-slug>/personas.md`
+1. `$EPIC_DIR/epic.md`
+2. `$EPIC_DIR/personas.md`
 3. UI-facing design artifacts and references preserved by `epic.md`
-4. `./planning/<epic-slug>/idea.md`
+4. `$EPIC_DIR/idea.md`
 
 For implementation reality, trust existing code and established conventions over prototype structure or inferred models.
 
@@ -49,38 +53,37 @@ For every inconsistency:
 
 ## Skills
 
-Use these skills when relevant:
-- `explore` for targeted multi-area codebase exploration
-- `ecoologic-code` to validate naming and pattern alignment
-- `mermaid-diagrams` for epic class diagrams, sequence diagrams, and optional ERD review artifacts
+Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. A skill about naming or pattern validation applies when reconciling terminology.
+
+Invoke the `diagrams` skill via `Skill` before writing any diagram in this document.
 
 ## Rules
 
-- NEVER write or modify application code, create commits, or write files outside `./planning/`
+- NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR` or a touched repo's `CONTEXT.md`
 - NEVER start with broad codebase exploration before understanding the epic inputs
 - NEVER silently trust a prototype or UI-shaped data model
-- NEVER define synonyms; glossary terms stay canonical unless the user explicitly approves a rename
+- NEVER define synonyms; a repo's `CONTEXT.md` terms stay canonical unless the user explicitly approves a rename
 - Treat inferred models as hypotheses until challenged against the codebase and project conventions
 - Prefer existing code and established conventions over prototype structure when they conflict
-- Update `glossary.md` only for durable confirmed terms or mappings; ask before renaming an existing term
-- Update `global-architecture.md` only for durable cross-epic structure, not epic-local design detail
+- Update a repo's `CONTEXT.md` only for durable confirmed terms or mappings; ask before renaming an existing term
+- `architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
+
 ## Step 1: Resolve required inputs
 
-`$ARGUMENTS` = `[instructions-or-suggestions]` — high-priority guidance for this run. Does not select the epic.
-
-Resolve `<epic-slug>` from `./planning/current.json`. Stop if missing or malformed.
+1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution: a leading `<epic-slug>` in `$ARGUMENTS`, then the current branch, then memory, then stop and ask.
+1. `$ARGUMENTS` = `[<epic-slug>] [instructions-or-suggestions]`. A leading token that names an existing `$PLANNING_ROOT/<token>` folder is the epic slug; everything else is high-priority guidance for this run and never selects the epic.
+1. Resolve `$EPIC_DIR`. Record the resolved epic slug in memory.
 
 Read (stop if any are missing):
-- `./planning/<epic-slug>/idea.md`
-- `./planning/<epic-slug>/epic.md`
-- `./planning/<epic-slug>/personas.md`
-- `./planning/glossary.md`
-- `./planning/global-architecture.md`
+- `$EPIC_DIR/idea.md`
+- `$EPIC_DIR/epic.md`
+- `$EPIC_DIR/personas.md`
 
 Follow references from those files to supporting artifacts. Stop and report any unreadable reference.
 
 Extract:
 - epic name and slug
+- the touched repos listed in `epic.md`'s `## Repos`
 - story list and summaries
 - personas and constraints
 - domain concepts and obvious relationships
@@ -124,30 +127,32 @@ Do not decide "the conflict is in `epic.md`" or "the conflict is in `idea.md`" a
 
 If a contradiction materially changes the architecture recommendation, stop, surface that exact contradiction immediately, and resolve it with the user before continuing.
 
-## Step 3: Load shared repo context
+## Step 3: Load repo context
 
-Read `./planning/global-architecture.md` and use it to narrow exploration.
+For each repo listed in `epic.md`'s `## Repos`, read when present:
+- `README.md`
+- `CLAUDE.md`, at the repo root and at any package level under it
+- `CONTRIBUTING.md`
+- `CONTEXT.md`
 
-If it is stale or too weak:
-- do targeted structural exploration
-- refresh `global-architecture.md` only with durable cross-epic structure
-
-Use the shared map to understand:
-- major system areas
-- responsibilities and boundaries
+Use these to understand:
+- major system areas and responsibilities
+- established naming and conventions
 - communication paths between parts
 - stable contracts and integrations
 
+A repo missing some of these files → continue with what exists and say so explicitly. A repo with none of them → treat it as a greenfield repo for this epic.
+
 ## Step 4: Explore relevant codebase areas
 
-Use targeted exploration only in areas relevant to the stories and still needing confirmation.
+Use targeted exploration only in areas relevant to the stories and still needing confirmation, scoped to the repos listed in `epic.md`'s `## Repos`.
 
-Use `Agent` with explore subagents or equivalent targeted search. Launch one agent per relevant area, up to 5, and reserve one slot for a prototype source when present. Follow `superpowers:dispatching-parallel-agents` — all dispatches must go out in a single message so they run concurrently, never one-after-another.
+Dispatch one `Agent` with type `Explore` per relevant area, up to 5, and reserve one slot for a prototype source when present. Send every dispatch in a single message so they run concurrently, never one after another.
 
 Each exploration prompt must include:
 1. the story list
 2. the inferred entities, flows, and open questions
-3. the glossary baseline
+3. the repo's `CONTEXT.md`, when present, as the naming baseline
 4. the specific system area to inspect
 
 Each exploration result must report:
@@ -156,7 +161,7 @@ Each exploration result must report:
 - reuse candidates
 - naming matches and conflicts
 - how the area communicates with the rest of the system
-- any durable structure that may belong in `global-architecture.md`
+- any durable structure worth recording in `architecture.md`
 
 Display a summary of findings by system area before moving on.
 
@@ -164,8 +169,8 @@ Display a summary of findings by system area before moving on.
 
 Build a terminology table for `architecture.md`:
 
-| Domain Term | Code Name | Definition | Source | Status |
-| ----------- | --------- | ---------- | ------ | ------ |
+| Domain Term | Repo | Code Name | Definition | Source | Status |
+| ----------- | ---- | --------- | ---------- | ------ | ------ |
 
 Status values:
 - `exists`
@@ -175,9 +180,9 @@ Status values:
 - `rename-request`
 
 Rules:
-- existing glossary terms remain canonical unless the user approves a change
-- add safe new glossary rows and safe enrichments to `glossary.md` in this command
-- do not silently rename existing glossary terms
+- existing `CONTEXT.md` terms remain canonical unless the user approves a change
+- add safe new rows and safe enrichments to the relevant repo's `CONTEXT.md` in this command
+- do not silently rename existing `CONTEXT.md` terms
 - keep conflicts and rename requests explicit in `architecture.md` and review them with the user before writing outputs
 
 ## Step 6: Make architecture decisions
@@ -202,7 +207,7 @@ If a decision has meaningful tradeoffs, present options with pros and cons and r
 
 ### 6a. Review open questions before writing
 
-Before writing `architecture.md` or updating shared artifacts, present the current architecture direction to the user.
+Before writing `architecture.md` or updating `CONTEXT.md`, present the current architecture direction to the user.
 
 Include:
 - input conflicts and gaps, listed one by one
@@ -230,7 +235,7 @@ Critique it harshly. Evaluate:
 1. entity and aggregate boundaries
 2. ownership and lifecycle boundaries
 3. relationship quality and direction
-4. naming and glossary alignment
+4. naming and `CONTEXT.md` alignment
 5. consistency with existing code and conventions
 6. suspicious UI-shaped or convenience-driven entities
 7. status blobs, nullable-field sprawl, duplicated data, and missing invariants
@@ -267,14 +272,15 @@ List every new or modified artifact that later story and criterion work will dep
 
 ## Step 8: Write `architecture.md`
 
-Write `./planning/<epic-slug>/architecture.md` with this structure:
+Write `$EPIC_DIR/architecture.md` with this structure:
 
 ```md
 # <Epic Name> — Architecture
 > Epic: <epic-slug>
 > Generated: <date>
-> Stories: `./planning/<epic-slug>/epic.md`
-> Personas: `./planning/<epic-slug>/personas.md`
+> Repos: `<repo>`, ...
+> Stories: `$EPIC_DIR/epic.md`
+> Personas: `$EPIC_DIR/personas.md`
 
 ## Epic Summary
 ## Resolved Source-of-Truth Decisions
@@ -293,7 +299,7 @@ Write `./planning/<epic-slug>/architecture.md` with this structure:
 List only the contradictions, missing inputs, and weak assumptions that still remain after discussion with the user. Record them as individual items, not bulk file-level conflict notes. This section records items explicitly left open by user choice or still awaiting later resolution.
 
 ## Terminology
-| Domain Term | Code Name | Definition | Source | Status |
+| Domain Term | Repo | Code Name | Definition | Source | Status |
 
 ### Key Domain Concepts
 
@@ -319,20 +325,17 @@ List only the contradictions, missing inputs, and weak assumptions that still re
 ## Story Mapping
 | Story | System Areas | New | Modified | Reused | Risk |
 
-## Upstream Updates Applied
-- glossary updates made in this run
-- global architecture updates made in this run
-- conflicts or rename requests left for user review
+## CONTEXT.md Updates Applied
+- Updates made in this run, per repo
+- Conflicts or rename requests left for user review
 
 ## Risks and Open Questions
 ## References
 ```
 
-## Step 9: Update shared artifacts
+## Step 9: Update repo terminology
 
-### 9a. Update glossary
-
-Update `./planning/glossary.md` in this command when the findings are durable and safe:
+Update the relevant repo's `CONTEXT.md` in this command when the findings are durable and safe:
 - add new terms
 - enrich existing rows with confirmed code names, sources, or statuses
 
@@ -341,29 +344,14 @@ Do not:
 - rename an existing term without explicit user approval
 - persist uncertain conflicts as canonical truth
 
-### 9b. Update global architecture
-
-Update `./planning/global-architecture.md` only with durable cross-epic structure such as:
-- stable modules and boundaries
-- major responsibilities
-- communication paths
-- stable contracts and integrations
-
-Do not merge back:
-- current epic goals
-- story-specific rationale
-- temporary assumptions
-- epic-local design detail
-
 ## Step 10: Present to user
 
 Summarize:
 - key decisions
 - ERD critique and recommended model
 - reuse opportunities
-- glossary updates applied
-- glossary conflicts or rename requests still open
-- global architecture updates applied
+- `CONTEXT.md` updates applied, per repo
+- `CONTEXT.md` conflicts or rename requests still open
 - risks and open questions
 
 Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs.
@@ -379,15 +367,17 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] the epic-wide class diagram is included
 - [ ] the epic-wide sequence diagrams are included
 - [ ] resolved inconsistencies, if any, were persisted in `architecture.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
-- [ ] any safe durable glossary updates were applied
-- [ ] any `global-architecture.md` updates are lean and cross-epic
+- [ ] any safe durable `CONTEXT.md` updates were applied, in the correct repo
 - [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user before files were written
+- [ ] the epic slug is recorded in memory
 
 ## Error Handling
 
-@include includes/error-protocol.md
+When stopping due to a missing, unreadable, or malformed input:
+1. Print the exact absolute path that was checked
+2. Print which step of this command failed (step number and name)
 
-- **Weak `global-architecture.md`** — continue, perform targeted structural mapping, and keep the shared file lean
+- **Weak repo context** — continue, perform targeted structural exploration, and say which files were missing
 - **Empty or new codebase** — say so explicitly and focus on greenfield decisions
 - **Inputs too weak for an ERD** — record the gap instead of fabricating certainty
 - **Conflicting input artifacts** — surface the conflict immediately and pause for user direction before continuing

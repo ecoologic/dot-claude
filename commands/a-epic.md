@@ -11,18 +11,18 @@ disable-model-invocation: true
 
 | Direction  | File                                      | Description                                                                                                      |
 | ---------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **In**     | `commands/a-templates/conventions.md`     | Shared folder layout, path resolution, selector resolution, and vertical-slicing rules                          |
+| **In**     | `~/.claude/commands/a-templates/conventions.md`     | Shared folder layout, path resolution, selector resolution, and vertical-slicing rules                          |
 | **In**     | `$EPIC_DIR/idea.md`                       | Raw epic idea and links to supporting artifacts                                                                  |
 | **In**     | `<repo>/CONTEXT.md`, per touched repo     | Existing naming baseline for that repo                                                                           |
 | **Out**    | `$EPIC_DIR/epic.md`                       | Structured now-work story list plus epic-level ERD, requirements, UX framing, the touched-repo list, and a top-of-file UI design reference section for later stages |
 | **Out**    | `$EPIC_DIR/personas.md`                   | Personas, actors, and usage context for later stages                                                             |
 | **Out**    | `$EPIC_DIR/stretch-goals.md`              | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
 
-`$EPIC_DIR` resolves per `commands/a-templates/conventions.md`.
+`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
 ## Skills
 
-Discover and invoke project skills per `commands/a-templates/conventions.md`. A skill about UX or interaction design applies when shaping story boundaries.
+Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. A skill about UX or interaction design applies when shaping story boundaries.
 
 ## Purpose
 
@@ -122,7 +122,7 @@ When several reasonable splits exist, prefer the smallest user-visible slice and
 
 ## Step 0: Resolve the epic and its folder
 
-1. Read `commands/a-templates/conventions.md`. Follow its path resolution and selector resolution.
+1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its path resolution and selector resolution.
 1. `$ARGUMENTS` = `<epic-slug> [details]`. `<epic-slug>` names the folder; it is never derived or guessed.
 1. No `<epic-slug>` in `$ARGUMENTS` → fall through selector resolution: memory, then stop and ask.
 1. Resolve `$EPIC_DIR` = `$PLANNING_ROOT/<epic-slug>`. Create it when it does not exist.
