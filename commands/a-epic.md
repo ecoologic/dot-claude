@@ -1,7 +1,8 @@
 ---
 description: Break down an idea into personas and actionable user stories
-argument-hint: "[instructions-or-suggestions]"
+argument-hint: "<epic-slug> [details]"
 allowed-tools: [Read, Write, Edit, AskUserQuestion, Skill]
+disable-model-invocation: true
 ---
 
 # Epic
@@ -10,22 +11,23 @@ allowed-tools: [Read, Write, Edit, AskUserQuestion, Skill]
 
 | Direction  | File                                      | Description                                                                                                      |
 | ---------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **In**     | `./planning/<epic-slug>/idea.md`          | Raw epic idea and links to supporting artifacts                                                                  |
-| **In/Out** | `./planning/glossary.md`                  | Shared domain glossary created by `/a-global-architecture`                                                       |
-| **In**     | `./planning/global-architecture.md`       | Shared repo-wide context created by `/a-global-architecture`                                                     |
-| **Out**    | `./planning/<epic-slug>/epic.md`          | Structured now-work story list plus epic-level ERD, requirements, UX framing, and a top-of-file UI design reference section for later stages |
-| **Out**    | `./planning/<epic-slug>/personas.md`      | Personas, actors, and usage context for later stages                                                             |
-| **Out**    | `./planning/<epic-slug>/stretch-goals.md` | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
+| **In**     | `commands/a-templates/conventions.md`     | Shared folder layout, path resolution, selector resolution, and vertical-slicing rules                          |
+| **In**     | `$EPIC_DIR/idea.md`                       | Raw epic idea and links to supporting artifacts                                                                  |
+| **In**     | `<repo>/CONTEXT.md`, per touched repo     | Existing naming baseline for that repo                                                                           |
+| **Out**    | `$EPIC_DIR/epic.md`                       | Structured now-work story list plus epic-level ERD, requirements, UX framing, the touched-repo list, and a top-of-file UI design reference section for later stages |
+| **Out**    | `$EPIC_DIR/personas.md`                   | Personas, actors, and usage context for later stages                                                             |
+| **Out**    | `$EPIC_DIR/stretch-goals.md`              | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
+
+`$EPIC_DIR` resolves per `commands/a-templates/conventions.md`.
 
 ## Skills
 
-Invoke these skills during execution via `Skill` when relevant:
-- `ux-laws` when shaping story boundaries or interaction expectations from the user perspective
+Discover and invoke project skills per `commands/a-templates/conventions.md`. A skill about UX or interaction design applies when shaping story boundaries.
 
 ## Purpose
 
 Turn a rough idea into a high-quality epic packet for the rest of the pipeline:
-- `epic.md` defines the current story list and the shape of the work
+- `epic.md` defines the current story list, the touched repos, and the shape of the work
 - `epic.md` preserves UI references near the top of the file so later stages can find and follow them immediately when the epic has UI
 - `personas.md` captures the actors, goals, and contexts that later commands must inherit
 - `stretch-goals.md` captures worthwhile later-scope ideas that no one needs to read for now
@@ -48,9 +50,9 @@ Treat each inconsistency independently:
 
 ## Rules
 
-- NEVER write or modify application code, create commits, or write files outside `./planning/`
+- NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR`
 - NEVER investigate the codebase for this step; rely on `idea.md` and its referenced product artifacts only
-- NEVER define synonyms; if a term exists in the glossary, use its exact term everywhere
+- NEVER define synonyms; if a term exists in a touched repo's `CONTEXT.md`, use its exact term everywhere
 - NEVER abbreviate new names
 - NEVER slice stories by technology layer
 - NEVER write implementation details, API shapes, schema designs, or task-level work into `epic.md`
@@ -118,33 +120,37 @@ It is OK to return to the same UI in a later story to add another field, interac
 
 When several reasonable splits exist, prefer the smallest user-visible slice and ask the user to choose before writing outputs if the tradeoff is ambiguous.
 
-## Step 0: Load glossary
+## Step 0: Resolve the epic and its folder
 
-Read `./planning/glossary.md` and `./planning/global-architecture.md`. Stop if either is missing.
-
-## Step 1: Resolve inputs
-
-`$ARGUMENTS` = `[instructions-or-suggestions]` — high-priority guidance for this run. Does not select the epic.
-
-Resolve `<epic-slug>` from `./planning/current.json`. Stop if missing or malformed.
-
-Read `./planning/<epic-slug>/idea.md`. Stop if missing.
-
-Follow references from `idea.md` to supporting materials. Stop and report any unreadable reference.
-
-Identify UI-facing referenced artifacts. Preserve every relevant UI reference in `epic.md` for later commands.
+1. Read `commands/a-templates/conventions.md`. Follow its path resolution and selector resolution.
+1. `$ARGUMENTS` = `<epic-slug> [details]`. `<epic-slug>` names the folder; it is never derived or guessed.
+1. No `<epic-slug>` in `$ARGUMENTS` → fall through selector resolution: memory, then stop and ask.
+1. Resolve `$EPIC_DIR` = `$PLANNING_ROOT/<epic-slug>`. Create it when it does not exist.
+1. Record `<epic-slug>` as the current epic in memory now, so every later command defaults to it.
+1. `$EPIC_DIR/idea.md` exists → read it whole, follow its references to supporting materials, and report any unreadable reference.
+1. `$EPIC_DIR/idea.md` is missing and `[details]` was given → write `$EPIC_DIR/idea.md` from `[details]` verbatim, then continue.
+1. `$EPIC_DIR/idea.md` is missing and no `[details]` was given → stop, print the exact path `$EPIC_DIR/idea.md`, and ask for the idea.
+1. Identify UI-facing referenced artifacts. Preserve every relevant UI reference in `epic.md` for later commands.
 
 Output:
 ```text
 Epic slug: <epic-slug>
-Epic summary: <one paragraph>
+Epic dir: <EPIC_DIR>
+Idea source: <written from details | read from idea.md>
 Referenced artifacts: <list or none>
 UI references found: <list or none>
 ```
 
+## Step 1: Confirm the touched repos
+
+1. Ask the user which sibling repos this epic touches. An epic may span several.
+1. Each named repo must exist as a sibling of `$EPIC_DIR`'s grandparent, at `$(dirname "$PLANNING_ROOT")/<repo>`. A repo that does not exist there → stop and ask again.
+1. Read `./CONTEXT.md` in each confirmed repo, when present, to reuse existing terms instead of coining new ones.
+1. Carry the confirmed repo list into `epic.md` in Step 5.
+
 ## Step 2: Create personas
 
-Derive the actors and usage contexts needed to reason about the epic. Write `./planning/<epic-slug>/personas.md`.
+Derive the actors and usage contexts needed to reason about the epic. Write `$EPIC_DIR/personas.md`.
 
 Use this structure:
 
@@ -209,12 +215,16 @@ Treat `Nice to have` stories as stretch goals. Do not include them in the main s
 
 ## Step 5: Write `epic.md`
 
-Write `./planning/<epic-slug>/epic.md` with this structure:
+Write `$EPIC_DIR/epic.md` with this structure:
 
 ```md
 # <Epic Name> (<epic-slug>)
 
 > Epic: <summary>
+
+## Repos
+- One line per touched repo, with its path relative to the dev root
+- If only one repo, still list it
 
 ## UI Design References
 - Every UI-facing reference later stages should read directly, with its type (eg: Lovable), exact path or URL plus a brief note about what it covers.
@@ -272,13 +282,13 @@ Write `./planning/<epic-slug>/epic.md` with this structure:
 
 Include only `Actionable` and `Blocked` stories in `epic.md`. Exclude all `Nice to have` stories from this file.
 When UI references exist, include all of them in `epic.md`, even if only some stories use each reference.
-Place the `## UI Design References` section immediately after the epic summary so the main design link is visible near the top of the document.
-Place `## Resolved Source-of-Truth Decisions` immediately after `## UI Design References` so later stages can reuse the conflict decisions before reading the stories.
+List every touched repo in `## Repos`, even when there is only one.
+Place `## Repos` immediately after the epic summary, `## UI Design References` after `## Repos`, and `## Resolved Source-of-Truth Decisions` immediately after that, so later stages can find them near the top.
 Ensure the numbered story sections are unique and contiguous within `epic.md` so later stages can resolve `Story N` to one story only and one corresponding `story-N.md` file.
 
 ## Step 6: Write `stretch-goals.md`
 
-Write `./planning/<epic-slug>/stretch-goals.md` with this structure:
+Write `$EPIC_DIR/stretch-goals.md` with this structure:
 
 ```md
 # <Epic Name> Stretch Goals
@@ -312,14 +322,14 @@ Write `./planning/<epic-slug>/stretch-goals.md` with this structure:
 
 If there are no stretch goals, still create the file and say so clearly.
 
-## Step 7: Update glossary
+## Step 7: Update repo terminology
 
-If this step reveals durable product terms that later stages must reuse, update `./planning/glossary.md`.
+If this step reveals durable product terms that later stages must reuse, update `./CONTEXT.md` in the relevant touched repo.
 
 Rules:
 - never remove entries
 - never rename an existing term without explicit user approval
-- at this stage, `Code Name` and `Source` may be `—` when the codebase has not yet been investigated
+- a term may carry no code name or source yet, when the codebase has not been investigated
 
 ## Step 8: Present to user
 
@@ -329,7 +339,7 @@ Summarize:
 3. personas created
 4. whether `stretch-goals.md` was created and how many items it contains
 5. remaining assumptions and open questions
-6. any glossary entries added
+6. any `CONTEXT.md` entries added, per repo
 
 Tell the user that the main review path is `epic.md` plus `personas.md`, and that `stretch-goals.md` is optional for now.
 
@@ -337,9 +347,9 @@ Invite final feedback on the generated artifacts before moving to `/a-architectu
 
 ## Success Criteria
 
-- [ ] `epic.md` exists at `./planning/<epic-slug>/epic.md`
-- [ ] `personas.md` exists at `./planning/<epic-slug>/personas.md`
-- [ ] `stretch-goals.md` exists at `./planning/<epic-slug>/stretch-goals.md`
+- [ ] `epic.md` exists at `$EPIC_DIR/epic.md`
+- [ ] `personas.md` exists at `$EPIC_DIR/personas.md`
+- [ ] `stretch-goals.md` exists at `$EPIC_DIR/stretch-goals.md`
 - [ ] all required inputs and followed references were validated before execution continued
 - [ ] every story uses canonical _As a / I want / So that_ format
 - [ ] every story includes `### User Context` and `### Dependencies` sections
@@ -348,14 +358,18 @@ Invite final feedback on the generated artifacts before moving to `/a-architectu
 - [ ] `epic.md` does not include numbered acceptance criteria; `/a-story` owns acceptance-criteria drafting
 - [ ] `epic.md` contains only `Actionable` and `Blocked` stories
 - [ ] `Nice to have` stories, if any, were written only to `stretch-goals.md`
+- [ ] every touched repo is listed in `## Repos`
 - [ ] UI-facing references from the inputs were preserved near the top of `epic.md` in `## UI Design References`, or `- None` was written explicitly
 - [ ] resolved inconsistencies, if any, were persisted in `epic.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
-- [ ] any durable new terms were added to `./planning/glossary.md`
+- [ ] any durable new terms were added to the relevant repo's `CONTEXT.md`
 - [ ] no synonyms were introduced
 - [ ] the user reviewed the proposed story set and remaining assumptions before outputs were written
+- [ ] the epic slug is recorded in memory
 
 ## Error Handling
 
-@include includes/error-protocol.md
+When stopping due to a missing, unreadable, or malformed input:
+1. Print the exact absolute path that was checked
+2. Print which step of this command failed (step number and name)
 
 - **Weak input** — say what is missing, keep assumptions explicit, and ask the user instead of inventing certainty
