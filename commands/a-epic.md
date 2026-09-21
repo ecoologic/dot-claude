@@ -57,21 +57,23 @@ Treat each inconsistency independently:
 - NEVER slice stories by technology layer
 - NEVER write implementation details, API shapes, schema designs, or task-level work into `epic.md`
 - NEVER reuse a story number, place multiple stories under the same numbered heading, or represent one numbered story across multiple files; each story number must map 1:1 to exactly one `## Story N` section in `epic.md` and exactly one future `story-N.md` file
+- NEVER change a story number once assigned; the number is identity, not sequence. Execution order lives in `## Story Order`, and that list is the only ordering a later stage may revise
 - produce `personas.md` in this command so later stages inherit the same actors and usage context
 - keep stretch goals out of `epic.md`; write them to `stretch-goals.md` instead
+- NEVER state an unverified claim as settled fact anywhere in `epic.md`; record it as a row in `## Assumptions` and cite its ID where it matters
 
 ## Story canonical format
 
-> _As a_ [role]
-> _I want_ [action]
+> _As a_ [role] \
+> _I want_ [action] \
 > _So that_ [benefit]
 
 ## What Is A User Story
 
 > A user story is a short, plain-language description of a capability told from the perspective of someone who uses the system, not someone who builds it. It follows this structure:
 >
-> _As a_ [persona]
-> _I want_ [goal]
+> _As a_ [persona] \
+> _I want_ [goal] \
 > _So that_ [benefit]
 >
 > It describes what the user can do and why it matters, never how it is implemented. Each story should be small enough to complete in a single iteration, deliver standalone value, and be independently testable. The written story is a placeholder for a conversation, not a full specification. Good stories follow the INVEST criteria: Independent, Negotiable, Valuable, Estimable, Small, and Testable.
@@ -182,10 +184,10 @@ Only include personas that matter to the epic. Avoid speculative future roles.
 
 Split the work into minimal, user-facing stories. For each story:
 - use canonical format
-- assign a unique integer story number exactly once, in ascending order, with one story per numbered section
+- assign a unique integer story number exactly once, in ascending order, with one story per numbered section; that number is the story's permanent identity and NEVER changes again
 - include a brief user context
 - include requirements only when they are truly part of the user-facing outcome
-- assess prerequisites or dependencies between stories
+- assess prerequisites or dependencies between stories, from the product inputs alone, and record each one in that story's `### Dependencies`; `/a-architecture` may still revise `## Story Order` once it knows implementation reality, but NEVER the numbers
 
 Before writing files, display each story title and canonical statement. Use this as an early discussion point for ambiguous story boundaries or assumptions.
 
@@ -198,7 +200,9 @@ Classify each story as:
 
 Display the classification table before writing outputs.
 
-Before writing `epic.md`, `personas.md`, or `stretch-goals.md`, present the proposed personas, story list, classification split, and remaining assumptions to the user.
+Before writing `epic.md`, `personas.md`, or `stretch-goals.md`, present the proposed personas, story list, classification split, and the assumption ledger to the user.
+
+Put every assumption to the user one at a time, with what it affects and what changes if it is false. A row the user settles is `resolved`, in their words; a row they cannot settle stays `open` and cascades to `/a-architecture`.
 
 If inconsistencies remain, present them one by one. For each one, show:
 - what conflicts
@@ -226,6 +230,12 @@ Write `$EPIC_DIR/epic.md` with this structure:
 - One line per touched repo, with its path relative to the dev root
 - If only one repo, still list it
 
+## Story Order
+- The epic's execution sequence, one line per story: `1. Story <n> — <title>`
+- This section, NOT the story numbers, is the authoritative order; the `## Story N` sections below may sit in any order
+- List every `Actionable` and `Blocked` story exactly once
+- A later stage revises this list; it NEVER renumbers a story
+
 ## UI Design References
 - Every UI-facing reference later stages should read directly, with its type (eg: Lovable), exact path or URL plus a brief note about what it covers.
 - If there is a primary design file, list it first and label it clearly
@@ -244,8 +254,8 @@ Write `$EPIC_DIR/epic.md` with this structure:
 
 ## Story 1: <title>
 
-> _As a_ [role]
-> _I want_ [action]
+> _As a_ [role] \
+> _I want_ [action] \
 > _So that_ [benefit]
 
 ### User Context
@@ -272,9 +282,15 @@ Write `$EPIC_DIR/epic.md` with this structure:
 ## UX Considerations
 - Epic-level UX constraints or interaction expectations shared across stories
 
-## Remaining Assumptions and Open Questions
-- Capture only unresolved scope questions, ambiguous splits, or weak assumptions that remain after discussion with the user
-- If none remain, write `- None`
+## Assumptions
+| ID | Assumption | Why It Matters | Status | Evidence or Decision |
+| --- | --- | --- | --- | --- |
+
+- One row per claim this step acted on without evidence, per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule
+- ID is `EPIC-<n>`, assigned once and NEVER reused
+- Every unresolved scope question, ambiguous split, or weak assumption left after discussion with the user is a row here, `open` — NEVER prose
+- This step reads no code, so it settles a row only with the user, as `resolved`. Everything else leaves `open` for `/a-architecture` to inherit
+- No rows when this step assumed nothing
 
 ## References
 - ...
@@ -283,8 +299,8 @@ Write `$EPIC_DIR/epic.md` with this structure:
 Include only `Actionable` and `Blocked` stories in `epic.md`. Exclude all `Nice to have` stories from this file.
 When UI references exist, include all of them in `epic.md`, even if only some stories use each reference.
 List every touched repo in `## Repos`, even when there is only one.
-Place `## Repos` immediately after the epic summary, `## UI Design References` after `## Repos`, and `## Resolved Source-of-Truth Decisions` immediately after that, so later stages can find them near the top.
-Ensure the numbered story sections are unique and contiguous within `epic.md` so later stages can resolve `Story N` to one story only and one corresponding `story-N.md` file.
+Place `## Repos` immediately after the epic summary, `## Story Order` after `## Repos`, `## UI Design References` after that, and `## Resolved Source-of-Truth Decisions` immediately after that, so later stages can find them near the top.
+Ensure the numbered story sections are unique and contiguous within `epic.md` so later stages can resolve `Story N` to one story only and one corresponding `story-N.md` file. Ensure `## Story Order` lists every one of them exactly once.
 
 ## Step 6: Write `stretch-goals.md`
 
@@ -302,8 +318,8 @@ Write `$EPIC_DIR/stretch-goals.md` with this structure:
 
 ## Stretch Goal 1: <title>
 
-> _As a_ [role]
-> _I want_ [action]
+> _As a_ [role] \
+> _I want_ [action] \
 > _So that_ [benefit]
 
 ### Why Later
@@ -338,7 +354,7 @@ Summarize:
 2. recommended starting story
 3. personas created
 4. whether `stretch-goals.md` was created and how many items it contains
-5. remaining assumptions and open questions
+5. the assumption ledger: every row, its status, and which rows leave this step `open`
 6. any `CONTEXT.md` entries added, per repo
 
 Tell the user that the main review path is `epic.md` plus `personas.md`, and that `stretch-goals.md` is optional for now.
@@ -354,6 +370,7 @@ Invite final feedback on the generated artifacts before moving to `/a-architectu
 - [ ] every story uses canonical _As a / I want / So that_ format
 - [ ] every story includes `### User Context` and `### Dependencies` sections
 - [ ] every actionable or blocked story in `epic.md` has a unique story number, appears exactly once under its own `## Story N` heading, and maps to exactly one future `story-N.md` file
+- [ ] `epic.md` contains `## Story Order`, listing every actionable and blocked story exactly once
 - [ ] stories are sliced by user value, not by tech layer
 - [ ] `epic.md` does not include numbered acceptance criteria; `/a-story` owns acceptance-criteria drafting
 - [ ] `epic.md` contains only `Actionable` and `Blocked` stories
@@ -363,7 +380,8 @@ Invite final feedback on the generated artifacts before moving to `/a-architectu
 - [ ] resolved inconsistencies, if any, were persisted in `epic.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
 - [ ] any durable new terms were added to the relevant repo's `CONTEXT.md`
 - [ ] no synonyms were introduced
-- [ ] the user reviewed the proposed story set and remaining assumptions before outputs were written
+- [ ] the user reviewed the proposed story set and the assumption ledger before outputs were written
+- [ ] every claim this step acted on without evidence is a row in `## Assumptions`, with an ID, a status, and no prose restating it
 - [ ] the epic slug is recorded in memory
 
 ## Error Handling
@@ -372,4 +390,4 @@ When stopping due to a missing, unreadable, or malformed input:
 1. Print the exact absolute path that was checked
 2. Print which step of this command failed (step number and name)
 
-- **Weak input** — say what is missing, keep assumptions explicit, and ask the user instead of inventing certainty
+- **Weak input** — say what is missing, record each assumption as its own `## Assumptions` row, and ask the user instead of inventing certainty

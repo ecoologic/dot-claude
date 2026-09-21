@@ -21,11 +21,11 @@ Repos: <repo>, <repo>, ...
 | --- | --- | --- | --- | --- |
 | 1 | a-architecture | - | architecture.md, hash 4f2a1c9 | [x] |
 | 2 | a-story | story 1 | story-1.md, hash 9c1e0aa | [x] |
-| 3 | a-design | story 1 | design-1.md, hash 0b7f2dd | [ ] |
-| 4 | a-plan | story 1, criterion 1 | plan-1-1.md, hash 71ac93e | [ ] |
-| 5 | a-implement | story 1, criterion 1 | commit a1b2c3d, 2 files | [ ] |
-| 6 | a-finish | story 1 | - | [ ] |
-| 7 | a-story | story 2 | - | [ ] |
+| 3 | a-design | story 1 | design-1.md, hash 0b7f2dd | [x] |
+| 4 | a-plan | story 1, criterion 1 | plan-1-1.md, hash 71ac93e | [x] |
+| 5 | a-implement | story 1, criterion 1 | commit a1b2c3d, 2 files | [x] |
+| 6 | a-finish | story 1 | commit e4f5a6b | [x] |
+| 7 | a-story | story 3 | - | [ ] |
 
 ## Blocked
 
@@ -39,16 +39,23 @@ Repos: <repo>, <repo>, ...
 | Epic dir | `$EPIC_DIR`, resolved per `~/.claude/commands/a-templates/conventions.md` |
 | Repos | The touched-repos list from `epic.md`'s `## Repos` |
 
+Row 7 above is story 3, not story 2, because `epic.md`'s `## Story Order` puts story 3 next. The matrix follows that list, never the number sequence.
+
 ## Row shape
 
 1. Row 1 is always `a-architecture`, with no selector
-2. Then one `a-story` row per Actionable and Blocked story in `epic.md`, in ascending story order, seeded as soon as `epic.md` exists
+2. Then exactly ONE `a-story` row: the next story, the first entry in `epic.md`'s `## Story Order` that has no row in the matrix yet. NEVER seed a row per story, and NEVER seed more than one story ahead
 3. A story's `a-story` row ticks → append that story's `a-design` row, immediately below it
 4. A story's `a-story` row ticks → read `story-N.md`'s acceptance criteria list, and append one `a-plan` row and one `a-implement` row per criterion, in order, below the story's `a-design` row
 5. A story's last criterion's `a-implement` row ticks → append that story's `a-finish` row
-6. A story's `a-finish` row ticks → its rows are done; the next story's `a-story` row was already seeded by rule 2
+6. A story's `a-finish` row ticks → re-read `epic.md`'s `## Story Order` and append the next story's `a-story` row, chosen per rule 2. No entry left → the epic is complete
 
-Only append rows. NEVER remove or reorder one.
+## Mutability
+
+1. A ticked row is set in stone: NEVER edit it, move it, untick it, or remove it. Everything above the pending rows is the epic's history, in the order it actually happened
+2. The single trailing unticked `a-story` row is the only provisional row. `## Story Order` changed while it sat unticked → replace its selector with the new next story, on the next `/a-cont` run
+3. Every other row is appended, never reordered, never removed
+4. The next story is always re-derived from `## Story Order` at the moment the previous story's `a-finish` ticks, NEVER from the number sequence
 
 ## Rules
 
@@ -57,3 +64,4 @@ Only append rows. NEVER remove or reorder one.
 3. One row per stage per selector, in execution order
 4. `## Blocked` is empty while the run is healthy. A gate writes the stage, the exact failure, and the decision the user must make
 5. `progress.md` is planning state. It is never committed
+6. A row whose artefact already exists on disk gets ticked by `/a-cont`'s own reconciliation step, not by re-running the stage that would produce it again

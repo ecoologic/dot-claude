@@ -13,7 +13,7 @@ disable-model-invocation: true
 | ---------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **In**     | `~/.claude/commands/a-templates/conventions.md`                                             | Shared path resolution, selector resolution, and repo conventions |
 | **In**     | `$EPIC_DIR/idea.md`                                                                | Raw epic idea and links to supporting artifacts                   |
-| **In**     | `$EPIC_DIR/epic.md`                                                                | Story list and touched repos from `/a-epic`                       |
+| **In/Out** | `$EPIC_DIR/epic.md`                                                                | Story list and touched repos from `/a-epic`; update `## Story Order` or an absorbed prerequisite only when implementation reality forces it, NEVER a story number |
 | **In**     | `$EPIC_DIR/personas.md`                                                           | Personas from `/a-epic`                                            |
 | **In**     | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out**    | `$EPIC_DIR/architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
@@ -63,10 +63,12 @@ Invoke the `diagrams` skill via `Skill` before writing any diagram in this docum
 - NEVER start with broad codebase exploration before understanding the epic inputs
 - NEVER silently trust a prototype or UI-shaped data model
 - NEVER define synonyms; a repo's `CONTEXT.md` terms stay canonical unless the user explicitly approves a rename
-- Treat inferred models as hypotheses until challenged against the codebase and project conventions
+- Treat inferred models as hypotheses until challenged against the codebase and project conventions; every surviving hypothesis is a row in `## Assumptions`, never confident prose
 - Prefer existing code and established conventions over prototype structure when they conflict
 - Update a repo's `CONTEXT.md` only for durable confirmed terms or mappings; ask before renaming an existing term
 - `architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
+- prefer reordering `epic.md`'s `## Story Order` to match implementation dependency order over having an earlier story silently absorb a later story's prerequisite; either resolution is surfaced to the user, NEVER decided silently
+- NEVER change a story number; the number is identity. `## Story Order` carries the sequence, and it is the only ordering this command may rewrite
 
 ## Step 1: Resolve required inputs
 
@@ -96,7 +98,7 @@ Before exploring the codebase, derive from the inputs:
 2. domain concepts implied by the stories
 3. likely entities and relationships
 4. likely system areas involved
-5. open questions and weak assumptions
+5. open questions and weak assumptions, each one a row in `## Assumptions`
 
 ### 2a. Infer an ERD from the inputs
 
@@ -205,15 +207,41 @@ Ground decisions in:
 
 If a decision has meaningful tradeoffs, present options with pros and cons and resolve them with the user before writing outputs.
 
-### 6a. Review open questions before writing
+### 6a. Check story order against implementation reality
+
+`/a-epic` orders stories by user value alone, before any codebase investigation. Validate that `epic.md`'s `## Story Order` still holds now that real dependencies are known.
+
+1. For each story, check whether it can be delivered and proven end-to-end using only what stories placed before it in `## Story Order` establish
+2. A story that needs ground only a later-placed story establishes is an order conflict
+3. Present every order conflict found, with both resolution paths: move the affected stories within `## Story Order` to match implementation order, or keep the order and have the earlier story explicitly absorb the missing prerequisite
+4. Default to reordering; recommend it unless the user has a standing reason to keep the original order
+5. This surfaces only as deep as this run's investigation goes. A conflict found later, in `/a-story` or `/a-design`, is surfaced explicitly there and recorded as an upstream finding against `epic.md`'s `## Story Order` for `/a-finish` to apply; NEVER silently absorbed, NEVER ignored, and NEVER written into `epic.md` by a story-level command
+6. Reordering chosen → rewrite `epic.md`'s `## Story Order` only, leaving every story number, `## Story N` heading, and future `story-N.md` filename untouched
+7. Absorption chosen → record in `epic.md`'s story text that the earlier story's scope now includes the prerequisite
+8. Update the affected stories' `### Dependencies` too, so the edge that forced the resolution is recorded, not just its outcome
+9. Either way, record the resolution under `## Resolved Source-of-Truth Decisions`, same shape as any other resolved conflict
+
+### 6b. Settle the assumption ledger
+
+Inherit every `open` and `cascaded` row from `epic.md` under its original ID, per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule. Add a row under `ARCH-<n>` for every claim this run acted on without evidence: an inferred entity, an unvalidated flow, a guessed boundary, an untested reuse candidate.
+
+1. This run's codebase investigation is the evidence. Mark a row `verified` or `invalidated` the moment it settles, citing the file, line, or test that settled it
+2. The inferred ERD, its entities, and its relationships stay assumptions until 7b's critique settles them; carry them as rows, NEVER as confident prose
+3. A row this command cannot settle from code goes to the user in 6c, one at a time, with what it affects and what changes if it is false
+4. Still unsettled after 6c → `cascaded` to the `story-<n>.md` of the story that carries it. A row no story carries NEVER cascades; put it to the user again instead
+5. An `invalidated` row already baked into `epic.md` → surface its impact in 6c and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
+
+### 6c. Review open questions before writing
 
 Before writing `architecture.md` or updating `CONTEXT.md`, present the current architecture direction to the user.
 
 Include:
 - input conflicts and gaps, listed one by one
 - terminology conflicts and rename requests
+- story order conflicts against implementation reality, with both resolution paths
 - decisions with meaningful tradeoffs
 - any weak assumptions that affect the recommended model
+- the assumption ledger: every row still `open`, what it blocks, and what changes if it is false
 
 For each conflict or tradeoff, present explicit options, state which option the hierarchy or codebase evidence favors, and explain the downstream impact.
 
@@ -296,7 +324,7 @@ Write `$EPIC_DIR/architecture.md` with this structure:
 
 ### Remaining Input Conflicts and Gaps
 
-List only the contradictions, missing inputs, and weak assumptions that still remain after discussion with the user. Record them as individual items, not bulk file-level conflict notes. This section records items explicitly left open by user choice or still awaiting later resolution.
+List only the contradictions and missing inputs that still remain after discussion with the user. Record them as individual items, not bulk file-level conflict notes. This section records items explicitly left open by user choice or still awaiting later resolution. A weak assumption belongs in `## Assumptions`, not here; cite its ID from this section when a conflict turns on it.
 
 ## Terminology
 | Domain Term | Repo | Code Name | Definition | Source | Status |
@@ -329,6 +357,14 @@ List only the contradictions, missing inputs, and weak assumptions that still re
 - Updates made in this run, per repo
 - Conflicts or rename requests left for user review
 
+## Assumptions
+| ID | Assumption | Why It Matters | Status | Evidence or Decision |
+| --- | --- | --- | --- | --- |
+
+- Every `open` and `cascaded` row inherited from `epic.md`, under its original ID, plus this run's own `ARCH-<n>` rows
+- Per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule
+- No rows when nothing was assumed and nothing was inherited
+
 ## Risks and Open Questions
 ## References
 ```
@@ -353,6 +389,7 @@ Summarize:
 - `CONTEXT.md` updates applied, per repo
 - `CONTEXT.md` conflicts or rename requests still open
 - risks and open questions
+- the assumption ledger: rows verified, invalidated, resolved, and cascaded, with the story each cascade lands in
 
 Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs.
 
@@ -367,6 +404,11 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] the epic-wide class diagram is included
 - [ ] the epic-wide sequence diagrams are included
 - [ ] resolved inconsistencies, if any, were persisted in `architecture.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
+- [ ] every story's place in `## Story Order` was checked against implementation reality; any conflict found was surfaced, resolved with the user, and recorded
+- [ ] no story number was changed; any reordering was applied to `epic.md`'s `## Story Order` alone
+- [ ] every `open` and `cascaded` assumption from `epic.md` was inherited into `## Assumptions` under its original ID
+- [ ] every assumption this run could settle from the codebase is `verified` or `invalidated`, with its evidence cited
+- [ ] every row this run could not settle was put to the user, and is `resolved` or `cascaded` to a named `story-<n>.md`
 - [ ] any safe durable `CONTEXT.md` updates were applied, in the correct repo
 - [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user before files were written
 - [ ] the epic slug is recorded in memory

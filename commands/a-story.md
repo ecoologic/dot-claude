@@ -1,7 +1,8 @@
 ---
-description: Break down a single story into an execution process organized by acceptance criterion
-argument-hint: "<story-number> [\"instructions-or-suggestions\"]"
+description: Break a story into user-approved acceptance criteria, UX/UI definition, and codebase context
+argument-hint: "[<story-number>] [details]"
 allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Skill]
+disable-model-invocation: true
 ---
 
 # Story Breakdown
@@ -10,58 +11,58 @@ allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Skill]
 
 | Direction | File | Description |
 | --------- | ---- | ----------- |
-| **In** | `./planning/<epic-slug>/epic.md` | User stories, story-level context and dependencies, and epic-level UI references from `/a-epic` |
-| **In/Out** | `./planning/<epic-slug>/architecture.md` | Epic-specific architecture from `/a-architecture`; update when the approved story acceptance criteria or deeper investigation reveal durable epic-level technical detail later stories should inherit |
-| **In** | `./planning/<epic-slug>/personas.md` | Personas from `/a-epic` |
-| **In/Out** | `./planning/glossary.md` | Shared domain glossary from `/a-global-architecture` |
-| **In/Out** | `./planning/global-architecture.md` | Shared repo-wide architecture from `/a-global-architecture` |
-| **Out** | `./planning/<epic-slug>/story-<story-number>.md` | Detailed story breakdown for this story, including story-level completion status, numbered acceptance criteria, story-relevant UI references, and the execution process that `/a-criterion` reads and updates |
+| **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
+| **In** | `$EPIC_DIR/epic.md` | User stories, story-level context and dependencies, touched repos, and epic-level UI references from `/a-epic` |
+| **In** | `$EPIC_DIR/architecture.md` | Epic-specific architecture from `/a-architecture`, and the assumptions it cascaded to this story |
+| **In** | `$EPIC_DIR/personas.md` | Personas from `/a-epic` |
+| **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
+| **Out** | `$EPIC_DIR/story-<story-number>.md` | Detailed story breakdown: slug, numbered acceptance criteria, UX/UI definition, codebase context, and upstream findings for `/a-design` and, eventually, `/a-finish` |
+
+`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
 ## Skills
 
-Invoke these skills when relevant:
-- `ux-laws` for stories with UI
-- `react-best-practices` when the project uses React
-- All relevant project specific rules and skills
+Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. A skill about UX, UI, or the project's frontend framework applies when defining the story's interface.
 
 ## Purpose
 
-Break one story into a concrete, code-informed execution process without writing code. This command should:
+Break one story into a concrete, code-informed context without writing code. This command should:
 - investigate the current codebase
 - draft and refine acceptance criteria with the user before locking them into the story artifact
 - define reuse opportunities and constraints
 - refine story-level details when needed
-- reconcile `architecture.md` when the approved acceptance criteria or story-level findings reveal durable epic-specific architecture detail
+- record any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` as an upstream finding, for `/a-finish` to apply later
+- settle every assumption it inherits or coins, by codebase evidence or by the user, before `/a-design`
 - capture schema-impact context when the story changes persisted schema
-- produce a single story artifact with numbered acceptance criteria and execution tasks for `/a-criterion`
+- produce a single story artifact with a stable slug and numbered acceptance criteria for `/a-design`
 
 ## Rules
 
-- NEVER write or modify application code, create commits, or write files outside `./planning/`
+- NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR`
+- NEVER write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`; record the finding in `story-<story-number>.md`'s `## Upstream Findings` instead, per `~/.claude/commands/a-templates/conventions.md`'s Upstream findings rule
+- NEVER change a story number, in this file's name, in its heading, or in `epic.md`; an order conflict is recorded as an upstream finding against `epic.md`'s `## Story Order`, never applied here
 - NEVER skip codebase investigation; story work must be grounded in the real codebase
-- NEVER define synonyms; if a term exists in the glossary, use its canonical name
+- NEVER finish this command with an assumption still `open` or `cascaded`; `/a-design` inherits a settled ledger or the command gates
+- NEVER state an unverified claim as settled fact in any section; record it as a row in `## Assumptions` and cite its ID where it matters
+- NEVER define synonyms; if a term exists in a touched repo's `CONTEXT.md`, use its canonical name
 - NEVER abbreviate new names
 - NEVER propose extractions for hypothetical future use
-- NEVER write unnumbered acceptance criteria; `/a-criterion` depends on stable criterion numbers
-- NEVER finalize the acceptance-criteria list without explicit user approval for each criterion in order
-- NEVER let implementation tasks float without a clear acceptance-criterion parent
-- NEVER split implementation tasks by technology layer alone when one coherent story-slice task would be clearer
-- refine higher-level artifacts only when the finding is durable and useful beyond this one local note
-- reconcile `architecture.md` after the acceptance criteria are locked and story investigation is complete when the story reveals epic-specific technical truth other stories should inherit
+- NEVER write unnumbered acceptance criteria; later stages select a specific criterion by number
+- NEVER finalize the acceptance-criteria list without explicit user approval for each criterion in order, unless the user lifted the gate per conventions.md's Bulk approval rule
+- NEVER accept a criterion that names a technology layer (eg: "add the table", "add the endpoint", "add the form") instead of a user-observable outcome
+- write and update `story-<story-number>.md` incrementally, per conventions.md's Incremental writes rule; NEVER hold the whole file in conversation only to write it once at the end
+
 ## Step 1: Resolve required inputs
 
-`$ARGUMENTS` = `<story-number> [instructions-or-suggestions]`
-
-One required numeric argument. Remaining text is optional high-priority guidance. Does not accept an epic slug.
-
-Resolve `<epic-slug>` from `./planning/current.json`. Stop if missing or malformed.
+1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution.
+1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (branch, then memory, then ask).
+1. No story number in `$ARGUMENTS` → fall through selector resolution: the current branch, then memory, then list the available story numbers from `epic.md` and ask.
+1. Record the resolved story number in memory.
 
 Read (stop if any are missing):
-- `./planning/<epic-slug>/epic.md`
-- `./planning/<epic-slug>/architecture.md`
-- `./planning/<epic-slug>/personas.md`
-- `./planning/glossary.md`
-- `./planning/global-architecture.md`
+- `$EPIC_DIR/epic.md`
+- `$EPIC_DIR/architecture.md`
+- `$EPIC_DIR/personas.md`
 
 Follow all references from planning artifacts. Stop and report any unreadable reference.
 
@@ -75,6 +76,7 @@ Extract the requested story section from `epic.md`. The story context includes:
 - dependencies
 
 Also extract the epic-level sections from `epic.md` that apply across stories:
+- touched repos
 - draft ERD
 - requirements
 - UX considerations
@@ -97,39 +99,46 @@ UI references: <list or none>
 Use the selected story's canonical statement from `epic.md`, its user context, dependencies, personas, and any trailing guidance to propose the story's working acceptance criteria list.
 
 Draft them interactively:
-1. propose exactly one numbered acceptance criterion at a time, starting with `1`
+1. propose exactly one numbered acceptance criterion at a time, starting with `1`, phrased as _Given_ [precondition] / _When_ [action] / _Then_ [expected result]
 2. ask the user to approve or revise that specific criterion before proposing the next one
 3. if the user revises a criterion, fold the revision into the wording and confirm it before continuing
-4. do not draft criterion `N + 1` until criterion `N` is explicitly approved
+4. do not draft criterion `N + 1` until criterion `N` is explicitly approved, unless the user lifts the gate per the Bulk approval rule below
 5. keep the numbering stable once a criterion is approved; if a later change forces renumbering, stop and get explicit user confirmation for the renumbered list
+6. the user may approve criterion `N` and ask for the rest in one pass (eg: "do the rest", "draft them all") — apply `~/.claude/commands/a-templates/conventions.md`'s Bulk approval rule: draft every remaining criterion in one pass, still following the rules below, then print the whole batch together and let the user revise it before it locks. This lifts only the criterion-drafting gate; Steps 3 onward still run and still stop at their own checkpoints
 
 While drafting:
 - split overly broad source criteria into multiple numbered criteria when that improves implementation clarity
 - merge duplicate or overlapping source criteria when the user agrees
 - keep criteria implementation-relevant and testable, but do not turn them into tasks
-- preserve glossary-canonical naming
+- reject a criterion phrased as a technology layer; ask for a rephrase around the user-observable outcome before numbering it
+- preserve canonical naming from each touched repo's `CONTEXT.md`
 
 After the last criterion is approved, restate the full numbered list and treat it as the locked acceptance-criteria source for the rest of the command.
 
 Immediately compare the locked list against `architecture.md` and note any epic-level technical detail that now needs confirmation, correction, or expansion during investigation.
 
+Once the list locks, write `story-<story-number>.md` now with its header, story statement, `## User Context`, and `## Acceptance Criteria` sections, per the shape in Step 10.
+
 ## Step 3: Investigate the codebase
 
-Use `global-architecture.md` and `architecture.md` to scope targeted code exploration to achieve the story acceptance criteria.
+Use `architecture.md` and each touched repo's `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, and `CONTEXT.md` to scope targeted code exploration to achieve the story acceptance criteria.
 
-The four axes below are **independent** — dispatch them in parallel via `superpowers:dispatching-parallel-agents` (one agent per axis, all in a single message). Don't run them sequentially.
+The five axes below are **independent** — dispatch one `Agent` with type `Explore` per axis, all in a single message so they run concurrently. Don't run them sequentially.
 
 1. related existing code
 2. patterns and conventions
 3. reuse opportunities
-4. epic-specific architecture details that should be added back to `architecture.md` once this story is better understood
+4. epic-specific architecture details worth recording as an upstream finding for `/a-finish`
+5. evidence for or against every `open` and `cascaded` assumption this story inherits from `epic.md` and `architecture.md`, per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule
 
 Each investigation result should report:
 - relevant files
 - why they matter
 - patterns to follow
 - reusable components, services, types, or utilities
-- naming matches or conflicts with the glossary
+- naming matches or conflicts with `CONTEXT.md`
+
+The fifth axis reports one verdict per assumption instead: its ID, the evidence found, and whether that evidence proves it, disproves it, or settles nothing. NEVER let it return an opinion without a file, line, or test behind it.
 
 If the story affects persisted schema, also identify:
 - affected entities or tables
@@ -151,9 +160,11 @@ Based on the investigation, evaluate:
 
 Flag inconsistencies that matter to this story. Do not fix unrelated issues.
 
+Update `story-<story-number>.md`'s `## Codebase Context` and `## Consistency Notes` sections now.
+
 ## Step 5: Define UX
 
-If the story has UI, use `ux-laws` and define:
+If the story has UI, discover and invoke a project skill about UX per `~/.claude/commands/a-templates/conventions.md`, and define:
 - user flow
 - states
 - feedback
@@ -162,6 +173,8 @@ If the story has UI, use `ux-laws` and define:
 Use the followed UI references to ground those decisions. Do not invent UI behavior that contradicts the referenced design artifacts unless the conflict is surfaced explicitly.
 
 If there is no UI, explicitly note that UX/UI sections are skipped.
+
+Update `story-<story-number>.md`'s `## UX Definition` section now.
 
 ## Step 6: Define UI
 
@@ -174,6 +187,8 @@ If the story has UI, define:
 
 If there is no UI, explicitly note that UI sections are skipped.
 
+Update `story-<story-number>.md`'s `## UI Definition` (including `### ASCII UI Sketch`) and `## UI References` sections now.
+
 ## Step 7: Define opportunities for code extraction and reusability
 
 Identify justified extractions:
@@ -184,47 +199,71 @@ Identify justified extractions:
 
 Only include extractions that are clearly warranted by this story.
 
-## Step 8: Refine upstream artifacts when needed
+Update `story-<story-number>.md`'s `### Extractions` table now.
 
-_With user permission_, this command may update higher-level artifacts when deeper investigation uncovers durable knowledge:
-- update `epic.md` when the story wording, boundaries, sequencing, or dependencies need correction
-- update `architecture.md` when the locked acceptance criteria or story work reveal epic-specific technical details other stories should inherit, especially newly clarified entities, interfaces, flows, sequencing, or constraints
-- update `glossary.md` when durable domain names, code names, sources, or statuses are confirmed
-- update `global-architecture.md` only when the work reveals durable cross-epic structure
+## Step 8: Record upstream findings
 
-When `architecture.md` needs refinement:
-- update it before or alongside writing `story-<story-number>.md`, not as an afterthought
-- keep the architecture artifact focused on epic-level technical truth other stories should inherit
-- leave story-local execution detail in `story-<story-number>.md`
+Deeper investigation may uncover something `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` should eventually reflect: a story wording, boundary, sequencing, or dependency correction; an epic-specific technical detail other stories should inherit; a durable domain name, code name, source, or status. NEVER write any of those three files from this command.
 
-Summarize every such update in the output.
+Record each finding in `story-<story-number>.md`'s `## Upstream Findings` section instead:
+- the target doc: `epic.md`, `architecture.md`, or `<repo>/CONTEXT.md`
+- the finding
+- the suggested change
 
-## Step 9: Write `story-<story-number>.md`
+A story-order conflict is one of these findings, never a rewrite: target `epic.md`'s `## Story Order`, name the position this story must move to, and name the dependency that forces it. NEVER renumber a story — the number is identity, and `story-N.md`, `design-N.md`, `plan-N-M.md`, the branch name, and the memory selector all key on it.
 
-Write `./planning/<epic-slug>/story-<story-number>.md` with this structure:
+`/a-finish` reads this section once the story's last criterion lands and applies whichever findings are still confirmed.
 
-This file is the single source of truth for the story. It captures story context, codebase findings, UX, UI, references, the required story diagrams, justified extractions, a story-level completion marker, the user-approved numbered acceptance criteria, and the execution process that `/a-criterion` reads and updates.
+Update `story-<story-number>.md`'s `## Upstream Findings` section now.
+
+## Step 9: Settle the assumption ledger
+
+`/a-design` NEVER starts with an unsettled assumption. This step is the deadline, per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule.
+
+1. Inherit every `open` and `cascaded` row from `epic.md` and `architecture.md` that this story touches, under its original ID. NEVER renumber one, NEVER drop one by omission
+2. Add a row under `STORY-<story-number>-<n>` for every claim this run acted on without evidence
+3. Step 3's fifth axis already reported what the codebase proves or disproves. Mark each row `verified` or `invalidated` now, citing the file, line, or test that settled it
+4. Put every row still `open` to the user, one at a time, with what it blocks and what changes if it is false. NEVER batch them into one question, unless the user lifts the gate per conventions.md's Bulk approval rule
+5. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`: record their decision in their words, and its impact. NEVER a silent pass
+6. The user cannot settle a row → stop. That is a gate: report the row, what it blocks, and the decision needed. NEVER hand `/a-design` an `open` or `cascaded` row
+7. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` also goes to `## Upstream Findings`, per Step 8
+
+Update `story-<story-number>.md`'s `## Assumptions` section now.
+
+## Step 10: Write `story-<story-number>.md`
+
+Derive `<story-slug>` as the kebab-case form of the title. `story-<story-number>.md` already exists → reuse its existing `Slug:` value instead of re-deriving it, so the slug survives a later title reword.
+
+Write `$EPIC_DIR/story-<story-number>.md` with this structure:
+
+This file is the single source of truth for the story. It captures the slug, story context, codebase findings, UX, UI, references, justified extractions, upstream findings, and the user-approved numbered acceptance criteria that `/a-design` reads next.
 
 ```md
 # Story <story-number>: <title>
 
 > Epic: <epic name>
+> Slug: <story-slug>
 > Generated: <date>
-> Source Story: `./planning/<epic-slug>/epic.md`
+> Source Story: `$EPIC_DIR/epic.md`
 
-> _As a_ [role]
-> _I want_ [action]
+> _As a_ [role] \
+> _I want_ [action] \
 > _So that_ [benefit]
-
-## Status
-- [ ] Story complete
 
 ## User Context
 - ...
 
 ## Acceptance Criteria
-1. [ ] ...
-2. [ ] ...
+
+### Criterion 1
+> _Given_ [precondition] \
+> _When_ [action] \
+> _Then_ [expected result]
+
+### Criterion 2
+> _Given_ ... \
+> _When_ ... \
+> _Then_ ...
 
 ## UX Definition
 ### User Flow
@@ -269,73 +308,6 @@ This file is the single source of truth for the story. It captures story context
 - Story-relevant subset of the epic-level UI references, plus any story-local UI references followed during this run
 - If none exist, write `- None`
 
-## Diagrams
-Present these diagrams in this exact order:
-1. Flow Diagram
-2. Class Diagram
-3. Sequence Diagram
-
-### Flow Diagram
-- Include a Mermaid `flowchart` that shows the story's end-to-end user and system flow
-- Show the main happy path plus key decision branches, failures, and handoffs that matter to implementation review
-- Keep it scoped to this story only
-
-```mermaid
-flowchart TD
-    Start([User starts story flow]) --> StepA[Primary user action]
-    StepA --> Decision{Valid?}
-    Decision -->|Yes| StepB[System completes key operation]
-    Decision -->|No| Error[System shows recoverable error]
-    StepB --> End([Story outcome achieved])
-    Error --> End
-```
-
-### Class Diagram
-- Include a Mermaid `classDiagram` that shows only the story-relevant entities, tables, value objects, or components and their relationships
-- Show each entity once using its DB representation only; do not duplicate the same entity across tech stacks (e.g., do not show both a DB table and a TS interface for the same concept)
-- Use `((NEW))`, `((CHANGED))`, and `((DELETED))` only for actual persisted schema changes
-- Include unchanged fields only when they are relevant for understanding the story
-- If the story does not change persisted schema, still include the story-relevant domain or structural relationships rather than writing `None`
-
-```mermaid
-classDiagram
-    class ExampleEntity {
-        id: uuid
-        existing_field: text
-        new_field ((NEW)): text
-        renamed_field ((CHANGED)): text
-        legacy_field ((DELETED)): text
-    }
-```
-
-### Sequence Diagram
-- Include a Mermaid `sequenceDiagram` that shows the story's runtime interactions across tech layers
-- Participants must make the main runtime and deployment boundaries obvious first: monorepo apps, API surfaces, workers, Lambdas, queues, databases, AWS services, and third-party systems
-- When helpful, annotate a participant with the concrete code entrypoint behind that boundary, but do not let the diagram collapse into an internal function-call trace
-- Group participants by tech boundary so the handoffs are visually obvious (e.g., Web App | API | Lambda | Queue | AWS | Third Party | DB)
-- Arrow labels must describe the boundary-crossing contract or call, such as an HTTP route, webhook, queue publish/consume, event, SDK call, or SQL operation
-- Show the happy path first, then key alt/opt blocks for errors or edge cases
-- Keep it scoped to this story only
-
-```mermaid
-sequenceDiagram
-    participant UI as Admin Web App\nUserList
-    participant API as Admin API\nGET /admin/users
-    participant Svc as User Service
-    participant DB as users table
-
-    UI->>API: GET /admin/users?filter[active]=true
-    API->>Svc: findUsers(filter)
-    Svc->>DB: SELECT id, name, email FROM users WHERE active = true
-    DB-->>Svc: rows
-    Svc-->>API: User[]
-    API-->>UI: 200 { data: User[] }
-
-    alt User not found
-        API-->>UI: 404 { error: "No users match filter" }
-    end
-```
-
 ## Codebase Context
 ### Related Code
 - ...
@@ -353,103 +325,61 @@ sequenceDiagram
 | What | From/Why | Target Location | Blocks Story? |
 | ---- | -------- | --------------- | ------------- |
 
-## Execution Process
-### Acceptance Criterion 1
+## Assumptions
+| ID | Assumption | Why It Matters | Status | Evidence or Decision |
+| --- | ---------- | -------------- | ------ | -------------------- |
 
-> _Given_ [precondition]
-> _When_ [action]
-> _Then_ [expected result]
-
-#### Outcome
-- Describe what must be true when this criterion is complete
-
-#### Files Likely To Change
-- `path/a`
-
-#### Dependencies
-- none
-
-#### Implementation Tasks
-- [ ] Task 1.1: <imperative title>
-  **Type**: [component | hook | service | api | model | migration | test | config | refactor]
-  **Files**: `path/a`, `path/b`
-  **Description**: ...
-  **Notes**: ...
-
-### Acceptance Criterion 2
-
-> _Given_ ...
-> _When_ ...
-> _Then_ ...
-
-#### Outcome
-- ...
-
-#### Files Likely To Change
-- ...
-
-#### Dependencies
-- `1` | `Story <other-story-number>` | none
-
-#### Implementation Tasks
-- [ ] Task 2.1: ...
-
-## Upstream Updates Applied
-- ...
+## Upstream Findings
+| Doc | Finding | Suggested Change |
+| --- | ------- | ----------------- |
 
 ## References
-- `./planning/<epic-slug>/architecture.md`
-- `./planning/global-architecture.md`
+- `$EPIC_DIR/architecture.md`
 ```
 
-Rules for the execution process:
-- acceptance criteria must stay explicitly numbered, because `/a-criterion` selects by criterion number
-- include a `## Status` section with `- [ ] Story complete`; `/a-criterion` owns updating it after implementation runs
-- every `### Acceptance Criterion N` section must match an item in `## Acceptance Criteria`
-- implementation tasks must be nested under their acceptance criterion and must never be mistaken for command selectors
-- implementation tasks may be story-coherent rather than artificially isolated
-- if a criterion needs a new type, validation, or helper to satisfy the slice, include it there instead of splitting it into a separate pseudo-task by default
-- keep schema details in `## Diagrams` under `### Class Diagram`, not scattered across implementation-task prose, unless a task needs to call out a migration-specific nuance
+Rules for the story artifact:
+- acceptance criteria must stay explicitly numbered; later stages select a specific criterion by number
+- every criterion must be phrased as _Given_ / _When_ / _Then_, so it stays testable without becoming a task
+- every criterion must describe a user-observable outcome, never a technology layer
+- `## Upstream Findings` lists every incongruity found against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`, with no rows when none were found; NEVER apply one of those files' changes directly from this command
+- `## Assumptions` carries every inherited and own assumption, each one `verified`, `resolved`, or `invalidated` by the time this command finishes; no row may stay `open` or `cascaded`
 
-## Step 10: Present to user
+## Step 11: Present to user
 
 Summarize:
 1. number of acceptance criteria
 2. critical path
 3. reuse opportunities
-4. upstream updates applied
-5. risks and open questions
-6. recommended starting criterion
+4. upstream findings recorded, for `/a-finish` to apply
+5. the assumption ledger: rows verified from code, rows the user resolved, rows invalidated, and the evidence behind each
+6. risks and open questions
 
-Ask the user to review the completed story artifact before moving to `/a-criterion`. Do not ask for fresh acceptance-criteria drafting at this stage unless the user wants to reopen one of the already approved criteria.
+Ask the user to review the completed story artifact before moving to `/a-design`.
 
 ## Success Criteria
 
 - [ ] `story-<story-number>.md` exists
 - [ ] all required inputs and followed references were validated before story work continued
-- [ ] `story-<story-number>.md` contains numbered acceptance criteria
-- [ ] each acceptance criterion was explicitly approved by the user before the next criterion was drafted
+- [ ] `story-<story-number>.md` carries a `Slug:` header
+- [ ] `story-<story-number>.md` contains numbered acceptance criteria, each phrased as _Given_ / _When_ / _Then_
+- [ ] each acceptance criterion was explicitly approved by the user before the next criterion was drafted, or the user explicitly lifted the gate to bulk-draft the rest, per conventions.md's Bulk approval rule
 - [ ] acceptance criteria cover the story's happy path plus important errors, failures, and security constraints
-- [ ] `story-<story-number>.md` contains a `## Status` section with `- [ ] Story complete`
-- [ ] every acceptance criterion has a matching `### Acceptance Criterion N` section in `## Execution Process`
-- [ ] implementation tasks are clearly nested under their acceptance criterion and cannot be confused with the `/a-criterion` selector
-- [ ] implementation tasks are organized around coherent story-slice delivery, not just technology-layer isolation
+- [ ] every acceptance criterion describes a user-observable outcome, not a technology layer
 - [ ] UI stories include a `### ASCII UI Sketch` section with a readable plain-text layout sketch; non-UI stories explicitly write `- None`
 - [ ] story-relevant UI references were carried into `story-<story-number>.md`, or `- None` was written explicitly
-- [ ] `story-<story-number>.md` contains a `## Diagrams` section with `### Flow Diagram`, `### Class Diagram`, and `### Sequence Diagram` in that exact order
-- [ ] the flow diagram uses Mermaid `flowchart` syntax and covers the story's user and system path
-- [ ] the class diagram uses Mermaid `classDiagram` syntax and covers the story-relevant structure using DB representation only (no TS duplicates)
-- [ ] `((NEW))`, `((CHANGED))`, and `((DELETED))` markers are used only for actual persisted schema changes
-- [ ] the sequence diagram uses Mermaid `sequenceDiagram` syntax and makes the main runtime and deployment boundaries obvious, such as apps, APIs, Lambdas, queues, AWS services, databases, and third-party systems
-- [ ] the sequence diagram focuses on boundary-crossing contracts and handoffs, not an internal function-call trace
-- [ ] `architecture.md` was updated when the approved acceptance criteria or story investigation revealed durable epic-specific technical detail
-- [ ] any durable naming updates were propagated to `glossary.md`
-- [ ] any durable cross-epic structure updates were propagated to `global-architecture.md`
+- [ ] any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` found this run was recorded in `## Upstream Findings`, never applied directly
+- [ ] any story-order conflict found this run was recorded as an upstream finding against `epic.md`'s `## Story Order`; no story was renumbered
+- [ ] every `open` and `cascaded` assumption this story inherits from `epic.md` and `architecture.md` appears in `## Assumptions` under its original ID
+- [ ] every assumption the codebase could settle is `verified` or `invalidated`, with a file, line, or test cited
+- [ ] every remaining assumption was put to the user and is `resolved` in their words; none is left `open` or `cascaded`
 - [ ] the user reviewed the output before the pipeline advanced
+- [ ] the story number is recorded in memory
 
 ## Error Handling
 
-@include includes/error-protocol.md
+When stopping due to a missing, unreadable, or malformed input:
+1. Print the exact absolute path that was checked
+2. Print which step of this command failed (step number and name)
 
 - **Story not found in `epic.md`** — list available story numbers and ask the user to pick one
 - **No relevant code found** — say so explicitly and treat the story as a greenfield area while still following project-wide patterns
