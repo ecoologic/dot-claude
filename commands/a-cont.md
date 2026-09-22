@@ -44,6 +44,7 @@ Stages also run outside `/a-cont`. Before trusting the matrix, catch it up to wh
 1. Found on disk → tick the row now, with the same evidence a normal tick uses: the path and the first 7 characters of `shasum -a 1 <file>`
 1. A tick made here triggers the same **Row shape** appends a tick in Step 4 triggers. Append those rows, then check them too
 1. Repeat until a pass ticks nothing further
+1. A ticked file-evidenced row whose artefact no longer matches its recorded hash → refresh the evidence to the current hash and report the drift. `/a-edit` revises artefacts outside this pipeline, so a ticked row's hash goes stale without the stage having rerun
 1. NEVER downgrade a tick already present. NEVER run a stage from this step — it only records what disk already shows
 
 ## Step 3: Find the next stage
@@ -94,6 +95,7 @@ Print the exact command to type next, using the row that is now first unticked:
 ## Report
 
 1. The stage that ran, with its evidence
+1. Any ticked row whose evidence was refreshed this run, and the artefact behind it
 1. The stage that gated, or `complete`
 1. The path of `progress.md`
 1. The exact next command to type, per Step 6

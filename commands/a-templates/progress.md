@@ -53,6 +53,7 @@ Row 7 above is story 3, not story 2, because `epic.md`'s `## Story Order` puts s
 ## Mutability
 
 1. A ticked row is set in stone: NEVER edit it, move it, untick it, or remove it. Everything above the pending rows is the epic's history, in the order it actually happened
+1. One narrow exception: a ticked row's **Evidence** may be refreshed when its artefact changed on disk, because evidence records what exists, not what was decided. `/a-edit` is the usual cause. The row's stage, selector, and `[x]` NEVER change with it
 2. The single trailing unticked `a-story` row is the only provisional row. `## Story Order` changed while it sat unticked → replace its selector with the new next story, on the next `/a-cont` run
 3. Every other row is appended, never reordered, never removed
 4. The next story is always re-derived from `## Story Order` at the moment the previous story's `a-finish` ticks, NEVER from the number sequence

@@ -1,229 +1,171 @@
 ---
 description: Revise one workflow artifact from high-priority guidance using its original command contract
-argument-hint: "<artifact-type> [selector...] <instructions-or-suggestions>"
+argument-hint: "<artifact-type> [selector] <instructions-or-suggestions>"
 allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Skill]
+disable-model-invocation: true
 ---
 
 # Artifact Revision
 
 ### Pipeline I/O
 
-| Direction              | File                                | Description                                                                                              |
-| ---------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **In**                 | owner command file                  | The original `a-*` command spec that defines the artifact contract, required inputs, and allowed updates |
-| **In**                 | target workflow artifact            | The current artifact being revised                                                                       |
-| **In**                 | original command inputs             | The same workflow inputs the owner command requires for that artifact type                               |
-| **Conditional In**     | codebase                            | Read only when the owner command for the target artifact is code-informed                                |
-| **Conditional In/Out** | `./planning/glossary.md`            | Update only when the owner command would have allowed a durable terminology promotion                    |
-| **Conditional In/Out** | `./planning/global-architecture.md` | Update only when the owner command would have allowed a durable cross-epic promotion                     |
-| **Out**                | target workflow artifact            | Revised artifact that addresses the user's highest-priority guidance without discarding valid existing content            |
+| Direction | File | Description |
+| --------- | ---- | ----------- |
+| **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
+| **In** | `~/.claude/commands/<owner-command>.md` | The `a-*` command that owns the target artifact: its contract, required inputs, and allowed writes |
+| **In** | the owner command's own required inputs | The same inputs the owner command reads for that artifact |
+| **In/Out** | the target artifact under `$EPIC_DIR` | The one artifact this run revises |
+| **Conditional In** | codebase | Read only when the owner command is code-informed, and only around the guidance |
+| **Conditional In/Out** | `<repo>/CONTEXT.md` | Update only when the owner command itself is allowed to write it |
+
+`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
+
+This command is not a pipeline stage. It NEVER appears in `progress.md`, and it NEVER writes `progress.md`; `/a-cont` is that file's only writer.
 
 ## Supported Targets
 
-| Artifact Type         | Selector                     | Owner Command            | Target Artifact                                        |
-| --------------------- | ---------------------------- | ------------------------ | ------------------------------------------------------ |
-| `global-architecture` | none                         | `/a-global-architecture` | `./planning/global-architecture.md`                    |
-| `glossary`            | none                         | `/a-global-architecture` | `./planning/glossary.md`                               |
-| `epic`                | none                         | `/a-epic`                | `./planning/<epic-slug>/epic.md`                       |
-| `personas`            | none                         | `/a-epic`                | `./planning/<epic-slug>/personas.md`                   |
-| `stretch-goals`       | none                         | `/a-epic`                | `./planning/<epic-slug>/stretch-goals.md`              |
-| `architecture`        | none                         | `/a-architecture`        | `./planning/<epic-slug>/architecture.md`               |
-| `story`               | `<story-number>`             | `/a-story`               | `./planning/<epic-slug>/story-<story-number>.md`       |
+| Artifact Type | Selector | Owner Command | Target Artifact |
+| ------------- | -------- | ------------- | --------------- |
+| `epic` | none | `/a-epic` | `$EPIC_DIR/epic.md` |
+| `personas` | none | `/a-epic` | `$EPIC_DIR/personas.md` |
+| `stretch-goals` | none | `/a-epic` | `$EPIC_DIR/stretch-goals.md` |
+| `architecture` | none | `/a-architecture` | `$EPIC_DIR/architecture.md` |
+| `story` | `<story-number>` | `/a-story` | `$EPIC_DIR/story-<story-number>.md` |
+
+An artifact type whose owner command file does not exist under `~/.claude/commands/` is unsupported. Stop and say which command must be written first; NEVER reconstruct a contract from the artifact alone.
 
 ## Skills
 
-Invoke the same skills the owner command would have used when the revision touches the same concerns.
-
-Common examples:
-- `explore` for targeted codebase investigation when revising `architecture` or `story`
-- `ux-laws` when revising user-facing story or epic framing
-- `react-best-practices` only when the owner contract requires code-informed UI investigation
-- `mermaid-diagrams` when a diagram change materially improves the revised artifact
+Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. Invoke the same skills the owner command would have invoked for the sections this revision touches, and no others.
 
 ## Purpose
 
-Revise one workflow artifact from concrete high-priority guidance while preserving the original pipeline contract.
+Revise one workflow artifact from concrete high-priority guidance, without breaking the contract that produced it.
 
 This command should:
-- reload the original owner command contract instead of guessing the artifact's shape
-- anchor on the already open workflow artifact when it clearly matches the request
+- reload the owner command contract instead of guessing the artifact's shape
 - reread the inputs that justified the artifact originally
 - compare the current artifact against the guidance and the owner contract
 - apply the smallest durable revision that addresses the issue
-- report any downstream artifacts that may now be stale or need reruns
+- keep the assumption ledger and the story order intact under the same rules the owner command follows
+- report which downstream artifacts the revision just made stale
 
 ## Rules
 
-- NEVER edit more than one primary target artifact per run
-- NEVER treat guidance as a request to regenerate the artifact from scratch unless the current artifact is unusable
-- NEVER bypass the owner command contract; read the owner command file first
-- NEVER let editor context override explicit user arguments
-- NEVER silently rename glossary terms or durable architecture concepts
-- NEVER write or modify application code
-- NEVER write files outside `./planning/`
-- NEVER widen scope into unrelated cleanup or speculative improvements
-- For `story`, acceptance-criterion and implementation-task revisions still target the single `story-<story-number>.md` artifact
-- Preserve still-correct content; revise only the sections needed to address the guidance
-- If the requested change implies broader planning drift, summarize the affected artifacts and suggest reruns instead of silently rewriting everything
-- Allow glossary or global-architecture promotion updates only when the owner command for the target artifact would have allowed them
-- Use the currently open or visible workflow artifact as a resolution hint only when it maps cleanly to a supported target
-- Read the resolved target artifact before asking for section-level clarification unless the file is missing or the request is still genuinely ambiguous after reading it
-- Treat the final freeform argument as the highest-priority guidance for the revision. It may include clarifications, requested artifact changes, or partial implementation notes, but it must not silently override the resolved target, owner contract, glossary canon, or other hard command constraints
+- NEVER edit more than one target artifact per run
+- NEVER regenerate the artifact from scratch unless the current one is unusable
+- NEVER bypass the owner contract; read the owner command file first
+- NEVER write application code, create commits, or write files outside `$EPIC_DIR` and whatever the owner command is itself allowed to write
+- NEVER write `progress.md`
+- NEVER write a file the owner command is forbidden to write. Revising `story-<story-number>.md` carries the same ban on `epic.md`, `architecture.md`, and a repo's `CONTEXT.md`; record the change in `## Upstream Findings` instead, per conventions.md's Upstream findings rule
+- NEVER change a story number. Sequencing guidance rewrites `epic.md`'s `## Story Order`, per conventions.md
+- NEVER drop, renumber, or silently re-status a row in `## Assumptions`, per conventions.md's Assumptions rule
+- NEVER collapse a canonical _As a_ / _I want_ / _So that_ or _Given_ / _When_ / _Then_ block, per conventions.md's Canonical blocks rule
+- NEVER define synonyms; a touched repo's `CONTEXT.md` term stays canonical
+- NEVER widen scope into unrelated cleanup or speculative improvement
+- Preserve still-correct content; revise only the sections the guidance reaches
+- Treat the freeform argument as the highest-priority guidance. It NEVER overrides the resolved target, the owner contract, canonical terminology, or any hard rule in conventions.md
 
-## Step 1: Resolve arguments and local context
+## Step 1: Resolve the target
 
-`$ARGUMENTS` = `<artifact-type> [selector...] <instructions-or-suggestions>`
+1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution for the epic.
+1. `$ARGUMENTS` = `<artifact-type> [selector] <instructions-or-suggestions>`. Parse left to right: the artifact type, its selector when the target takes one, then the guidance text.
+1. Empty guidance text → stop and ask what to revise.
+1. Unsupported artifact type → print the Supported Targets table and stop.
+1. `story` with no selector → fall through selector resolution: the current branch, then memory, then list the story numbers from `epic.md` and ask.
+1. Resolve `$EPIC_DIR`. Record the resolved selector in memory.
 
-Parse left to right: artifact-type, optional selector, then guidance text (usually quoted).
+## Step 2: Load the owner contract and the artifact
 
-Resolve target using this precedence:
-1. Explicit command arguments
-2. Currently open/visible workflow artifact
-3. `./planning/current.json` for epic-scoped targets
-
-If explicit arguments and visible artifact disagree, stop and ask. If artifact-type is missing but visible artifact identifies a supported target, use it. If selector is still incomplete, use `./planning/current.json` when unambiguous.
-
-Stop if artifact-type is unsupported, selector is incomplete after all resolution, guidance text is empty, or `current.json` is missing/malformed.
-
-## Step 2: Resolve the owner contract and target files
-
-Map the `artifact-type` to its owner command and target artifact path using the supported targets table.
-
-Read the owner command file first:
-- `~/.agents/commands/a-global-architecture.md`
-- `~/.agents/commands/a-epic.md`
-- `~/.agents/commands/a-architecture.md`
-- `~/.agents/commands/a-story.md`
-
-Then read the current target artifact immediately.
-
-Treat the artifact that is already open or visible in the editor as the first file candidate when it matches the resolved target path. Otherwise, read the resolved target path directly from `./planning/`.
-
-If the target artifact does not exist, report the exact path checked and tell the user which owner command must produce it first.
-
-If the guidance references a section, story number, heading, or acceptance criterion inside the target artifact, inspect the current file to resolve it before asking the user to paste more context.
-
-Ask for section-level clarification only if:
-- the file does not contain the referenced section or concept
-- multiple plausible matches remain after reading the file
-- the user's request conflicts with explicit arguments, visible context, or the owner contract
+1. Read `~/.claude/commands/<owner-command>.md` in full, before reading the artifact.
+1. Read the target artifact.
+1. The artifact does not exist → report the exact absolute path checked, name the owner command that must produce it, and stop.
 
 Extract from the owner command:
-- the Pipeline I/O contract
-- the required input files
-- any followed-reference requirements
-- the artifact structure or sections that should be preserved
-- the allowed promotion targets and naming constraints
+- its Pipeline I/O contract and required inputs
+- its followed-reference requirements
+- the artifact sections it owns, and the order it writes them in
+- every file it is allowed to write, and every file it is forbidden to write
+- its own success criteria, which this revision must still satisfy afterwards
+
+Resolve any section, story, criterion, or assumption ID the guidance names by reading the artifact. Ask for clarification only when the artifact does not contain it, when several matches remain, or when the guidance conflicts with the owner contract.
 
 Output:
 ```text
 Target type: <artifact-type>
 Owner command: </a-...>
-Target artifact: <path>
-Resolution source: <explicit | visible artifact | mixed>
-Instructions: <quoted guidance summary>
+Target artifact: <absolute path>
+Epic dir: <EPIC_DIR>
+Guidance: <one-line summary>
 ```
 
-## Step 3: Reload the original inputs
+## Step 3: Reload the owner's inputs
 
-Reload the same inputs the owner command would require for the resolved target artifact.
+Reload exactly what the owner command's Pipeline I/O lists as **In** for this artifact, and follow the references it requires. Derive the list from the contract, never from the user's prompt.
 
-Derive those inputs from the owner command contract and the resolved artifact path. Do not require the user to restate the upstream file chain in the prompt.
+1. Any required input or followed reference missing or unreadable → stop and print the exact absolute path or reference
+1. Owner command is code-informed → explore only around the guidance, never the whole repo
+1. Read the target's `## Assumptions` section, when it has one, so the revision can be checked against what was already settled
 
-Minimum required inputs by target:
+## Step 4: Diagnose the revision
 
-- `global-architecture` or `glossary`
-  - durable repo docs and architecture references
-  - codebase read-only structure
-- `epic`, `personas`, or `stretch-goals`
-  - `./planning/<epic-slug>/idea.md`
-  - `./planning/glossary.md`
-  - `./planning/global-architecture.md`
-- `architecture`
-  - `./planning/<epic-slug>/idea.md`
-  - `./planning/<epic-slug>/epic.md`
-  - `./planning/<epic-slug>/personas.md`
-  - `./planning/glossary.md`
-  - `./planning/global-architecture.md`
-  - targeted codebase areas needed to validate the guidance
-- `story`
-  - `./planning/<epic-slug>/epic.md`
-  - `./planning/<epic-slug>/architecture.md`
-  - `./planning/<epic-slug>/personas.md`
-  - `./planning/glossary.md`
-  - `./planning/global-architecture.md`
-  - targeted codebase areas needed to validate the guidance
+Compare the guidance, the current artifact, the owner contract, and the reloaded inputs. Classify before editing:
 
-Also follow any references that the owner command says are required for that target. If any required input or followed reference is missing or unreadable, stop and report the exact path or reference.
+| Class | Means |
+| ----- | ----- |
+| missing content | required content the owner contract calls for was omitted |
+| incorrect content | the artifact contradicts its inputs or the codebase |
+| scope correction | boundaries, sequencing, or dependencies are wrong |
+| naming correction | a term conflicts with a touched repo's `CONTEXT.md` |
+| stale artifact | a later discovery invalidated part of it |
 
-If the owner command is code-informed, use only targeted exploration around the guidance. Do not do broad repo exploration.
+1. The guidance conflicts with a prior approval, canonical terminology, or a resolved decision already recorded in the artifact → surface the conflict and ask before editing
+1. The guidance is really a request to rerun the whole stage → say so and stop. NEVER fake a narrow edit
 
-If all required inputs can be resolved from the owner contract and the artifact path, keep going without asking the user to relink them manually.
+## Step 5: Apply the revision
 
-## Step 4: Diagnose the requested revision
+Edit the target artifact in place, preserving its structure and every section the guidance does not reach.
 
-Compare:
-1. the user's instructions-or-suggestions
-2. the current target artifact
-3. the owner command contract
-4. the reloaded inputs
+Then reconcile what the revision disturbed:
 
-Classify the revision request before editing:
-- **missing content**: valid required content was omitted
-- **incorrect content**: artifact contradicts source inputs or codebase truth
-- **scope correction**: artifact boundaries, sequencing, or dependencies are wrong
-- **naming correction**: terminology conflicts with the glossary or durable code names
-- **stale artifact**: later discoveries invalidated part of the artifact
+1. Sequencing changed and the target is `epic.md` → rewrite `## Story Order` only. NEVER renumber a story, NEVER rename `story-N.md`
+1. Sequencing changed and the target is `story-<story-number>.md` → record it in `## Upstream Findings` against `epic.md`'s `## Story Order`. NEVER edit `epic.md` from a story revision
+1. The revision invalidates a `verified` or `resolved` assumption → re-status that row `invalidated`, record what is true instead, and carry it forward per conventions.md's Assumptions rule
+1. The revision acts on a new claim without evidence → add it as a new row under the artifact's own ID prefix, and settle it under the owner command's rules. A `story` revision settles it in this run, because `/a-design` inherits no open row
+1. A canonical block is reworded → keep one clause per line and keep its trailing hard breaks
+1. A durable confirmed term changed → update the relevant repo's `CONTEXT.md` only when the owner command is itself allowed to write it, and only additively
 
-If the instructions-or-suggestions conflict with prior approvals, glossary canon, or durable repo-wide architecture:
-- surface the conflict explicitly
-- ask the user before changing the target
-
-If the guidance is really a request to rerun the entire owner stage, say so explicitly and stop instead of faking a narrow edit.
-
-## Step 5: Apply the constrained revision
-
-Edit the target artifact in place.
-
-When revising:
-- preserve the file's existing structure unless the owner command contract requires a structural fix
-- update only the sections needed to address the guidance
-- keep all unaffected valid content
-- prefer additive or surgical edits over full rewrites
-- keep terminology aligned with `glossary.md`
-
-Allowed promotion updates:
-- update `./planning/glossary.md` only when the owner command for the target artifact would have allowed a durable terminology update
-- update `./planning/global-architecture.md` only when the owner command for the target artifact would have allowed a durable cross-epic update
-
-If a promotion update is needed, keep it minimal and summarize it separately from the primary artifact revision.
+Write each section as it finalizes, per conventions.md's Incremental writes rule.
 
 ## Step 6: Assess downstream impact
 
-After editing, determine which downstream artifacts may now be stale.
+Report what this revision just made stale. Do not rewrite any of it in this run.
 
-Use these defaults unless the specific change proves otherwise:
-- editing `global-architecture.md` may affect every epic-specific artifact
-- editing `glossary.md` may affect every artifact that uses the renamed or corrected term
-- editing `epic.md` may affect `personas.md`, `architecture.md`, and `story-*.md` for that epic
-- editing `personas.md` may affect `architecture.md` and `story-*.md` for that epic
-- editing `stretch-goals.md` usually has no downstream effect on the active pipeline unless a now-work vs later-work boundary changed
-- editing `architecture.md` may affect `story-*.md` and future `/a-criterion` runs for that epic
-- editing `story-<story-number>.md` may affect future `/a-criterion` runs for that story
+| Edited | May now be stale |
+| ------ | ---------------- |
+| `epic.md` | `architecture.md`, every `story-N.md`, and any assumption row cascaded out of `epic.md` |
+| `personas.md` | `architecture.md` and every `story-N.md` |
+| `stretch-goals.md` | nothing in the active pipeline, unless a now-versus-later boundary moved |
+| `architecture.md` | every `story-N.md`, its own cascaded assumption rows, and every later stage for this epic |
+| `story-N.md` | that story's `design-N.md`, its `plan-N-M.md` files, and every later stage for that story |
 
-Do not silently rewrite those downstream artifacts in the same run unless the owner rules explicitly require a minimal promotion update.
+Also report, every run:
+1. the artifact's row in `progress.md` is now ticked against stale evidence; `/a-cont` refreshes the hash on its next reconcile
+1. every assumption row this revision re-statused, and where it now has to be settled
+1. whether the owner command's success criteria still hold for the revised artifact
 
 ## Step 7: Present the revision
 
 Summarize:
-1. target artifact revised
-2. exact issue addressed
-3. sections changed
-4. any promotion updates applied
-5. affected artifacts and suggested reruns
-6. any conflicts or remaining risks
+1. the artifact revised, with its absolute path
+2. the exact issue addressed
+3. the sections changed
+4. story-order and assumption-ledger effects
+5. any `CONTEXT.md` update applied
+6. affected artifacts and suggested reruns
+7. remaining conflicts or risks
 
-Always include this section in the final output:
+Always print:
 
 ```text
 Affected artifacts / suggested reruns:
@@ -234,21 +176,25 @@ Ask the user to review the revision before advancing the pipeline again.
 
 ## Success Criteria
 
-- [ ] the target artifact was resolved from a supported `artifact-type`
-- [ ] explicit arguments took precedence over editor context when both were present
-- [ ] the owner command file was read before revising the artifact
-- [ ] the target artifact was read before asking for section-level clarification
-- [ ] all required inputs and followed references were reloaded or the run stopped with an exact missing path
-- [ ] the requested guidance was addressed without broad regeneration
-- [ ] glossary and global architecture constraints were preserved
-- [ ] any downstream impact was summarized explicitly
-- [ ] the user was asked to review the revised artifact before the pipeline advanced
+- [ ] the target resolved to a supported artifact type whose owner command file exists
+- [ ] `conventions.md` and the owner command file were both read before the artifact was revised
+- [ ] the owner command's required inputs and followed references were reloaded, or the run stopped with an exact path
+- [ ] the guidance was addressed without broad regeneration
+- [ ] no file the owner command is forbidden to write was written, and `progress.md` was not touched
+- [ ] no story number changed; any sequencing change landed in `epic.md`'s `## Story Order` or in `## Upstream Findings`
+- [ ] every assumption row the revision disturbed was re-statused, never dropped; a `story` revision left none `open` or `cascaded`
+- [ ] canonical blocks kept one clause per line
+- [ ] downstream impact and stale `progress.md` evidence were reported explicitly
+- [ ] the user was asked to review before the pipeline advanced
 
 ## Error Handling
 
-@include includes/error-protocol.md
+When stopping due to a missing, unreadable, or malformed input:
+1. Print the exact absolute path that was checked
+2. Print which step of this command failed (step number and name)
 
-- **Unsupported `artifact-type`** — show the supported targets table and stop
-- **Guidance conflicts with glossary or durable architecture** — surface the conflict and ask the user before editing
-- **Requested change is too broad for a constrained revision** — recommend rerunning the owner command and explain why
-- **Requested change would require writing application code** — stop and tell the user this command only revises workflow artifacts
+- **Unsupported artifact type** — print the Supported Targets table and stop
+- **Owner command file missing** — name it and stop; NEVER infer its contract from the artifact
+- **Guidance conflicts with canonical terminology or a recorded decision** — surface the conflict and ask before editing
+- **Guidance too broad for a constrained revision** — recommend rerunning the owner command, and say why
+- **Guidance would require application code** — stop; this command revises workflow artifacts only
