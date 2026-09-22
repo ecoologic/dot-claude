@@ -17,7 +17,7 @@ The caller names the mode. Stop and say so when it names none.
 | Mode | Caller | Subject | Return |
 | --- | --- | --- | --- |
 | `pr` | `/pr-draft` | What the branch diff changes | A `### Changes` section |
-| `design` | `/architect` | The design the caller passes | The diagram and its legend, no heading |
+| `design` | `/a-design` | The design the caller passes | The diagram and its legend, no heading |
 
 ## Inputs
 

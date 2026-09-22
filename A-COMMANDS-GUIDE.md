@@ -1,6 +1,6 @@
 # The `a-*` workflow
 
-A slug-keyed pipeline for taking an idea from a rough note through to a shipped story. Planning artifacts live outside every repo, in a sibling folder shared by the repos an epic touches.
+A pipeline for taking an idea from a rough note through to a shipped story using the agile process. Planning artifacts live outside every repo, in a sibling folder shared by the repos.
 
 ## Status
 
@@ -9,7 +9,7 @@ A slug-keyed pipeline for taking an idea from a rough note through to a shipped 
 | Epic | `/a-epic` | Working |
 | Architecture | `/a-architecture` | Working |
 | Story | `/a-story` | Working |
-| Design | `/a-design` | Does not exist yet |
+| Design | `/a-design` | Working |
 | Plan | `/a-plan` | Does not exist yet |
 | Implement | `/a-implement` | Does not exist yet |
 | Finish | `/a-finish` | Does not exist yet |
@@ -26,13 +26,14 @@ A slug-keyed pipeline for taking an idea from a rough note through to a shipped 
 /clear
 /rtd
 /a-story
+/a-design
 ```
 
 `/a-cont <slug>` runs the next unticked stage of this instead, one at a time, and prints the exact next command to type.
 
 ## The three loops
 
-The full pipeline has three loops; only the first is usable today.
+The full pipeline has three loops. The first is complete; the per-story loop stops after `a-design`.
 
 | Loop | Commands | Artefacts |
 | --- | --- | --- |
@@ -53,7 +54,8 @@ The full pipeline has three loops; only the first is usable today.
         ├── stretch-goals.md
         ├── architecture.md
         ├── progress.md                # the whole epic's state
-        └── story-1.md                 # /a-story, one file per story
+        ├── story-1.md                 # /a-story, one file per story
+        └── design-1.md                # /a-design, one file per story
 ```
 
 Planning is never committed. `CONTEXT.md` in each repo is the only tracked artefact this flow writes to outside `planning/`.
@@ -64,6 +66,7 @@ Planning is never committed. `CONTEXT.md` in each repo is the only tracked artef
 1. Answer the questions it asks: story boundaries, then which sibling repos the epic touches
 1. `/a-architecture` — no argument needed; it defaults to the epic you just created
 1. `/a-story` — no argument needed the first time; it defaults to the epic in memory and asks which story number when more than one is Actionable. Later stories: `/a-story <n>`
+1. `/a-design` — no argument needed; it defaults to the story you just broke down. It ends when you say the design is ready, not before
 
 ## Resuming after `/clear`
 
@@ -84,7 +87,8 @@ Trailing text after the selector passes straight through to the command as high-
 | `personas.md` | `a-epic` | Actors and usage context |
 | `stretch-goals.md` | `a-epic` | Later-scope stories, not required reading |
 | `architecture.md` | `a-architecture` | The epic's architecture: critique, decisions, diagrams, terminology, change inventory. There is no other architecture document — repo-level context comes from each repo's README, `CLAUDE.md`, `CONTRIBUTING.md`, and `CONTEXT.md`. `a-finish` is the only later command that writes it |
-| `story-N.md` | `a-story` | One story's slug, Given/When/Then acceptance criteria, UX/UI definition, codebase context, and an `## Upstream Findings` log that every later stage appends to and only `a-finish` applies |
+| `story-N.md` | `a-story` | WHAT the story delivers: its slug, user context, Given/When/Then acceptance criteria, UI references, a settled assumption ledger, and an `## Upstream Findings` log that every later stage appends to and only `a-finish` applies. It carries no technical design |
+| `design-N.md` | `a-design` | HOW the story is built: goal, UX, UI sketch, components, file structure, reuse and extractions, contracts, migrations, the two story-level diagrams, happy-path test lines, risks, and the decision registry |
 | `progress.md` | `a-cont` | The completion matrix for the whole epic |
 | `CONTEXT.md` (in each repo) | `a-epic`, `a-architecture` | That repo's naming baseline. Later stages record term findings in `story-N.md` instead; `a-finish` applies them |
 
