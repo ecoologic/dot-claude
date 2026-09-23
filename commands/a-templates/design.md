@@ -12,11 +12,14 @@ disable-model-invocation: true
 The document is these H2 sections, in this order.
 
 ````md
+---
+updated: 2026-09-23T14:05+1000
+status: draft
+---
+
 # Design <story-number>: <title>
 
 > Epic: <epic name>
-> Slug: <story-slug>
-> Generated: <date>
 > Source Story: `$EPIC_DIR/story-<story-number>.md`
 
 ## Goal
@@ -135,6 +138,10 @@ repo/
 - `$EPIC_DIR/architecture.md`
 ````
 
+## Header
+
+Per conventions `## Document header`. `status` moves to `done` only on the user's final "design is ready" approval.
+
 ## Section rules
 
 | Section | Rule |
@@ -154,7 +161,7 @@ repo/
 | Happy Path Automated Tests | The expected results written as test lines, in the repo's own test format. One line per acceptance criterion at minimum |
 | Architecture | Boundaries, dependency direction, ownership, the patterns to follow, the smells to avoid, and the inconsistencies this story must respect |
 | Current Weaknesses & Risks | One row per risk, biggest impact first. `Impact` is a T-shirt size. `Risk` is a title, 5 words max. `Details` is an ELI5 example, 3 sentences max. `Resolution` is a status — `open`, `accepted`, `mitigated`, `postponed` — then a one-sentence solution |
-| Assumptions | Per conventions.md's Assumptions rule. No row may stay `open` or `cascaded` |
+| Assumptions | Per conventions.md's Assumptions rule. No row this story's implementation requires may stay `open` or `cascaded` |
 | Decision Registry | The ONLY place that holds how the design got here. Every considered option, its trade-offs, and why the agreed one won. A resolved risk moves here from the section above |
 | AI Notes | Invariants, gotchas and existing code to reuse that no other section records. NEVER a work breakdown, a task packet, or a model and effort table |
 

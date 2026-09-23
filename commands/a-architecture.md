@@ -1,7 +1,7 @@
 ---
 description: Design the technical architecture for an epic from stories, personas, and the codebase
 argument-hint: "[<epic-slug>] [instructions-or-suggestions]"
-allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, Skill, AskUserQuestion]
+allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, Skill, AskUserQuestion, Bash(git rev-parse:*), Bash(date:*), Bash(git symbolic-ref:*), Bash(git branch:*)]
 disable-model-invocation: true
 ---
 
@@ -10,16 +10,17 @@ disable-model-invocation: true
 ### Pipeline I/O
 
 | Direction  | File                                                                             | Description                                                       |
-| ---------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ---------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **In**     | `~/.claude/commands/a-templates/conventions.md`                                             | Shared path resolution, selector resolution, and repo conventions |
+| **In**     | `~/.claude/commands/a-templates/architecture.md`                                  | The template for the output document                              |
 | **In**     | `$EPIC_DIR/idea.md`                                                                | Raw epic idea and links to supporting artifacts                   |
-| **In/Out** | `$EPIC_DIR/epic.md`                                                                | Story list and touched repos from `/a-epic`; update `## Story Order` or an absorbed prerequisite only when implementation reality forces it, NEVER a story number |
+| **In/Out** | `$EPIC_DIR/epic.md`                                                                | Story list, `## Domain Concepts`, `## Candidate Terms`, and touched repos from `/a-epic`; update `## Story Order` or an absorbed prerequisite only when implementation reality forces it, NEVER a story number |
 | **In**     | `$EPIC_DIR/personas.md`                                                           | Personas from `/a-epic`                                            |
 | **In**     | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out**    | `$EPIC_DIR/architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
-| **Out**    | `<repo>/CONTEXT.md`, per touched repo                                             | Durable confirmed terms                                            |
+| **Out**    | `<repo>/CONTEXT.md`, per touched repo                                             | Durable confirmed terms, including `epic.md`'s confirmed candidate terms |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
+`$EPIC_DIR` resolves per conventions.md.
 
 ## Purpose
 
@@ -53,9 +54,7 @@ For every inconsistency:
 
 ## Skills
 
-Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. A skill about naming or pattern validation applies when reconciling terminology.
-
-Invoke the `diagrams` skill via `Skill` before writing any diagram in this document.
+Discover and invoke project skills per conventions `## Skills`; it also names the global skills for this stage: `grill-me` at the Step 10 gate, `engineering:architecture` for Step 9's decision records, `diagrams` for every mermaid diagram, and `ask-user-question` for every `AskUserQuestion` call. A repo or package skill about naming or pattern validation applies when reconciling terminology.
 
 ## Rules
 
@@ -66,20 +65,24 @@ Invoke the `diagrams` skill via `Skill` before writing any diagram in this docum
 - Treat inferred models as hypotheses until challenged against the codebase and project conventions; every surviving hypothesis is a row in `## Assumptions`, never confident prose
 - Prefer existing code and established conventions over prototype structure when they conflict
 - Update a repo's `CONTEXT.md` only for durable confirmed terms or mappings; ask before renaming an existing term
+- `epic.md`'s `## Candidate Terms` are unconfirmed until this command confirms them into a repo's `CONTEXT.md`; `a-epic` never writes `CONTEXT.md`
 - `architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
 - prefer reordering `epic.md`'s `## Story Order` to match implementation dependency order over having an earlier story silently absorb a later story's prerequisite; either resolution is surfaced to the user, NEVER decided silently
 - NEVER change a story number; the number is identity. `## Story Order` carries the sequence, and it is the only ordering this command may rewrite
+- write `architecture.md` per conventions `## Write as you go`: create it from its template at the first write, then Edit only the section a step just settled
+- Invoke the `diagrams` skill via `Skill` before drawing any diagram in this document
 
 ## Step 1: Resolve required inputs
 
-1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution: a leading `<epic-slug>` in `$ARGUMENTS`, then the current branch, then memory, then stop and ask.
+1. Read conventions.md. This command is a planning stage: follow conventions `## Where a command runs` (stop if started inside a worktree; print a warning if not on the default branch) and its planning-stage selector order — this command's own argument, then memory, then stop and ask.
 1. `$ARGUMENTS` = `[<epic-slug>] [instructions-or-suggestions]`. A leading token that names an existing `$PLANNING_ROOT/<token>` folder is the epic slug; everything else is high-priority guidance for this run and never selects the epic.
-1. Resolve `$EPIC_DIR`. Record the resolved epic slug in memory.
+1. Resolve `$EPIC_DIR`. Record the resolved epic slug in memory, per conventions `## Memory`.
 
 Read (stop if any are missing):
 - `$EPIC_DIR/idea.md`
 - `$EPIC_DIR/epic.md`
 - `$EPIC_DIR/personas.md`
+- `~/.claude/commands/a-templates/architecture.md`
 
 Follow references from those files to supporting artifacts. Stop and report any unreadable reference.
 
@@ -87,9 +90,20 @@ Extract:
 - epic name and slug
 - the touched repos listed in `epic.md`'s `## Repos`
 - story list and summaries
+- `epic.md`'s `## Domain Concepts` and `## Candidate Terms`
 - personas and constraints
-- domain concepts and obvious relationships
 - contradictions, gaps, and unknowns
+
+Create `$EPIC_DIR/architecture.md` from `~/.claude/commands/a-templates/architecture.md` now: the header with `status: draft`, the title, and every H2 heading. Every later step Edits its own section alone as it settles.
+
+Output:
+```text
+Epic: <epic name>
+Epic dir: <EPIC_DIR>
+Touched repos: <list>
+Stories: <count>
+architecture.md: created from template
+```
 
 ## Step 2: Understand the target system
 
@@ -102,7 +116,7 @@ Before exploring the codebase, derive from the inputs:
 
 ### 2a. Infer an ERD from the inputs
 
-Infer a provisional domain model from all useful input evidence, not only the UI.
+Infer a provisional domain model from all useful input evidence, including `epic.md`'s `## Domain Concepts`, not only the UI.
 
 If evidence is strong enough:
 - include the inferred ERD in `architecture.md`
@@ -128,6 +142,8 @@ Specifically:
 Do not decide "the conflict is in `epic.md`" or "the conflict is in `idea.md`" as a bulk conclusion. Resolve each differing statement on its own merits.
 
 If a contradiction materially changes the architecture recommendation, stop, surface that exact contradiction immediately, and resolve it with the user before continuing.
+
+Edit `## Epic Summary` now.
 
 ## Step 3: Load repo context
 
@@ -167,9 +183,11 @@ Each exploration result must report:
 
 Display a summary of findings by system area before moving on.
 
+Edit `## Current System Landscape` now: one `### <system area>` subsection per area explored, and `### Communication Paths and Boundaries`.
+
 ## Step 5: Reconcile terminology
 
-Build a terminology table for `architecture.md`:
+Build the `## Terminology` table for `architecture.md`, seeded from `epic.md`'s `## Candidate Terms` plus every domain term this run's investigation adds:
 
 | Domain Term | Repo | Code Name | Definition | Source | Status |
 | ----------- | ---- | --------- | ---------- | ------ | ------ |
@@ -183,81 +201,20 @@ Status values:
 
 Rules:
 - existing `CONTEXT.md` terms remain canonical unless the user approves a change
-- add safe new rows and safe enrichments to the relevant repo's `CONTEXT.md` in this command
+- confirm `epic.md`'s `## Candidate Terms` into the relevant repo's `CONTEXT.md` when safe and durable; this is their first landing point, since `a-epic` never writes `CONTEXT.md`
+- add other safe new rows and safe enrichments to the relevant repo's `CONTEXT.md` in this command too
 - do not silently rename existing `CONTEXT.md` terms
-- keep conflicts and rename requests explicit in `architecture.md` and review them with the user before writing outputs
+- keep conflicts and rename requests explicit in `architecture.md` and review them with the user at the Step 10 gate
 
-## Step 6: Make architecture decisions
+Edit `## Terminology` and `### Key Domain Concepts` now.
 
-Organize decisions around change types:
+## Step 6: Record the inferred ERD
 
-| Area | What Exists | What Changes | Decision | Rationale |
-| ---- | ----------- | ------------ | -------- | --------- |
+Per Step 2a: include the inferred ERD when evidence is strong enough, labeled as a review artifact, not accepted truth. Evidence too weak → say so explicitly and name what is missing.
 
-Action types:
-- **Reuse as-is**
-- **Extend**
-- **Extract**
-- **New**
-
-Ground decisions in:
-1. epic inputs and intended flows
-2. current system structure
-3. project conventions already present in the codebase
-
-If a decision has meaningful tradeoffs, present options with pros and cons and resolve them with the user before writing outputs.
-
-### 6a. Check story order against implementation reality
-
-`/a-epic` orders stories by user value alone, before any codebase investigation. Validate that `epic.md`'s `## Story Order` still holds now that real dependencies are known.
-
-1. For each story, check whether it can be delivered and proven end-to-end using only what stories placed before it in `## Story Order` establish
-2. A story that needs ground only a later-placed story establishes is an order conflict
-3. Present every order conflict found, with both resolution paths: move the affected stories within `## Story Order` to match implementation order, or keep the order and have the earlier story explicitly absorb the missing prerequisite
-4. Default to reordering; recommend it unless the user has a standing reason to keep the original order
-5. This surfaces only as deep as this run's investigation goes. A conflict found later, in `/a-story` or `/a-design`, is surfaced explicitly there and recorded as an upstream finding against `epic.md`'s `## Story Order` for `/a-finish` to apply; NEVER silently absorbed, NEVER ignored, and NEVER written into `epic.md` by a story-level command
-6. Reordering chosen → rewrite `epic.md`'s `## Story Order` only, leaving every story number, `## Story N` heading, and future `story-N.md` filename untouched
-7. Absorption chosen → record in `epic.md`'s story text that the earlier story's scope now includes the prerequisite
-8. Update the affected stories' `### Dependencies` too, so the edge that forced the resolution is recorded, not just its outcome
-9. Either way, record the resolution under `## Resolved Source-of-Truth Decisions`, same shape as any other resolved conflict
-
-### 6b. Settle the assumption ledger
-
-Inherit every `open` and `cascaded` row from `epic.md` under its original ID, per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule. Add a row under `ARCH-<n>` for every claim this run acted on without evidence: an inferred entity, an unvalidated flow, a guessed boundary, an untested reuse candidate.
-
-1. This run's codebase investigation is the evidence. Mark a row `verified` or `invalidated` the moment it settles, citing the file, line, or test that settled it
-2. The inferred ERD, its entities, and its relationships stay assumptions until 7b's critique settles them; carry them as rows, NEVER as confident prose
-3. A row this command cannot settle from code goes to the user in 6c, one at a time, with what it affects and what changes if it is false
-4. Still unsettled after 6c → `cascaded` to the `story-<n>.md` of the story that carries it. A row no story carries NEVER cascades; put it to the user again instead
-5. An `invalidated` row already baked into `epic.md` → surface its impact in 6c and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
-
-### 6c. Review open questions before writing
-
-Before writing `architecture.md` or updating `CONTEXT.md`, present the current architecture direction to the user.
-
-Include:
-- input conflicts and gaps, listed one by one
-- terminology conflicts and rename requests
-- story order conflicts against implementation reality, with both resolution paths
-- decisions with meaningful tradeoffs
-- any weak assumptions that affect the recommended model
-- the assumption ledger: every row still `open`, what it blocks, and what changes if it is false
-
-For each conflict or tradeoff, present explicit options, state which option the hierarchy or codebase evidence favors, and explain the downstream impact.
-
-Persist every resolved source-of-truth inconsistency in `architecture.md` under the same section structure described below so later stages inherit the decision history instead of re-opening the same conflict.
-
-Pause for user feedback on these items before continuing to the write steps.
+Edit `## Diagrams and Model Review` now with this content.
 
 ## Step 7: Critique the inferred model
-
-The architecture document must contain:
-
-### 7a. Inferred ERD from inputs
-
-Include it when evidence is strong enough.
-
-### 7b. Architectural critique of the inferred ERD
 
 Critique it harshly. Evaluate:
 1. entity and aggregate boundaries
@@ -276,13 +233,84 @@ Say clearly:
 - what to remove
 - what remains uncertain
 
-### 7c. Recommended domain model
+Edit `## Diagrams and Model Review` now, continuing after the inferred ERD.
+
+## Step 8: Recommend the domain model
 
 After critique and codebase comparison, propose the model that should guide this epic.
 
 Represent the recommended model in an epic class diagram focused on the entities, components, boundaries, and relationships that must be added, extended, extracted, or reused for this epic.
 
-### 7d. Epic sequence diagrams for required changes
+Edit `### Recommended Epic Class Diagram` now.
+
+## Step 9: Make architecture decisions
+
+Organize decisions around change types:
+
+| Area | What Exists | What Changes | Decision | Rationale |
+| ---- | ----------- | ------------ | -------- | --------- |
+
+Action types:
+- **Reuse as-is**
+- **Extend**
+- **Extract**
+- **New**
+
+Ground decisions in:
+1. epic inputs and intended flows
+2. current system structure
+3. project conventions already present in the codebase
+
+Invoke the `engineering:architecture` skill via `Skill` when drafting each decision record.
+
+If a decision has meaningful tradeoffs, present options with pros and cons; resolve them with the user at the Step 10 gate.
+
+Edit `## Technical Decisions` and `## Reuse and Extraction Plan` now.
+
+### 9a. Check story order against implementation reality
+
+`/a-epic` orders stories by user value alone, before any codebase investigation. Validate that `epic.md`'s `## Story Order` still holds now that real dependencies are known.
+
+1. For each story, check whether it can be delivered and proven end-to-end using only what stories placed before it in `## Story Order` establish
+2. A story that needs ground only a later-placed story establishes is an order conflict
+3. Present every order conflict found, with both resolution paths: move the affected stories within `## Story Order` to match implementation order, or keep the order and have the earlier story explicitly absorb the missing prerequisite
+4. Default to reordering; recommend it unless the user has a standing reason to keep the original order
+5. This surfaces only as deep as this run's investigation goes. A conflict found later, in `/a-story` or `/a-design`, is surfaced explicitly there and recorded as an upstream finding against `epic.md`'s `## Story Order` for `/a-finish` to apply; NEVER silently absorbed, NEVER ignored, and NEVER written into `epic.md` by a story-level command
+6. Reordering chosen → rewrite `epic.md`'s `## Story Order` only, leaving every story number, `## Story N` heading, and future `story-N.md` filename untouched
+7. Absorption chosen → record in `epic.md`'s story text that the earlier story's scope now includes the prerequisite
+8. Update the affected stories' `### Dependencies` too, so the edge that forced the resolution is recorded, not just its outcome
+9. Either way, record the resolution under `## Resolved Source-of-Truth Decisions`, same shape as any other resolved conflict
+
+### 9b. Settle the assumption ledger
+
+Inherit every `A-EPIC` row routed here, per conventions `## Assumptions`. Add a row under `A-ARCH-<n>` for every claim this run acted on without evidence: an inferred entity, an unvalidated flow, a guessed boundary, an untested reuse candidate.
+
+1. This run's codebase investigation is the evidence. Settle a row `verified` or `invalidated` the moment it settles, citing the file, line, or test
+2. The inferred ERD, its entities, and its relationships stay assumptions until Step 7's critique settles them; carry them as rows, NEVER as confident prose
+3. A row no architecture decision requires → cascade it straight to the `story-<n>.md` whose implementation requires it, or `every story-N.md`, per conventions `## Assumptions`. NEVER gate Step 10 on it. No story requires it either → that is a gate, not a cascade; put it to the user at Step 10 instead
+4. A row an architecture decision requires, still unsettled from code → put it to the user at Step 10, one at a time, with what it affects and what changes if it is false
+5. Still unsettled after Step 10 → cascade it the same way as point 3
+6. An `invalidated` row already baked into `epic.md` → surface its impact at Step 10 and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
+
+Edit `## Assumptions` now.
+
+## Step 10: Review with the user
+
+Invoke the `grill-me` skill via `Skill` before running this gate.
+
+Present the current architecture direction to the user:
+- input conflicts and gaps, listed one by one
+- terminology conflicts and rename requests
+- story order conflicts against implementation reality, with both resolution paths
+- decisions with meaningful tradeoffs
+- any weak assumptions that affect the recommended model
+- the assumption ledger: every row still `open` that an architecture decision requires, what it blocks, and what changes if it is false, per conventions `## Assumptions`
+
+For each conflict or tradeoff, present explicit options, state which option the hierarchy or codebase evidence favors, and explain the downstream impact. Keep each question within conventions `## Size caps`.
+
+Edit `## Resolved Source-of-Truth Decisions` and `### Remaining Input Conflicts and Gaps` now, as each item resolves. Continue to Step 11 only once every item above has the user's response.
+
+## Step 11: Draw the epic sequence diagrams
 
 Rules:
 - these are required deliverables, separate from the optional inferred ERD
@@ -294,82 +322,21 @@ Rules:
 - label arrows with the boundary-crossing contract or call, such as HTTP routes, webhooks, queue publishes or consumes, events, SDK calls, or SQL operations
 - do not turn these diagrams into internal function-call traces; concrete code entrypoints may be annotated, but the boundary should remain the primary unit shown
 
-### 7f. Change inventory
+Edit `### Recommended Epic Sequence Diagrams` now.
 
-List every new or modified artifact that later story and criterion work will depend on.
+## Step 12: Build the change inventory
 
-## Step 8: Write `architecture.md`
+List every new or modified artifact that later story and criterion work will depend on. Map each item to the stories, system areas, and reuse status established above.
 
-Write `$EPIC_DIR/architecture.md` with this structure:
+Edit `## Change Inventory` and `## Story Mapping` now.
 
-```md
-# <Epic Name> — Architecture
-> Epic: <epic-slug>
-> Generated: <date>
-> Repos: `<repo>`, ...
-> Stories: `$EPIC_DIR/epic.md`
-> Personas: `$EPIC_DIR/personas.md`
+## Step 13: Final check and approval
 
-## Epic Summary
-## Resolved Source-of-Truth Decisions
-- Use this section only for inconsistencies that were actually resolved during this step
-- Record each resolved inconsistency as its own item using this shape:
-  - Question: ...
-  - Option A: ...
-  - Option B: ...
-  - Chosen: ...
-  - Basis: which source or evidence won for this specific question, and why
-  - Impact: how the decision changed architecture, terminology, reuse, or boundaries
-- If no inconsistencies were resolved, write `- None`
+Per conventions `## Write as you go`: read `~/.claude/commands/a-templates/architecture.md` again, check `$EPIC_DIR/architecture.md` against its `## Shape`, and Edit in only the sections still missing. NEVER rewrite a section an earlier step already settled.
 
-### Remaining Input Conflicts and Gaps
+Present the completed document to the user. On approval, Edit the header's `status` line to `done`.
 
-List only the contradictions and missing inputs that still remain after discussion with the user. Record them as individual items, not bulk file-level conflict notes. This section records items explicitly left open by user choice or still awaiting later resolution. A weak assumption belongs in `## Assumptions`, not here; cite its ID from this section when a conflict turns on it.
-
-## Terminology
-| Domain Term | Repo | Code Name | Definition | Source | Status |
-
-### Key Domain Concepts
-
-## Current System Landscape
-
-### <system area>
-### Communication Paths and Boundaries
-
-## Reuse and Extraction Plan
-| Candidate | Source | Action | Stories | Target System Area |
-
-## Technical Decisions
-| Area | What Exists | What Changes | Decision | Rationale |
-
-## Diagrams and Model Review
-
-### Recommended Epic Class Diagram
-### Recommended Epic Sequence Diagrams
-
-## Change Inventory
-| Type | Name | Action | Story | Details |
-
-## Story Mapping
-| Story | System Areas | New | Modified | Reused | Risk |
-
-## CONTEXT.md Updates Applied
-- Updates made in this run, per repo
-- Conflicts or rename requests left for user review
-
-## Assumptions
-| ID | Assumption | Why It Matters | Status | Evidence or Decision |
-| --- | --- | --- | --- | --- |
-
-- Every `open` and `cascaded` row inherited from `epic.md`, under its original ID, plus this run's own `ARCH-<n>` rows
-- Per `~/.claude/commands/a-templates/conventions.md`'s Assumptions rule
-- No rows when nothing was assumed and nothing was inherited
-
-## Risks and Open Questions
-## References
-```
-
-## Step 9: Update repo terminology
+## Step 14: Update repo terminology
 
 Update the relevant repo's `CONTEXT.md` in this command when the findings are durable and safe:
 - add new terms
@@ -380,7 +347,9 @@ Do not:
 - rename an existing term without explicit user approval
 - persist uncertain conflicts as canonical truth
 
-## Step 10: Present to user
+Edit `## CONTEXT.md Updates Applied` now.
+
+## Step 15: Present to user
 
 Summarize:
 - key decisions
@@ -391,11 +360,11 @@ Summarize:
 - risks and open questions
 - the assumption ledger: rows verified, invalidated, resolved, and cascaded, with the story each cascade lands in
 
-Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs.
+Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs; that already happened at Step 10.
 
 ## Success Criteria
 
-- [ ] `architecture.md` exists with the required sections
+- [ ] `architecture.md` exists, created from its template at the first write and completed incrementally, per conventions `## Write as you go`
 - [ ] all required inputs and followed references were validated before architecture work continued
 - [ ] every story appears in Story Mapping and Change Inventory
 - [ ] the inferred ERD is included or explicitly unavailable
@@ -406,11 +375,13 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] resolved inconsistencies, if any, were persisted in `architecture.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
 - [ ] every story's place in `## Story Order` was checked against implementation reality; any conflict found was surfaced, resolved with the user, and recorded
 - [ ] no story number was changed; any reordering was applied to `epic.md`'s `## Story Order` alone
-- [ ] every `open` and `cascaded` assumption from `epic.md` was inherited into `## Assumptions` under its original ID
+- [ ] every `A-EPIC` row routed to this doc was inherited into `## Assumptions` under its original ID, per conventions `## Assumptions`
 - [ ] every assumption this run could settle from the codebase is `verified` or `invalidated`, with its evidence cited
-- [ ] every row this run could not settle was put to the user, and is `resolved` or `cascaded` to a named `story-<n>.md`
-- [ ] any safe durable `CONTEXT.md` updates were applied, in the correct repo
-- [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user before files were written
+- [ ] the Step 10 gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<n>.md` or `every story-N.md`, never gated here
+- [ ] every gated row this run could not settle was put to the user, and is `resolved`
+- [ ] `epic.md`'s `## Candidate Terms` were confirmed into the relevant repo's `CONTEXT.md`, or left explicit as conflicts for user review
+- [ ] any other safe durable `CONTEXT.md` update was applied, in the correct repo
+- [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user at the Step 10 gate before the header's `status` was set to `done`
 - [ ] the epic slug is recorded in memory
 
 ## Error Handling

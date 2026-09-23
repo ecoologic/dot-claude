@@ -1,7 +1,7 @@
 ---
 description: Turn one acceptance criterion into an ordinary implementation plan grounded in the design
 argument-hint: "[<story-number>] [<criterion-number>] [details]"
-allowed-tools: [Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Skill]
+allowed-tools: [Read, Glob, Grep, Write, Edit, Bash(git rev-parse:*), Bash(date:*), Bash(git symbolic-ref:*), Bash(git branch:*), Agent, AskUserQuestion, Skill]
 disable-model-invocation: true
 ---
 
@@ -13,12 +13,12 @@ disable-model-invocation: true
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
 | **In** | `~/.claude/commands/a-templates/plan.md` | The template for the output document |
-| **In** | `$EPIC_DIR/story-<story-number>.md` | The criterion verbatim, the story's assumption ledger, and its `## Upstream Findings` |
+| **In** | `$EPIC_DIR/story-<story-number>.md` | The criterion verbatim, the story's assumption ledger, and its `## Findings` |
 | **In** | `$EPIC_DIR/design-<story-number>.md` | The agreed design: contracts, file structure, components, reuse, migrations, test lines |
 | **In** | `$EPIC_DIR/epic.md` | Touched repos and story dependencies |
 | **In** | `$EPIC_DIR/plan-<story-number>-*.md` | The criteria of this story already planned, and the verification commands already recorded |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
-| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Upstream Findings` only. NEVER change any other section |
+| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Findings` only. NEVER change any other section |
 | **Out** | `$EPIC_DIR/plan-<story-number>-<criterion-number>.md` | The implementation plan for ONE acceptance criterion |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
@@ -36,8 +36,8 @@ Turn ONE acceptance criterion into an implementation plan a reader can execute w
 - copy the contracts it implements verbatim from the design
 - name the test lines the criterion must make pass, and the exact verification commands
 - bound the scope, the next criterion included
-- settle every assumption it coins, and reprint the ledger it inherits
-- record any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` as an upstream finding
+- settle every assumption it coins, and cite by ID the rows it inherits
+- record any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` as a finding
 
 ## Rules
 
@@ -51,15 +51,15 @@ Turn ONE acceptance criterion into an implementation plan a reader can execute w
 - NEVER detect a verification command. Ask once, record the answer, see Step 7
 - NEVER write application code, and NEVER create commits. `/a-implement` owns both
 - NEVER write files outside `$EPIC_DIR`
-- NEVER write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Upstream Findings` instead, per conventions.md's Upstream findings rule
-- NEVER edit any section of `story-<story-number>.md` except `## Upstream Findings`, and NEVER edit `design-<story-number>.md` at all
-- NEVER apply an upstream finding yourself; `/a-finish` applies them
+- NEVER write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
+- NEVER edit any section of `story-<story-number>.md` except `## Findings`, and NEVER edit `design-<story-number>.md` at all
+- NEVER apply a finding yourself; `/a-finish` applies them
 - NEVER write waves, task packets, subagent prompts, model tables or effort tables
 - NEVER start the implementation, and NEVER offer to; the user runs `/a-implement` when the plan is right
 - a step needing a new type, validation or helper to satisfy the slice keeps it in the same step, instead of splitting it into a separate pseudo-step
 - Prefer existing code patterns, file placement conventions and interfaces over inventing new ones
 - Interactions in chat stay brief and follow the active output style; express the plan in the document, not in chat
-- write and update `plan-<story-number>-<criterion-number>.md` incrementally, per conventions.md's Incremental writes rule
+- write and update `plan-<story-number>-<criterion-number>.md` incrementally, per conventions `## Write as you go`
 
 ## Step 1: Resolve required inputs
 
@@ -96,11 +96,13 @@ Criteria already planned: <list or none>
 Existing plan: <yes, revising | no, new>
 ```
 
+No plan on disk → create `plan-<story-number>-<criterion-number>.md` from the template with `status: draft`, and keep its header per conventions `## Document header`.
+
 ## Step 2: Reconcile the criterion against the codebase
 
 The design already explored the story. This step checks only what this criterion touches: search around the criterion's own area, never the whole repo.
 
-Read `story-<story-number>.md`'s `## Upstream Findings` and factor every confirmed finding into the plan. NEVER apply one upstream — `/a-finish` does that.
+Read `story-<story-number>.md`'s `## Findings` and factor every confirmed finding into the plan. NEVER apply one upstream — `/a-finish` does that.
 
 Resolve these four before any step is written:
 1. Which files will actually change
@@ -189,21 +191,21 @@ Write `## Out Of Scope` now.
 
 Per conventions.md's Assumptions rule.
 
-1. Reprint every row `design-<story-number>.md` carries that this criterion depends on, under its original ID. NEVER renumber one, NEVER drop one by omission
-1. Add a row under `STORY-<story-number>-<n>`, continuing that story's numbering, for every claim this plan acts on without evidence: a corrected path, an interpretation of an underspecified criterion, an unverified dependency, a guessed repo convention
+1. Cite by ID every row `design-<story-number>.md` carries that this criterion depends on, per conventions `## Assumptions`. NEVER renumber one, NEVER drop one by omission
+1. Add a row under `A-STORY-<story-number>-<n>`, continuing that story's numbering, for every claim this plan acts on without evidence: a corrected path, an interpretation of an underspecified criterion, an unverified dependency, a guessed repo convention
 1. Step 2 already checked the criterion's own area. Mark each new row `verified` or `invalidated`, citing the file, line or test
 1. Put every row still `open` to the user, one at a time, with what it blocks and what changes if it is false
 1. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`, in their words, with its impact
 1. The user cannot settle a row → stop. That is a gate: report the row, what it blocks, and the decision needed. NEVER hand `/a-implement` an `open` row
-1. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` also goes to `## Upstream Findings`, per Step 10
+1. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` also goes to `## Findings`, per Step 10
 
 Write `## Assumptions` now.
 
-## Step 10: Record upstream findings
+## Step 10: Record findings
 
 Planning the criterion against real code uncovers what `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` should eventually reflect: a contract the epic architecture states wrongly, a dependency that changes the story order, a durable domain name. NEVER write any of those three files from this command.
 
-Append each finding to `story-<story-number>.md`'s `## Upstream Findings` section instead:
+Append each finding to `story-<story-number>.md`'s `## Findings` section instead:
 - the target doc: `epic.md`, `architecture.md`, or `<repo>/CONTEXT.md`
 - the finding
 - the suggested change
@@ -214,9 +216,9 @@ Append only. NEVER edit a row `/a-story` or `/a-design` already wrote, and NEVER
 
 ## Step 11: Write `plan-<story-number>-<criterion-number>.md`
 
-Read `~/.claude/commands/a-templates/plan.md` and follow it exactly. Its own frontmatter is not part of the document.
+Read `~/.claude/commands/a-templates/plan.md` and follow it exactly. Its command frontmatter is not part of the document; the header inside `## Shape` is.
 
-Write `$EPIC_DIR/plan-<story-number>-<criterion-number>.md`.
+Check the doc against the template and Edit in only missing sections, per conventions `## Write as you go`.
 
 Rules for the plan artifact:
 - the reader has no access to this conversation, to the design document, or to the story. Every path, name and signature it needs is in the plan
@@ -234,17 +236,17 @@ Summarize:
 4. the step count, and which steps are marked `independent`
 5. the verification commands recorded, and which ones the user supplied this run
 6. the assumption ledger: rows verified from code, rows the user resolved, rows invalidated
-7. upstream findings appended to `story-<story-number>.md`
+7. findings appended to `story-<story-number>.md`
 8. anything the design left `TODO` that this criterion needs
 
-Then stop. NEVER start the implementation, and NEVER offer to. The user runs `/a-implement` when the plan is right.
+Then present for approval and set `status: done` only on the user's final approval. Then stop. NEVER start the implementation, and NEVER offer to. The user runs `/a-implement` when the plan is right.
 
 ## Success Criteria
 
 - [ ] `plan-<story-number>-<criterion-number>.md` exists under `$EPIC_DIR`
 - [ ] exactly one acceptance criterion is planned, and it appears verbatim in `## Criterion`
 - [ ] `design-<story-number>.md` was read, and its assumption ledger carried no `open` or `cascaded` row when this command started
-- [ ] `story-<story-number>.md`'s `## Upstream Findings` was read, and every confirmed finding is reflected in the steps; none was applied upstream
+- [ ] `story-<story-number>.md`'s `## Findings` was read, and every confirmed finding is reflected in the steps; none was applied upstream
 - [ ] every dependency that is not `none` was verified in the codebase or put to the user before the plan was written
 - [ ] every file in `## Files` carries an exact path marked `create` or `edit`
 - [ ] every contract in `## Contracts` is copied verbatim from the design; no name, signature or route was invented
@@ -253,8 +255,8 @@ Then stop. NEVER start the implementation, and NEVER offer to. The user runs `/a
 - [ ] every verification command came from the user or from an earlier plan file; none was detected
 - [ ] `## Out Of Scope` names the next criterion explicitly
 - [ ] every assumption this plan coined is `verified`, `resolved`, or `invalidated`; none is left `open` or `cascaded`
-- [ ] any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Upstream Findings`, never applied directly
-- [ ] no section of `story-<story-number>.md` other than `## Upstream Findings` changed, and `design-<story-number>.md` did not change
+- [ ] any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
+- [ ] no section of `story-<story-number>.md` other than `## Findings` changed, and `design-<story-number>.md` did not change
 - [ ] no waves, task packets, subagent prompts, model tables or effort tables appear in the document
 - [ ] the user was asked to review, and no offer to proceed to `/a-implement` was made
 - [ ] the story number and the criterion number are recorded in memory

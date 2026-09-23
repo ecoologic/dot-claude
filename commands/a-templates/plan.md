@@ -14,11 +14,14 @@ One file per acceptance criterion. `/a-implement` executes it with no access to 
 The document is these H2 sections, in this order.
 
 `````md
+---
+updated: 2026-09-23T14:05+1000
+status: draft
+---
+
 # Plan <story-number>-<criterion-number>: <criterion title>
 
 > Epic: <epic name>
-> Slug: <story-slug>
-> Generated: <date>
 > Source Story: `$EPIC_DIR/story-<story-number>.md`
 > Source Design: `$EPIC_DIR/design-<story-number>.md`
 > Repos: <repo>, <repo>
