@@ -12,6 +12,10 @@
 1. ALWAYS setup a worktree (with `/wt`) for a new feature, then run the setup script
 1. NEVER push a branch unless you're told
 
+## Chat
+
+1. ALWAYS use `ask-user-question` skill before asking user questions
+
 ## Plan mode
 
 1. ALWAYS print the folder and the plan path just before EOM (even if repeated somewhere else):

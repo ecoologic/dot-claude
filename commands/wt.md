@@ -2,7 +2,6 @@
 description: Create a sibling git worktree named <project-initials>-<sanitised-branch>
 argument-hint: <branch-name>
 model: haiku
-disable-model-invocation: true
 ---
 
 # Create Git Worktree
