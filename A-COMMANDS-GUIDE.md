@@ -10,7 +10,7 @@ A pipeline for taking an idea from a rough note through to a shipped story using
 | Architecture | `/a-architecture` | Working |
 | Story | `/a-story` | Working |
 | Design | `/a-design` | Working |
-| Plan | `/a-plan` | Does not exist yet |
+| Plan | `/a-plan` | Working |
 | Implement | `/a-implement` | Does not exist yet |
 | Finish | `/a-finish` | Does not exist yet |
 
@@ -27,13 +27,14 @@ A pipeline for taking an idea from a rough note through to a shipped story using
 /rtd
 /a-story
 /a-design
+/a-plan                 # one criterion at a time
 ```
 
 `/a-cont <slug>` runs the next unticked stage of this instead, one at a time, and prints the exact next command to type.
 
 ## The three loops
 
-The full pipeline has three loops. The first is complete; the per-story loop stops after `a-design`.
+The full pipeline has three loops. The first is complete; the per-story loop stops after `a-design`, and the per-criterion loop stops after `a-plan`.
 
 | Loop | Commands | Artefacts |
 | --- | --- | --- |
@@ -55,7 +56,9 @@ The full pipeline has three loops. The first is complete; the per-story loop sto
         ├── architecture.md
         ├── progress.md                # the whole epic's state
         ├── story-1.md                 # /a-story, one file per story
-        └── design-1.md                # /a-design, one file per story
+        ├── design-1.md                # /a-design, one file per story
+        ├── plan-1-1.md                # /a-plan, one file per acceptance criterion
+        └── plan-1-2.md
 ```
 
 Planning is never committed. `CONTEXT.md` in each repo is the only tracked artefact this flow writes to outside `planning/`.
@@ -67,6 +70,7 @@ Planning is never committed. `CONTEXT.md` in each repo is the only tracked artef
 1. `/a-architecture` — no argument needed; it defaults to the epic you just created
 1. `/a-story` — no argument needed the first time; it defaults to the epic in memory and asks which story number when more than one is Actionable. Later stories: `/a-story <n>`
 1. `/a-design` — no argument needed; it defaults to the story you just broke down. It ends when you say the design is ready, not before
+1. `/a-plan` — no argument needed; it defaults to the story in memory and the first criterion with no plan file yet. One criterion per run: `/a-plan <n> <m>` picks another
 
 ## Resuming after `/clear`
 
@@ -89,6 +93,7 @@ Trailing text after the selector passes straight through to the command as high-
 | `architecture.md` | `a-architecture` | The epic's architecture: critique, decisions, diagrams, terminology, change inventory. There is no other architecture document — repo-level context comes from each repo's README, `CLAUDE.md`, `CONTRIBUTING.md`, and `CONTEXT.md`. `a-finish` is the only later command that writes it |
 | `story-N.md` | `a-story` | WHAT the story delivers: its slug, user context, Given/When/Then acceptance criteria, UI references, a settled assumption ledger, and an `## Upstream Findings` log that every later stage appends to and only `a-finish` applies. It carries no technical design |
 | `design-N.md` | `a-design` | HOW the story is built: goal, UX, UI sketch, components, file structure, reuse and extractions, contracts, migrations, the two story-level diagrams, happy-path test lines, risks, and the decision registry |
+| `plan-N-M.md` | `a-plan` | HOW one acceptance criterion gets built: the criterion verbatim, its outcome and dependencies, the exact files, the numbered steps, the contracts copied from the design, the test lines, the verification commands, and what is out of scope |
 | `progress.md` | `a-cont` | The completion matrix for the whole epic |
 | `CONTEXT.md` (in each repo) | `a-epic`, `a-architecture` | That repo's naming baseline. Later stages record term findings in `story-N.md` instead; `a-finish` applies them |
 

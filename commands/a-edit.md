@@ -32,6 +32,7 @@ This command is not a pipeline stage. It NEVER appears in `progress.md`, and it 
 | `architecture` | none | `/a-architecture` | `$EPIC_DIR/architecture.md` |
 | `story` | `<story-number>` | `/a-story` | `$EPIC_DIR/story-<story-number>.md` |
 | `design` | `<story-number>` | `/a-design` | `$EPIC_DIR/design-<story-number>.md` |
+| `plan` | `<story-number> <criterion-number>` | `/a-plan` | `$EPIC_DIR/plan-<story-number>-<criterion-number>.md` |
 
 An artifact type whose owner command file does not exist under `~/.claude/commands/` is unsupported. Stop and say which command must be written first; NEVER reconstruct a contract from the artifact alone.
 
@@ -59,7 +60,9 @@ This command should:
 - NEVER write application code, create commits, or write files outside `$EPIC_DIR` and whatever the owner command is itself allowed to write
 - NEVER write `progress.md`
 - NEVER write a file the owner command is forbidden to write. Revising `story-<story-number>.md` or `design-<story-number>.md` carries the same ban on `epic.md`, `architecture.md`, and a repo's `CONTEXT.md`; record the change in `story-<story-number>.md`'s `## Upstream Findings` instead, per conventions.md's Upstream findings rule
-- NEVER edit any section of `story-<story-number>.md` except `## Upstream Findings` while revising `design-<story-number>.md`; `/a-design` is bound by the same rule
+- NEVER edit any section of `story-<story-number>.md` except `## Upstream Findings` while revising `design-<story-number>.md` or `plan-<story-number>-<criterion-number>.md`; `/a-design` and `/a-plan` are bound by the same rule
+- NEVER edit `design-<story-number>.md` while revising `plan-<story-number>-<criterion-number>.md`; a design gap is revised with `/a-edit design <story-number>` first, then the plan is revised against it
+- NEVER detect a verification command while revising a plan; it comes from the user or from an earlier `plan-<story-number>-*.md`, per `/a-plan`'s own rule
 - NEVER change a story number. Sequencing guidance rewrites `epic.md`'s `## Story Order`, per conventions.md
 - NEVER drop, renumber, or silently re-status a row in `## Assumptions`, per conventions.md's Assumptions rule
 - NEVER collapse a canonical _As a_ / _I want_ / _So that_ or _Given_ / _When_ / _Then_ block, per conventions.md's Canonical blocks rule
@@ -75,6 +78,7 @@ This command should:
 1. Empty guidance text → stop and ask what to revise.
 1. Unsupported artifact type → print the Supported Targets table and stop.
 1. `story` or `design` with no selector → fall through selector resolution: the current branch, then memory, then list the story numbers on disk and ask.
+1. `plan` takes two numbers. Missing the story number → resolve it as above. Missing the criterion number → list the `plan-<story-number>-*.md` files on disk and ask which one to revise.
 1. Resolve `$EPIC_DIR`. Record the resolved selector in memory.
 
 ## Step 2: Load the owner contract and the artifact
@@ -133,7 +137,7 @@ Then reconcile what the revision disturbed:
 1. Sequencing changed and the target is `epic.md` → rewrite `## Story Order` only. NEVER renumber a story, NEVER rename `story-N.md`
 1. Sequencing changed and the target is `story-<story-number>.md` → record it in `## Upstream Findings` against `epic.md`'s `## Story Order`. NEVER edit `epic.md` from a story revision
 1. The revision invalidates a `verified` or `resolved` assumption → re-status that row `invalidated`, record what is true instead, and carry it forward per conventions.md's Assumptions rule
-1. The revision acts on a new claim without evidence → add it as a new row under the artifact's own ID prefix, and settle it under the owner command's rules. A `story` revision settles it in this run, because `/a-design` inherits no open row; a `design` revision settles it too, because `/a-plan` inherits none either
+1. The revision acts on a new claim without evidence → add it as a new row under the artifact's own ID prefix, and settle it under the owner command's rules. A `story` revision settles it in this run, because `/a-design` inherits no open row; a `design` revision settles it too, because `/a-plan` inherits none either; a `plan` revision settles it as well, because `/a-implement` inherits none
 1. A canonical block is reworded → keep one clause per line and keep its trailing hard breaks
 1. A durable confirmed term changed → update the relevant repo's `CONTEXT.md` only when the owner command is itself allowed to write it, and only additively
 
@@ -151,6 +155,7 @@ Report what this revision just made stale. Do not rewrite any of it in this run.
 | `architecture.md` | every `story-N.md`, its own cascaded assumption rows, and every later stage for this epic |
 | `story-N.md` | that story's `design-N.md`, its `plan-N-M.md` files, and every later stage for that story |
 | `design-N.md` | that story's `plan-N-M.md` files, and every later stage for that story |
+| `plan-N-M.md` | that criterion's `/a-implement` run, and that story's `a-finish` |
 
 Also report, every run:
 1. the artifact's row in `progress.md` is now ticked against stale evidence; `/a-cont` refreshes the hash on its next reconcile
@@ -185,7 +190,7 @@ Ask the user to review the revision before advancing the pipeline again.
 - [ ] the guidance was addressed without broad regeneration
 - [ ] no file the owner command is forbidden to write was written, and `progress.md` was not touched
 - [ ] no story number changed; any sequencing change landed in `epic.md`'s `## Story Order` or in `## Upstream Findings`
-- [ ] every assumption row the revision disturbed was re-statused, never dropped; a `story` or `design` revision left none `open` or `cascaded`
+- [ ] every assumption row the revision disturbed was re-statused, never dropped; a `story`, `design` or `plan` revision left none `open` or `cascaded`
 - [ ] canonical blocks kept one clause per line
 - [ ] downstream impact and stale `progress.md` evidence were reported explicitly
 - [ ] the user was asked to review before the pipeline advanced
