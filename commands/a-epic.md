@@ -12,11 +12,11 @@ disable-model-invocation: true
 | Direction  | File                                      | Description                                                                                                      |
 | ---------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **In**     | `~/.claude/commands/a-templates/conventions.md`     | Shared folder layout, path resolution, selector resolution, and vertical-slicing rules                          |
-| **In**     | `$EPIC_DIR/idea.md`                       | Raw epic idea and links to supporting artifacts                                                                  |
+| **In**     | `$EPIC_DIR/epic-requirements.md`                       | Raw epic idea and links to supporting artifacts                                                                  |
 | **In**     | `<repo>/CONTEXT.md`, per touched repo     | Existing naming baseline for that repo                                                                           |
 | **Out**    | `$EPIC_DIR/epic.md`                       | Structured now-work story list plus epic-level domain concepts, requirements, UX framing, candidate terms, the touched-repo list, and a top-of-file UI design reference section for later stages |
-| **Out**    | `$EPIC_DIR/personas.md`                   | Personas, actors, and usage context for later stages                                                             |
-| **Out**    | `$EPIC_DIR/stretch-goals.md`              | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
+| **Out**    | `$EPIC_DIR/epic-personas.md`                   | Personas, actors, and usage context for later stages                                                             |
+| **Out**    | `$EPIC_DIR/epic-stretch-goals.md`              | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -29,16 +29,16 @@ Discover and invoke project skills per `~/.claude/commands/a-templates/conventio
 Turn a rough idea into a high-quality epic packet for the rest of the pipeline:
 - `epic.md` defines the current story list, the touched repos, and the shape of the work
 - `epic.md` preserves UI references near the top of the file so later stages can find and follow them immediately when the epic has UI
-- `personas.md` captures the actors, goals, and contexts that later commands must inherit
-- `stretch-goals.md` captures worthwhile later-scope ideas that no one needs to read for now
+- `epic-personas.md` captures the actors, goals, and contexts that later commands must inherit
+- `epic-stretch-goals.md` captures worthwhile later-scope ideas that no one needs to read for now
 
 This command produces workflow artifacts only. It must not investigate the codebase or write implementation code.
 
 For downstream commands, the source of truth shifts to the packet produced here:
 1. `epic.md`
-2. `personas.md`
+2. `epic-personas.md`
 3. UI-facing design artifacts and references preserved near the top of `epic.md`
-4. `idea.md` as the raw upstream input
+4. `epic-requirements.md` as the raw upstream input
 
 Use this hierarchy per question, not per file. Do not resolve a whole run by deciding that one file wins globally.
 
@@ -51,14 +51,14 @@ Treat each inconsistency independently:
 ## Rules
 
 - NEVER write or modify application code, or create commits. Per conventions `## Path resolution`, write only inside `$EPIC_DIR`, except the memory file
-- NEVER investigate the codebase for this step; rely on `idea.md` and its referenced product artifacts only
+- NEVER investigate the codebase for this step; rely on `epic-requirements.md` and its referenced product artifacts only
 - NEVER define synonyms; if a term exists in a touched repo's `CONTEXT.md`, use its exact term everywhere
 - NEVER abbreviate new names
 - NEVER slice stories by technology layer
 - NEVER write implementation details, API shapes, schema designs, or task-level work into `epic.md`
 - NEVER reuse or renumber a story number; each number maps 1:1 to exactly one `## Story N` section in `epic.md` and exactly one future `story-N.md` file, per conventions `## Story numbers`
-- produce `personas.md` in this command so later stages inherit the same actors and usage context
-- keep stretch goals out of `epic.md`; write them to `stretch-goals.md` instead
+- produce `epic-personas.md` in this command so later stages inherit the same actors and usage context
+- keep stretch goals out of `epic.md`; write them to `epic-stretch-goals.md` instead
 - Per conventions `## Assumptions`, NEVER state an unverified claim as settled fact anywhere in `epic.md`; record it as a row instead and cite its ID where it matters
 - Every Edit to a doc refreshes its `updated` header, per conventions `## Document header`
 
@@ -130,16 +130,16 @@ When several reasonable splits exist, prefer the smallest user-visible slice and
 1. Resolve `<epic-slug>` per conventions `## Selector resolution`'s planning-stage order: the command's own argument, then memory, then stop and ask. Skill: `ask-user-question`.
 1. `<epic-slug>` is new (no matching folder exists yet) → confirm it with the user before `$EPIC_DIR` is created, per conventions `## Selector resolution`. Skill: `ask-user-question`.
 1. Resolve `$EPIC_DIR` = `$PLANNING_ROOT/<epic-slug>`. Print it. Create it when it does not exist.
-1. `$EPIC_DIR/idea.md` exists → read it whole. Missing and `[details]` was given → create it from `~/.claude/commands/a-templates/idea.md`, with `[details]` verbatim as the idea. Missing and no `[details]` → stop, print the exact path `$EPIC_DIR/idea.md`, and ask for the idea. Skill: `ask-user-question`.
+1. `$EPIC_DIR/epic-requirements.md` exists → read it whole. Missing and `[details]` was given → create it from `~/.claude/commands/a-templates/epic-requirements.md`, with `[details]` verbatim as the idea. Missing and no `[details]` → stop, print the exact path `$EPIC_DIR/epic-requirements.md`, and ask for the idea. Skill: `ask-user-question`.
 1. `epic.md` does not yet exist → create it from `~/.claude/commands/a-templates/epic.md`. It exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit it only from here on; NEVER recreate it.
-1. Follow `idea.md`'s references to supporting materials. An unreadable reference → report it and Edit a new `open` row into `epic.md`'s `## Assumptions`.
+1. Follow `epic-requirements.md`'s references to supporting materials. An unreadable reference → report it and Edit a new `open` row into `epic.md`'s `## Assumptions`.
 1. Identify UI-facing referenced artifacts. Edit them into `epic.md`'s `## UI Design References`, or `- None`.
 
 Output:
 ```text
 Epic slug: <epic-slug>
 Epic dir: <EPIC_DIR>
-Idea source: <written from details | read from idea.md>
+Idea source: <written from details | read from epic-requirements.md>
 Referenced artifacts: <list or none>
 UI references found: <list or none>
 ```
@@ -154,7 +154,7 @@ UI references found: <list or none>
 
 ## Step 2: Create personas
 
-Derive the actors and usage contexts needed to reason about the epic. `personas.md` missing → create it from `~/.claude/commands/a-templates/personas.md`. It exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit in each persona, `## Shared Constraints`, and `## References` as they are settled.
+Derive the actors and usage contexts needed to reason about the epic. `epic-personas.md` missing → create it from `~/.claude/commands/a-templates/epic-personas.md`. It exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit in each persona, `## Shared Constraints`, and `## References` as they are settled.
 
 Only include personas that matter to the epic. Avoid speculative future roles.
 
@@ -194,7 +194,7 @@ Ask the user to confirm or adjust this proposed scope before continuing. Skill: 
 
 Once a story's classification is confirmed:
 - `Actionable` or `Blocked` → assign it the next integer story number, in ascending order; that number is the story's permanent identity and NEVER changes again. Edit its `## Story N: <title>` section into `epic.md` immediately, with its canonical statement, `### User Context`, and `### Dependencies`
-- `Nice to have` → gets no story number. `stretch-goals.md` missing → create it from `~/.claude/commands/a-templates/stretch-goals.md` on the first one; exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit its `## Stretch Goal N: <title>` section in immediately
+- `Nice to have` → gets no story number. `epic-stretch-goals.md` missing → create it from `~/.claude/commands/a-templates/epic-stretch-goals.md` on the first one; exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit its `## Stretch Goal N: <title>` section in immediately
 
 Once every story is classified and written, Edit `epic.md`'s `## Story Order` with every `Actionable` and `Blocked` story, in execution order.
 
@@ -204,13 +204,13 @@ Edit into `epic.md`, one section at a time as each settles:
 - `## Domain Concepts` — domain concepts inferred from the idea and referenced product artifacts only, never the codebase
 - `## Requirements` — cross-story requirements that shape the whole epic
 - `## UX Considerations` — epic-level UX constraints or interaction expectations shared across stories
-- `## References` — every reference `idea.md` named, plus any this step adds
+- `## References` — every reference `epic-requirements.md` named, plus any this step adds
 
 `epic.md`'s full shape and per-section rules are `~/.claude/commands/a-templates/epic.md`.
 
-## Step 6: Confirm stretch-goals.md
+## Step 6: Confirm epic-stretch-goals.md
 
-`stretch-goals.md` already exists, from Step 4, when any `Nice to have` story was found → keep it and Edit only. No `Nice to have` stories were found and it still does not exist → create `$EPIC_DIR/stretch-goals.md` from `~/.claude/commands/a-templates/stretch-goals.md` now, per its own Rule 1.
+`epic-stretch-goals.md` already exists, from Step 4, when any `Nice to have` story was found → keep it and Edit only. No `Nice to have` stories were found and it still does not exist → create `$EPIC_DIR/epic-stretch-goals.md` from `~/.claude/commands/a-templates/epic-stretch-goals.md` now, per its own Rule 1.
 
 ## Step 7: Record candidate terms
 
@@ -220,27 +220,27 @@ Edit `epic.md`'s `## Candidate Terms` with every durable product term this run c
 
 ## Step 8: Present to user
 
-Check `epic.md`, `personas.md`, and `stretch-goals.md` each against their own template in `~/.claude/commands/a-templates/`; Edit in any section still missing or empty in any of them.
+Check `epic.md`, `epic-personas.md`, and `epic-stretch-goals.md` each against their own template in `~/.claude/commands/a-templates/`; Edit in any section still missing or empty in any of them.
 
 Summarize:
 1. story count by classification
 2. recommended starting story
 3. personas created
-4. whether `stretch-goals.md` was created and how many items it contains
+4. whether `epic-stretch-goals.md` was created and how many items it contains
 5. the assumption ledger: every row, its status, and which rows leave this step `open`
 6. any candidate terms recorded in `epic.md`'s `## Candidate Terms`
 
-Tell the user that the main review path is `epic.md` plus `personas.md`, and that `stretch-goals.md` is optional for now.
+Tell the user that the main review path is `epic.md` plus `epic-personas.md`, and that `epic-stretch-goals.md` is optional for now.
 
 Invite final feedback on the generated artifacts before moving to `/a-architecture`. Skill: `ask-user-question`. Do not use this step as the primary scope discussion gate.
 
-On the user's approval, Edit `epic.md`'s header to `status: done`, per conventions `## Write as you go`. `personas.md` and `stretch-goals.md` carry no `status` key, per conventions `## Document header`.
+On the user's approval, Edit `epic.md`'s header to `status: done`, per conventions `## Write as you go`. `epic-personas.md` and `epic-stretch-goals.md` carry no `status` key, per conventions `## Document header`.
 
 ## Success Criteria
 
 - [ ] `epic.md` exists at `$EPIC_DIR/epic.md`
-- [ ] `personas.md` exists at `$EPIC_DIR/personas.md`
-- [ ] `stretch-goals.md` exists at `$EPIC_DIR/stretch-goals.md`
+- [ ] `epic-personas.md` exists at `$EPIC_DIR/epic-personas.md`
+- [ ] `epic-stretch-goals.md` exists at `$EPIC_DIR/epic-stretch-goals.md`
 - [ ] all required inputs and followed references were validated before execution continued
 - [ ] every story uses canonical _As a / I want / So that_ format
 - [ ] every story includes `### User Context` and `### Dependencies` sections
@@ -249,7 +249,7 @@ On the user's approval, Edit `epic.md`'s header to `status: done`, per conventio
 - [ ] stories are sliced by user value, not by tech layer
 - [ ] `epic.md` does not include numbered acceptance criteria; `/a-story` owns acceptance-criteria drafting
 - [ ] `epic.md` contains only `Actionable` and `Blocked` stories
-- [ ] `Nice to have` stories, if any, were written only to `stretch-goals.md`
+- [ ] `Nice to have` stories, if any, were written only to `epic-stretch-goals.md`
 - [ ] every touched repo is listed in `## Repos`
 - [ ] UI-facing references from the inputs were preserved near the top of `epic.md` in `## UI Design References`, or `- None` was written explicitly
 - [ ] resolved inconsistencies, if any, were persisted in `epic.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly

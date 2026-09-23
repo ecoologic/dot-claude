@@ -1,11 +1,11 @@
 ---
-description: "Template: design-N.md, the story design produced by /a-design"
+description: "Template: story-N-design.md, the story design produced by /a-design"
 disable-model-invocation: true
 ---
 
 # Design document template
 
-`design-<story-number>.md` lives at `$EPIC_DIR/design-<story-number>.md`, beside `story-<story-number>.md`. `/a-design` writes it; `/a-edit design <story-number>` revises it.
+`story-<story-number>-design.md` lives at `$EPIC_DIR/story-<story-number>-design.md`, beside `story-<story-number>.md`. `/a-design` writes it; `/a-edit design <story-number>` revises it.
 
 ## Shape
 
@@ -135,7 +135,7 @@ repo/
 
 ## References
 - `$EPIC_DIR/story-<story-number>.md`
-- `$EPIC_DIR/architecture.md`
+- `$EPIC_DIR/epic-architecture.md`
 ````
 
 ## Header
@@ -171,4 +171,4 @@ Per conventions `## Document header`. `status` moves to `done` only on the user'
 1. Mark every speculation `TODO`
 1. Every path and symbol is real, or is marked as planned by this design
 1. NEVER record conversation history outside `## Decision Registry`. A wording or naming back-and-forth belongs nowhere, unless it changed the approach
-1. NEVER repeat `architecture.md`'s epic-level diagrams. This document is story altitude
+1. NEVER repeat `epic-architecture.md`'s epic-level diagrams. This document is story altitude

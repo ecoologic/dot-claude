@@ -1,11 +1,11 @@
 ---
-description: "Template: idea.md, the epic's raw idea and supporting links captured by /a-epic"
+description: "Template: epic-requirements.md, the epic's raw idea and supporting links captured by /a-epic"
 disable-model-invocation: true
 ---
 
 # Idea document template
 
-`idea.md` lives at `$EPIC_DIR/idea.md`. `/a-epic` Step 0 writes it from `[details]` verbatim when it does not yet exist, and reads it whole on every later run.
+`epic-requirements.md` lives at `$EPIC_DIR/epic-requirements.md`. `/a-epic` Step 0 writes it from `[details]` verbatim when it does not yet exist, and reads it whole on every later run.
 
 ## Shape
 

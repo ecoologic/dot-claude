@@ -15,26 +15,26 @@ Every `a-*` command reads this file as its own step 1 and follows it. A command 
 ├── fb-checkout-flow-1-guest-email/   # /wt worktree, sibling, per story
 └── planning/                         # git repo, the user commits it by hand
     └── checkout-flow/                # epic slug
-        ├── idea.md
-        ├── epic.md
-        ├── personas.md
-        ├── stretch-goals.md
-        ├── architecture.md
-        ├── progress.md               # the whole epic's state
+        ├── epic-architecture.md      # /a-architecture
+        ├── epic-personas.md          # /a-epic
+        ├── epic-progress.md          # the whole epic's state, /a-cont
+        ├── epic-requirements.md      # /a-epic Step 0, from the raw idea
+        ├── epic-stretch-goals.md     # /a-epic
+        ├── epic.md                   # /a-epic
+        ├── story-1-ac1.md            # /a-plan, story 1 criterion 1
+        ├── story-1-ac2.md
+        ├── story-1-design.md         # /a-design
         ├── story-1.md                # /a-story
-        ├── design-1.md               # /a-design
-        ├── plan-1-1.md               # /a-plan, story 1 criterion 1
-        ├── plan-1-2.md
         └── story-2.md                # ... one set per story
 ```
 
-One flat epic folder. The suffix is `<story-number>` or `<story-number>-<criterion-number>`, so any artefact resolves from numbers alone.
+Every file name doubles as its alphabetical sort key: an `epic-` or `story-<story-number>-` prefix, plus a trailing detail (`-design`, `-ac<criterion-number>`) or none for the stage's own root doc (`epic.md`, `story-<story-number>.md`). `ls` groups every epic-level doc together and every story's own artefacts together, in the order shown above. One flat epic folder; any artefact resolves from numbers alone. Past 9 stories or 9 criteria, the two-digit numbers (`story-10-*.md`, `story-<n>-ac10.md`) sort lexicographically inside their group, not numerically, but the group itself stays contiguous.
 
 ## Story numbers
 
 1. `N` is permanent identity: assigned once by `a-epic`, never reused, never changed
 1. The execution order lives in `epic.md`'s `## Story Order`, never in the numbers, so the two are free to disagree
-1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `design-N.md`, `plan-N-M.md`, the branch name and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
+1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the branch name and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
 
 ## Path resolution
 
@@ -104,7 +104,7 @@ The user clears and compacts context between stages. Every `a-*` command runs fr
 
 ## Templates
 
-1. Every planning doc has exactly one template in `~/.claude/commands/a-templates/`, named after the doc: `idea.md`, `epic.md`, `personas.md`, `stretch-goals.md`, `architecture.md`, `story.md`, `design.md`, `plan.md`, `progress.md`
+1. Every planning doc has exactly one template in `~/.claude/commands/a-templates/`, named after the doc: `epic-requirements.md`, `epic.md`, `epic-personas.md`, `epic-stretch-goals.md`, `epic-architecture.md`, `story.md`, `story-design.md`, `story-ac.md`, `epic-progress.md`
 1. The template's `## Shape` block is the doc's structure. A command reads headings from the template; NEVER retype a heading from memory or from another command
 1. A command reads another stage's doc by the headings in that doc's template
 
@@ -123,12 +123,12 @@ branch: checkout-flow/1-guest-email
 | Key | On | Content |
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
-| `status` | the stage's primary doc: `epic.md`, `architecture.md`, `story-N.md`, `design-N.md`, `plan-N-M.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions` |
+| `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions` |
 | `branch` | `story-N.md` only | `<epic-slug>/<n>-<story-slug>`, set once the slug locks. `/wt` and `a-implement` read it from here |
 
 1. Update each key with one exact Edit of its line. NEVER rewrite the header block as a whole
 1. A later revision of a `done` doc keeps `status: done` and refreshes `updated`
-1. A stage that writes no doc (`a-implement`, `a-finish`) records its status in its `progress.md` row only
+1. A stage that writes no doc (`a-implement`, `a-finish`) records its status in its `epic-progress.md` row only
 1. A doc without a header is legacy. Its owning command, or `/a-edit`, adds the header the next time it writes that doc. NEVER bulk-migrate
 
 ## Write as you go
@@ -142,7 +142,7 @@ This is THE write rule for every `a-*` command. No command restates it or carves
 
 ## Single source of facts
 
-Each fact lives in one planning doc. Every other doc cites it by assumption ID or by heading (`architecture.md` → `## Technical Decisions`), NEVER copies it. A copy drifts.
+Each fact lives in one planning doc. Every other doc cites it by assumption ID or by heading (`epic-architecture.md` → `## Technical Decisions`), NEVER copies it. A copy drifts.
 
 ## Canonical blocks
 
@@ -191,27 +191,27 @@ Findings travel up; assumptions travel down. Every stage records what it acted o
 | Evidence or Decision | `verified` → the file, line, test, or reference that proves it. `resolved` → the user's decision, in their words. `invalidated` → what is true instead. `cascaded` → the doc that inherits it. `open` → empty |
 
 1. Legacy IDs without the `A-` prefix (`EPIC-5`, `ARCH-3`, `STORY-1-2`) are the same row as their prefixed form (`A-EPIC-5`). Match them as equal when reading; write new rows prefixed only
-1. Routing: every `a-epic` row routes to `architecture.md`. A `cascaded` row routes to the doc its Evidence cell names (`story-3.md`, or `every story-N.md`)
+1. Routing: every `a-epic` row routes to `epic-architecture.md`. A `cascaded` row routes to the doc its Evidence cell names (`story-3.md`, or `every story-N.md`)
 1. A stage inherits only the `open` and `cascaded` rows routed to its own doc, and reprints each under its original ID. NEVER drop a routed row by omission
 1. A settled row is cited by ID, NEVER reprinted
-1. One ID, one truth: the most downstream doc's status wins, in the order `epic.md` → `architecture.md` → `story-N.md` → `design-N.md` → `plan-N-M.md`. NEVER go back to update the upstream row
+1. One ID, one truth: the most downstream doc's status wins, in the order `epic.md` → `epic-architecture.md` → `story-N.md` → `story-N-design.md` → `story-N-acM.md`. NEVER go back to update the upstream row
 1. A stage settles what its own evidence settles: `verified` when the codebase, a test, or a followed reference proves it; `invalidated` when they disprove it
 1. It cannot settle a row from evidence → put it to the user. Their call is `resolved`, recorded in their words
 1. It can settle a row neither way → `cascaded`, naming the doc that inherits it. A cascade is the ONLY way to leave a row unsettled, and a cascade with nowhere left to go is a gate, not a pass
 1. The gate covers only the rows this story's implementation requires. NEVER let such a row reach `/a-design` `open` or `cascaded`. `a-story` is their deadline: it verifies what the codebase can settle, then puts the rest to the user
 1. A routed row this story's implementation does not require is never gated here: cascade it to the doc that does require it (`story-N.md` of a later story, or `every story-N.md`)
 1. The user may settle a row by accepting it as a known risk. That is `resolved`, recorded with the decision and its impact — NEVER a silent pass
-1. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` also becomes a finding, per `## Findings` below
+1. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` also becomes a finding, per `## Findings` below
 1. NEVER record an assumption as prose. The table is the ledger; a narrative section may cite an ID, NEVER restate the claim in its place
 
 ## Findings
 
-A story's own stages touch one planning doc each. None of them write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` directly.
+A story's own stages touch one planning doc each. None of them write `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` directly.
 
 1. `a-story`, `a-design`, `a-plan`, and `a-implement` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves: the target doc, the finding, the suggested change
-1. A confirmed finding overrides the shared doc it targets. Every later stage reads `## Findings` beside `architecture.md` and acts on the finding, NEVER on the text it corrects
-1. Until `a-finish` exists, a stage also reads `## Findings` in every other `story-*.md` of the epic, since nothing has applied them upstream yet
-1. `a-finish` is the only command that applies confirmed findings from `## Findings` to `epic.md`, `architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands
+1. A confirmed finding overrides the shared doc it targets. Every later stage reads `## Findings` beside `epic-architecture.md` and acts on the finding, NEVER on the text it corrects
+1. Until `a-finish` exists, a stage also reads `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, since nothing has applied them upstream yet
+1. `a-finish` is the only command that applies confirmed findings from `## Findings` to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands
 1. A story-order conflict takes the same route: the finding targets `epic.md`'s `## Story Order`, names the position the story must move to, and names the dependency that forces it. Per `## Story numbers`, it NEVER renumbers
 
 ## Skills

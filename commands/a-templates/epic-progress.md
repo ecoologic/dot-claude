@@ -1,11 +1,11 @@
 ---
-description: "Template: progress.md, the epic-wide state file seeded and driven by /a-cont"
+description: "Template: epic-progress.md, the epic-wide state file seeded and driven by /a-cont"
 disable-model-invocation: true
 ---
 
 # Progress file template
 
-`progress.md` lives at `$EPIC_DIR/progress.md`, beside `epic.md` and `architecture.md`. `/a-cont` is the only writer.
+`epic-progress.md` lives at `$EPIC_DIR/epic-progress.md`, beside `epic.md` and `epic-architecture.md`. `/a-cont` is the only writer.
 
 ## Shape
 
@@ -24,9 +24,9 @@ Repos: <repo>, <repo>, ...
 | Done | Stage | Artefact | Status | Updated | Branch |
 | --- | --- | --- | --- | --- | --- |
 | [x] | a-epic | epic.md | done | 2026-09-21T16:54+1000 | - |
-| [x] | a-architecture | architecture.md | done | 2026-09-22T10:02+1000 | - |
+| [x] | a-architecture | epic-architecture.md | done | 2026-09-22T10:02+1000 | - |
 | [x] | a-story 3 | story-3.md | done | 2026-09-22T19:23+1000 | checkout-flow/3-guest-email |
-| [ ] | a-design 3 | design-3.md | draft | 2026-09-23T09:40+1000 | checkout-flow/3-guest-email |
+| [ ] | a-design 3 | story-3-design.md | draft | 2026-09-23T09:40+1000 | checkout-flow/3-guest-email |
 
 ## Blocked
 
@@ -41,7 +41,7 @@ Repos: <repo>, <repo>, ...
 
 | Field | Content |
 | --- | --- |
-| `updated` | Per conventions `## Document header`. `progress.md` carries no `status` |
+| `updated` | Per conventions `## Document header`. `epic-progress.md` carries no `status` |
 | Epic dir | `$EPIC_DIR`, resolved per `~/.claude/commands/a-templates/conventions.md` |
 | Repos | The touched-repos list from `epic.md`'s `## Repos` |
 
@@ -77,7 +77,7 @@ The matrix follows `## Story Order`, never the number sequence: story 3 above ru
 
 ## Legacy matrix
 
-A `progress.md` without the header, or with the old `# | Stage | Selector | Evidence | Status` columns, is legacy. `/a-cont` rewrites it into this shape on its next write, once:
+An `epic-progress.md` without the header, or with the old `# | Stage | Selector | Evidence | Status` columns, is legacy. `/a-cont` rewrites it into this shape on its next write, once:
 
 1. Stage = the old Stage plus the old Selector's numbers (`a-story` + `story 1` → `a-story 1`)
 1. Artefact = the file the old Evidence names, else the path the stage's command writes
@@ -92,4 +92,4 @@ A `progress.md` without the header, or with the old `# | Stage | Selector | Evid
 2. Every stage records the command's own report, never its prose
 3. One row per stage per selector, in execution order
 4. `## Blocked` is empty while the run is healthy. A gate writes the stage, the exact failure, and the decision the user must make
-5. `$PLANNING_ROOT` is a git repository; the user commits `progress.md` by hand, never `/a-cont`
+5. `$PLANNING_ROOT` is a git repository; the user commits `epic-progress.md` by hand, never `/a-cont`

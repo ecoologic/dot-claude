@@ -5,7 +5,7 @@ disable-model-invocation: true
 
 # Epic document template
 
-`epic.md` lives at `$EPIC_DIR/epic.md`, beside `idea.md`, `personas.md`, and `stretch-goals.md`. `/a-epic` writes it; `/a-edit epic` revises it.
+`epic.md` lives at `$EPIC_DIR/epic.md`, beside `epic-requirements.md`, `epic-personas.md`, and `epic-stretch-goals.md`. `/a-epic` writes it; `/a-edit epic` revises it.
 
 ## Shape
 
@@ -98,7 +98,7 @@ status: draft
 
 ## Rules
 
-1. Include only `Actionable` and `Blocked` stories. Exclude every `Nice to have` story; it belongs in `stretch-goals.md` instead
+1. Include only `Actionable` and `Blocked` stories. Exclude every `Nice to have` story; it belongs in `epic-stretch-goals.md` instead
 2. When UI references exist, include all of them, even if only some stories use each one
 3. List every touched repo in `## Repos`, even when there is only one
 4. Place `## Repos` immediately after the epic summary, `## Story Order` after `## Repos`, `## UI Design References` after that, and `## Resolved Source-of-Truth Decisions` immediately after that, so later stages find them near the top

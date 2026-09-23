@@ -1,11 +1,11 @@
 ---
-description: "Template: stretch-goals.md, the epic's deferred later-scope stories produced by /a-epic"
+description: "Template: epic-stretch-goals.md, the epic's deferred later-scope stories produced by /a-epic"
 disable-model-invocation: true
 ---
 
 # Stretch goals document template
 
-`stretch-goals.md` lives at `$EPIC_DIR/stretch-goals.md`, beside `epic.md`. `/a-epic` writes it; `/a-edit stretch-goals` revises it.
+`epic-stretch-goals.md` lives at `$EPIC_DIR/epic-stretch-goals.md`, beside `epic.md`. `/a-epic` writes it; `/a-edit stretch-goals` revises it.
 
 ## Shape
 

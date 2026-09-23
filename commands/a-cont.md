@@ -11,8 +11,8 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 
 ## Core rules
 
-1. `progress.md` is the state. Read it first, then seed or extend it, editing it row by row, section by section — NEVER rewrite the whole file, except the one-time legacy migration, per the template's `## Legacy matrix`
-1. Every write to `progress.md` refreshes its own `updated` header, per conventions `## Document header`
+1. `epic-progress.md` is the state. Read it first, then seed or extend it, editing it row by row, section by section — NEVER rewrite the whole file, except the one-time legacy migration, per the template's `## Legacy matrix`
+1. Every write to `epic-progress.md` refreshes its own `updated` header, per conventions `## Document header`
 1. Tick a row only when Step 2 or Step 4 sets its Status to `done`, per the template's `## Rules`, or when seeding the `a-epic` row per its `## Legacy matrix`. NEVER a hash, a SHA, or any other manufactured evidence
 1. NEVER record a command's prose. Record what it actually produced
 1. A gate stops the WHOLE run. Write `## Blocked`. Tick nothing further. Report. NEVER retry
@@ -30,11 +30,11 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 1. `$EPIC_DIR/epic.md` is missing → stop. `/a-epic` has not produced its output yet
 1. Record the resolved epic slug in memory
 
-## Step 1: Seed or extend `progress.md`
+## Step 1: Seed or extend `epic-progress.md`
 
-Read `~/.claude/commands/a-templates/progress.md` and follow its `## Row shape`, `## Mutability`, and `## Legacy matrix` exactly.
+Read `~/.claude/commands/a-templates/epic-progress.md` and follow its `## Row shape`, `## Mutability`, and `## Legacy matrix` exactly.
 
-1. `$EPIC_DIR/progress.md` is missing → create it from the template, seeded per `## Row shape`
+1. `$EPIC_DIR/epic-progress.md` is missing → create it from the template, seeded per `## Row shape`
 1. It exists and is legacy, per the template's `## Legacy matrix` → migrate it into the new shape on this write, once
 1. It exists and is current shape → read it whole, then apply every `## Row shape` and `## Mutability` rule that now applies
 
@@ -42,7 +42,7 @@ Read `~/.claude/commands/a-templates/progress.md` and follow its `## Row shape`,
 
 Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row from its artefact's header, so this command stays idempotent no matter how it drifted.
 
-1. A row's Artefact is a doc (`epic.md`, `architecture.md`, `story-N.md`, `design-N.md`, `plan-N-M.md`) → Read only its header, `limit: 6`, never the whole file, never `shasum`
+1. A row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md`) → Read only its header, `limit: 6`, never the whole file, never `shasum`
 1. The header's `updated` matches the row's Updated cell → the row is current, leave Status and Updated alone
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
@@ -69,13 +69,13 @@ Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row
 
 ## Step 5: Gate
 
-1. Write `## Blocked` in `progress.md`: the stage, the exact reason, the decision the user must make — or, from Step 3's `a-epic` case, that reason and the command to run instead
+1. Write `## Blocked` in `epic-progress.md`: the stage, the exact reason, the decision the user must make — or, from Step 3's `a-epic` case, that reason and the command to run instead
 1. Tick nothing further this turn. Leave every earlier tick alone
 1. Report the stage and the reason, then go to Step 6. NEVER retry, NEVER work around a gate
 
 ## Step 6: Append findings
 
-Before printing the next command, append one line per finding this run produced to `progress.md`'s `## Findings`, newest last, per the template's `## Shape`: any drift Step 2 found, a legacy migration Step 1 performed, any row refreshed, and any other anomaly this run hit. Nothing new this run → leave `## Findings` unchanged. Then go to Step 7.
+Before printing the next command, append one line per finding this run produced to `epic-progress.md`'s `## Findings`, newest last, per the template's `## Shape`: any drift Step 2 found, a legacy migration Step 1 performed, any row refreshed, and any other anomaly this run hit. Nothing new this run → leave `## Findings` unchanged. Then go to Step 7.
 
 ## Step 7: Report the next command
 
@@ -98,7 +98,7 @@ Print the exact command to type next, using the row that is now first unticked, 
 1. NEVER run two stages in one `/a-cont` invocation
 1. NEVER create `$EPIC_DIR` or `epic.md`. `/a-epic` creates them
 1. NEVER infer the next story by incrementing the last one; per conventions `## Story numbers`, `## Story Order` is the only sequence
-1. NEVER edit `epic.md`, `architecture.md`, `story-N.md`, or `design-N.md` as inputs; each owning command edits its own output only
+1. NEVER edit `epic.md`, `epic-architecture.md`, `story-N.md`, or `story-N-design.md` as inputs; each owning command edits its own output only
 1. NEVER detect a test, lint, or verification command. The owning command's own contract is the only source
 1. Per conventions `## Git`: `$PLANNING_ROOT` is a git repository; the user commits it by hand; `a-cont` never commits
 1. DO NOT do anything beyond the steps above
@@ -108,7 +108,7 @@ Print the exact command to type next, using the row that is now first unticked, 
 1. The stage that ran, and the status its artefact's header now shows
 1. Any row refreshed this run, and the artefact behind it
 1. The stage that gated, or `complete`
-1. The path of `progress.md`
+1. The path of `epic-progress.md`
 1. The exact next command to type, per Step 7
 
 ## Error Handling

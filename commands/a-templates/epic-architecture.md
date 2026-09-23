@@ -1,11 +1,11 @@
 ---
-description: "Template: architecture.md, the epic-specific architecture produced by /a-architecture"
+description: "Template: epic-architecture.md, the epic-specific architecture produced by /a-architecture"
 disable-model-invocation: true
 ---
 
 # Architecture document template
 
-`architecture.md` lives at `$EPIC_DIR/architecture.md`. `/a-architecture` writes it; `/a-edit architecture <epic-slug>` revises it.
+`epic-architecture.md` lives at `$EPIC_DIR/epic-architecture.md`. `/a-architecture` writes it; `/a-edit architecture <epic-slug>` revises it.
 
 ## Shape
 
@@ -22,7 +22,7 @@ status: draft
 > Epic: <epic-slug>
 > Repos: `<repo>`, ...
 > Stories: `$EPIC_DIR/epic.md`
-> Personas: `$EPIC_DIR/personas.md`
+> Personas: `$EPIC_DIR/epic-personas.md`
 
 ## Epic Summary
 
@@ -104,4 +104,4 @@ status: draft
 1. Write `- None` explicitly in `## Resolved Source-of-Truth Decisions` and `### Remaining Input Conflicts and Gaps` when nothing qualifies, rather than omitting the section
 1. Every path, term, and code name named is real, or is marked as this run's own proposal
 1. NEVER repeat a settled `## Assumptions` row's claim in prose elsewhere; cite its ID
-1. `architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
+1. `epic-architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into

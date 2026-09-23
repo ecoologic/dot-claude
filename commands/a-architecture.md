@@ -12,12 +12,12 @@ disable-model-invocation: true
 | Direction  | File                                                                             | Description                                                       |
 | ---------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **In**     | `~/.claude/commands/a-templates/conventions.md`                                             | Shared path resolution, selector resolution, and repo conventions |
-| **In**     | `~/.claude/commands/a-templates/architecture.md`                                  | The template for the output document                              |
-| **In**     | `$EPIC_DIR/idea.md`                                                                | Raw epic idea and links to supporting artifacts                   |
+| **In**     | `~/.claude/commands/a-templates/epic-architecture.md`                                  | The template for the output document                              |
+| **In**     | `$EPIC_DIR/epic-requirements.md`                                                                | Raw epic idea and links to supporting artifacts                   |
 | **In/Out** | `$EPIC_DIR/epic.md`                                                                | Story list, `## Domain Concepts`, `## Candidate Terms`, and touched repos from `/a-epic`; update `## Story Order` or an absorbed prerequisite only when implementation reality forces it, NEVER a story number |
-| **In**     | `$EPIC_DIR/personas.md`                                                           | Personas from `/a-epic`                                            |
+| **In**     | `$EPIC_DIR/epic-personas.md`                                                           | Personas from `/a-epic`                                            |
 | **In**     | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
-| **Out**    | `$EPIC_DIR/architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
+| **Out**    | `$EPIC_DIR/epic-architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
 | **Out**    | `<repo>/CONTEXT.md`, per touched repo                                             | Durable confirmed terms, including `epic.md`'s confirmed candidate terms |
 
 `$EPIC_DIR` resolves per conventions.md.
@@ -37,9 +37,9 @@ It is the first epic-specific step that may inspect the codebase.
 
 For product intent and scope, trust sources in this order:
 1. `$EPIC_DIR/epic.md`
-2. `$EPIC_DIR/personas.md`
+2. `$EPIC_DIR/epic-personas.md`
 3. UI-facing design artifacts and references preserved by `epic.md`
-4. `$EPIC_DIR/idea.md`
+4. `$EPIC_DIR/epic-requirements.md`
 
 For implementation reality, trust existing code and established conventions over prototype structure or inferred models.
 
@@ -66,10 +66,10 @@ Discover and invoke project skills per conventions `## Skills`; it also names th
 - Prefer existing code and established conventions over prototype structure when they conflict
 - Update a repo's `CONTEXT.md` only for durable confirmed terms or mappings; ask before renaming an existing term
 - `epic.md`'s `## Candidate Terms` are unconfirmed until this command confirms them into a repo's `CONTEXT.md`; `a-epic` never writes `CONTEXT.md`
-- `architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
+- `epic-architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
 - prefer reordering `epic.md`'s `## Story Order` to match implementation dependency order over having an earlier story silently absorb a later story's prerequisite; either resolution is surfaced to the user, NEVER decided silently
 - NEVER change a story number; the number is identity. `## Story Order` carries the sequence, and it is the only ordering this command may rewrite
-- write `architecture.md` per conventions `## Write as you go`: create it from its template at the first write, then Edit only the section a step just settled
+- write `epic-architecture.md` per conventions `## Write as you go`: create it from its template at the first write, then Edit only the section a step just settled
 - Invoke the `diagrams` skill via `Skill` before drawing any diagram in this document
 
 ## Step 1: Resolve required inputs
@@ -79,10 +79,10 @@ Discover and invoke project skills per conventions `## Skills`; it also names th
 1. Resolve `$EPIC_DIR`. Record the resolved epic slug in memory, per conventions `## Memory`.
 
 Read (stop if any are missing):
-- `$EPIC_DIR/idea.md`
+- `$EPIC_DIR/epic-requirements.md`
 - `$EPIC_DIR/epic.md`
-- `$EPIC_DIR/personas.md`
-- `~/.claude/commands/a-templates/architecture.md`
+- `$EPIC_DIR/epic-personas.md`
+- `~/.claude/commands/a-templates/epic-architecture.md`
 
 Follow references from those files to supporting artifacts. Stop and report any unreadable reference.
 
@@ -94,7 +94,7 @@ Extract:
 - personas and constraints
 - contradictions, gaps, and unknowns
 
-Create `$EPIC_DIR/architecture.md` from `~/.claude/commands/a-templates/architecture.md` now: the header with `status: draft`, the title, and every H2 heading. Every later step Edits its own section alone as it settles.
+Create `$EPIC_DIR/epic-architecture.md` from `~/.claude/commands/a-templates/epic-architecture.md` now: the header with `status: draft`, the title, and every H2 heading. Every later step Edits its own section alone as it settles.
 
 Output:
 ```text
@@ -102,7 +102,7 @@ Epic: <epic name>
 Epic dir: <EPIC_DIR>
 Touched repos: <list>
 Stories: <count>
-architecture.md: created from template
+epic-architecture.md: created from template
 ```
 
 ## Step 2: Understand the target system
@@ -119,7 +119,7 @@ Before exploring the codebase, derive from the inputs:
 Infer a provisional domain model from all useful input evidence, including `epic.md`'s `## Domain Concepts`, not only the UI.
 
 If evidence is strong enough:
-- include the inferred ERD in `architecture.md`
+- include the inferred ERD in `epic-architecture.md`
 - label it as a review artifact, not accepted truth
 
 If evidence is weak:
@@ -129,17 +129,17 @@ If evidence is weak:
 
 ### 2b. Apply source-of-truth hierarchy
 
-When sources disagree, apply the hierarchy above per inconsistency instead of falling back to `idea.md` or guesswork.
+When sources disagree, apply the hierarchy above per inconsistency instead of falling back to `epic-requirements.md` or guesswork.
 
 Specifically:
-1. `epic.md` beats `personas.md` only for explicit epic scope and story definition
-2. `personas.md` sharpens actor intent and context when `epic.md` is less specific
+1. `epic.md` beats `epic-personas.md` only for explicit epic scope and story definition
+2. `epic-personas.md` sharpens actor intent and context when `epic.md` is less specific
 3. preserved UI design artifacts clarify interaction details, but do not silently override epic scope
-4. `idea.md` is background context once the epic packet exists
+4. `epic-requirements.md` is background context once the epic packet exists
 5. existing code and established conventions beat prototype structure for implementation decisions
 6. the inferred ERD remains a hypothesis until validated
 
-Do not decide "the conflict is in `epic.md`" or "the conflict is in `idea.md`" as a bulk conclusion. Resolve each differing statement on its own merits.
+Do not decide "the conflict is in `epic.md`" or "the conflict is in `epic-requirements.md`" as a bulk conclusion. Resolve each differing statement on its own merits.
 
 If a contradiction materially changes the architecture recommendation, stop, surface that exact contradiction immediately, and resolve it with the user before continuing.
 
@@ -179,7 +179,7 @@ Each exploration result must report:
 - reuse candidates
 - naming matches and conflicts
 - how the area communicates with the rest of the system
-- any durable structure worth recording in `architecture.md`
+- any durable structure worth recording in `epic-architecture.md`
 
 Display a summary of findings by system area before moving on.
 
@@ -187,7 +187,7 @@ Edit `## Current System Landscape` now: one `### <system area>` subsection per a
 
 ## Step 5: Reconcile terminology
 
-Build the `## Terminology` table for `architecture.md`, seeded from `epic.md`'s `## Candidate Terms` plus every domain term this run's investigation adds:
+Build the `## Terminology` table for `epic-architecture.md`, seeded from `epic.md`'s `## Candidate Terms` plus every domain term this run's investigation adds:
 
 | Domain Term | Repo | Code Name | Definition | Source | Status |
 | ----------- | ---- | --------- | ---------- | ------ | ------ |
@@ -204,7 +204,7 @@ Rules:
 - confirm `epic.md`'s `## Candidate Terms` into the relevant repo's `CONTEXT.md` when safe and durable; this is their first landing point, since `a-epic` never writes `CONTEXT.md`
 - add other safe new rows and safe enrichments to the relevant repo's `CONTEXT.md` in this command too
 - do not silently rename existing `CONTEXT.md` terms
-- keep conflicts and rename requests explicit in `architecture.md` and review them with the user at the Step 10 gate
+- keep conflicts and rename requests explicit in `epic-architecture.md` and review them with the user at the Step 10 gate
 
 Edit `## Terminology` and `### Key Domain Concepts` now.
 
@@ -332,7 +332,7 @@ Edit `## Change Inventory` and `## Story Mapping` now.
 
 ## Step 13: Final check and approval
 
-Per conventions `## Write as you go`: read `~/.claude/commands/a-templates/architecture.md` again, check `$EPIC_DIR/architecture.md` against its `## Shape`, and Edit in only the sections still missing. NEVER rewrite a section an earlier step already settled.
+Per conventions `## Write as you go`: read `~/.claude/commands/a-templates/epic-architecture.md` again, check `$EPIC_DIR/epic-architecture.md` against its `## Shape`, and Edit in only the sections still missing. NEVER rewrite a section an earlier step already settled.
 
 Present the completed document to the user. On approval, Edit the header's `status` line to `done`.
 
@@ -364,7 +364,7 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 
 ## Success Criteria
 
-- [ ] `architecture.md` exists, created from its template at the first write and completed incrementally, per conventions `## Write as you go`
+- [ ] `epic-architecture.md` exists, created from its template at the first write and completed incrementally, per conventions `## Write as you go`
 - [ ] all required inputs and followed references were validated before architecture work continued
 - [ ] every story appears in Story Mapping and Change Inventory
 - [ ] the inferred ERD is included or explicitly unavailable
@@ -372,7 +372,7 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] the recommended domain model is explicit
 - [ ] the epic-wide class diagram is included
 - [ ] the epic-wide sequence diagrams are included
-- [ ] resolved inconsistencies, if any, were persisted in `architecture.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
+- [ ] resolved inconsistencies, if any, were persisted in `epic-architecture.md` under `## Resolved Source-of-Truth Decisions`, or `- None` was written explicitly
 - [ ] every story's place in `## Story Order` was checked against implementation reality; any conflict found was surfaced, resolved with the user, and recorded
 - [ ] no story number was changed; any reordering was applied to `epic.md`'s `## Story Order` alone
 - [ ] every `A-EPIC` row routed to this doc was inherited into `## Assumptions` under its original ID, per conventions `## Assumptions`

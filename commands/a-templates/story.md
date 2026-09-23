@@ -5,7 +5,7 @@ disable-model-invocation: true
 
 # Story document template
 
-`story-<story-number>.md` lives at `$EPIC_DIR/story-<story-number>.md`, beside `epic.md` and `architecture.md`. `/a-story` writes it; `/a-edit story <story-number>` revises it.
+`story-<story-number>.md` lives at `$EPIC_DIR/story-<story-number>.md`, beside `epic.md` and `epic-architecture.md`. `/a-story` writes it; `/a-edit story <story-number>` revises it.
 
 ## Shape
 
@@ -55,7 +55,7 @@ branch: checkout-flow/1-guest-email
 | --- | ------- | ----------------- |
 
 ## References
-- `$EPIC_DIR/architecture.md`
+- `$EPIC_DIR/epic-architecture.md`
 ```
 
 ## Section rules
@@ -71,6 +71,6 @@ branch: checkout-flow/1-guest-email
 
 ## Rules
 
-1. The file carries no technical design. Components, contracts, file structure, reuse, extractions, UX, UI and diagrams live in `design-<story-number>.md`
+1. The file carries no technical design. Components, contracts, file structure, reuse, extractions, UX, UI and diagrams live in `story-<story-number>-design.md`
 1. Every acceptance criterion describes a user-observable outcome, never a technology layer
-1. `## Findings` lists every incongruity found against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`, with no rows when none were found
+1. `## Findings` lists every incongruity found against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md`, with no rows when none were found

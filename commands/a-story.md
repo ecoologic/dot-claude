@@ -13,8 +13,8 @@ disable-model-invocation: true
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
 | **In** | `$EPIC_DIR/epic.md` | Read by `a-templates/epic.md`'s exact headings: this story's title, `### User Context` and `### Dependencies`, plus `## Repos`, `## UI Design References` and the other epic-level sections. `a-epic` never writes acceptance criteria, so none are extracted here |
-| **In** | `$EPIC_DIR/architecture.md` | Epic-specific architecture from `/a-architecture`, and the assumptions it cascaded to this story |
-| **In** | `$EPIC_DIR/personas.md` | Personas from `/a-epic` |
+| **In** | `$EPIC_DIR/epic-architecture.md` | Epic-specific architecture from `/a-architecture`, and the assumptions it cascaded to this story |
+| **In** | `$EPIC_DIR/epic-personas.md` | Personas from `/a-epic` |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out** | `$EPIC_DIR/story-<story-number>.md` | Written per `a-templates/story.md`: the slug (in its `branch` header), user context, numbered acceptance criteria, UI references, the assumption ledger, and findings for `/a-design` and, eventually, `/a-finish` |
 
@@ -31,7 +31,7 @@ Break one story into user-approved, code-informed acceptance criteria. This comm
 This command should:
 - draft and refine acceptance criteria with the user before locking them into the story artifact
 - investigate the codebase far enough to prove each criterion is achievable and correctly named
-- record any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` as a finding, for `/a-finish` to apply later
+- record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding, for `/a-finish` to apply later
 - settle, or cascade onward, every assumption it inherits or coins, per conventions `## Assumptions`, before `/a-design`
 - produce a single story artifact with a stable slug and numbered acceptance criteria for `/a-design`
 
@@ -39,7 +39,7 @@ This command should:
 
 - NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR`
 - NEVER design the solution here. Components, contracts, file structure, reuse, extractions, UX, UI and diagrams all belong to `/a-design`
-- NEVER write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`; record the finding in `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
+- NEVER write `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md`; record the finding in `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
 - NEVER change a story number, in this file's name, in its heading, or in `epic.md`, per conventions `## Story numbers`; an order conflict is a finding against `epic.md`'s `## Story Order`, never applied here
 - NEVER skip codebase investigation; a criterion must be grounded in the real codebase
 - NEVER finish this command with a row still `open`; a row this story does not require is `cascaded` onward instead, per conventions `## Assumptions`
@@ -61,8 +61,8 @@ This command should:
 
 Read (stop if any are missing):
 - `$EPIC_DIR/epic.md`
-- `$EPIC_DIR/architecture.md`
-- `$EPIC_DIR/personas.md`
+- `$EPIC_DIR/epic-architecture.md`
+- `$EPIC_DIR/epic-personas.md`
 
 Follow all references from planning artifacts. Stop and report any unreadable reference.
 
@@ -108,7 +108,7 @@ Before investigating, inherit this story's routed assumption rows: the `open` an
 
 Investigate only far enough to prove the story's canonical statement, user context and dependencies hold, and to settle what evidence can settle. `/a-design` does the deep technical exploration; this step does not record its findings for that purpose.
 
-Use `architecture.md` and each touched repo's `README.md`, `CLAUDE.md`, `CONTRIBUTING.md` and `CONTEXT.md` to scope the search. Also read `## Findings` in every other `story-*.md` in `$EPIC_DIR`, per conventions `## Findings`, since nothing has applied them upstream yet.
+Use `epic-architecture.md` and each touched repo's `README.md`, `CLAUDE.md`, `CONTRIBUTING.md` and `CONTEXT.md` to scope the search. Also read `## Findings` in every other `story-N.md` in `$EPIC_DIR`, never its `-design` or `-ac` files, per conventions `## Findings`, since nothing has applied them upstream yet.
 
 The three axes below are **independent** — dispatch one `Agent` with type `Explore` per axis, all in a single message so they run concurrently. Don't run them sequentially.
 
@@ -159,7 +159,7 @@ Settle every row still `open`, per conventions `## Assumptions`; `/a-story` is t
 1. Put every row still `open` to the user, one at a time, using the `ask-user-question` skill, with what it blocks and what changes if it is false. NEVER batch them into one question, unless the user lifts the gate per conventions `## Bulk approval`
 2. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`: record their decision in their words, and its impact. NEVER a silent pass
 3. The user cannot settle a row → set `status: blocked` in the header, per conventions `## Document header`, and stop. Report the row, what it blocks, and the decision needed
-4. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` is also a finding, per Step 2
+4. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` is also a finding, per Step 2
 
 Edit `story-<story-number>.md`'s `## Assumptions` section now.
 
@@ -191,7 +191,7 @@ On approval, Edit the header's `status` to `done`, per conventions `## Document 
 - [ ] the codebase grounding in Step 2 ran before criteria drafting, and every revision it forced was approved by the user
 - [ ] the file carries no technical design; no components, contracts, file structure, reuse, extractions, UX, UI or diagrams
 - [ ] story-relevant UI references were carried into `story-<story-number>.md`, or `- None` was written explicitly
-- [ ] any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` found this run was recorded in `## Findings`, never applied directly
+- [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` found this run was recorded in `## Findings`, never applied directly
 - [ ] any story-order conflict found this run was recorded as a finding against `epic.md`'s `## Story Order`; no story was renumbered
 - [ ] every `open` and `cascaded` assumption routed to this story appears in `## Assumptions` under its original ID, and no row routed elsewhere was inherited
 - [ ] every assumption the codebase could settle is `verified` or `invalidated`, with a file, line, or test cited

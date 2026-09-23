@@ -12,14 +12,14 @@ disable-model-invocation: true
 | Direction | File | Description |
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
-| **In** | `~/.claude/commands/a-templates/design.md` | The template for the output document |
+| **In** | `~/.claude/commands/a-templates/story-design.md` | The template for the output document |
 | **In** | `$EPIC_DIR/story-<story-number>.md` | The story: slug, numbered acceptance criteria, user context, UI references, settled assumptions, findings |
-| **In** | `$EPIC_DIR/architecture.md` | The epic's architecture, its epic-level diagrams, and its terminology — a confirmed finding in `story-<story-number>.md`'s `## Findings` overrides it, per conventions `## Findings` |
+| **In** | `$EPIC_DIR/epic-architecture.md` | The epic's architecture, its epic-level diagrams, and its terminology — a confirmed finding in `story-<story-number>.md`'s `## Findings` overrides it, per conventions `## Findings` |
 | **In** | `$EPIC_DIR/epic.md` | Touched repos, epic-level UI references, and the domain concepts |
-| **In** | `$EPIC_DIR/story-*.md` (every other story of the epic) | `## Findings` only, per conventions `## Findings` |
+| **In** | `$EPIC_DIR/story-N.md` (every other story of the epic, never its `-design` or `-ac` files) | `## Findings` only, per conventions `## Findings` |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Findings` only. NEVER change any other section |
-| **Out** | `$EPIC_DIR/design-<story-number>.md` | The agreed design: goal, UX, UI, components, file structure, reuse, contracts, diagrams, risks, decisions |
+| **Out** | `$EPIC_DIR/story-<story-number>-design.md` | The agreed design: goal, UX, UI, components, file structure, reuse, contracts, diagrams, risks, decisions |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -40,7 +40,7 @@ Agree ONE story's design with the user, then record it. This command should:
 - have the `uml-diagram` agent draw every diagram
 - review the agreed design on four axes, and record what that review finds
 - settle every assumption it coins, and inherit only what routes to this doc
-- record any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` as a finding
+- record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding
 - produce one design document that `/a-plan` turns into per-criterion plans
 
 ## Rules
@@ -48,11 +48,11 @@ Agree ONE story's design with the user, then record it. This command should:
 - NEVER write implementation steps, work breakdowns, task packets, subagent instructions, model tables or effort tables; `/a-plan` owns all of those
 - NEVER write application code, and NEVER create commits
 - NEVER write files outside `$EPIC_DIR`, except the memory file, per conventions `## Path resolution`. This command never writes a repo's `CONTEXT.md`
-- NEVER write `epic.md`, `architecture.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
+- NEVER write `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
 - NEVER edit any section of `story-<story-number>.md` except `## Findings`
 - NEVER change a story number, in this file's name, in its heading, or in `epic.md`
 - NEVER draw a diagram yourself; the `uml-diagram` agent is the only diagram author, see Step 6
-- NEVER restate `architecture.md`'s epic-level diagrams; `design-<story-number>.md` is story altitude and shows only what this story changes
+- NEVER restate `epic-architecture.md`'s epic-level diagrams; `story-<story-number>-design.md` is story altitude and shows only what this story changes
 - NEVER start work with a required assumption still `open` or `cascaded` in `story-<story-number>.md`, per conventions `## Assumptions`; that is a gate, see Step 1
 - NEVER design for an acceptance criterion the story does not carry, and NEVER design the next story
 - NEVER define synonyms; if a term exists in a touched repo's `CONTEXT.md`, use its canonical name
@@ -65,7 +65,7 @@ Agree ONE story's design with the user, then record it. This command should:
 - The user can be wrong. Clarify and find the correct solution rather than following a mistaken instruction
 - Asked to change an existing interface beyond this story's scope → explain the consequence and ask for confirmation first
 - Interactions in chat stay brief and follow the active output style; express the design in the document, not in chat
-- Write `design-<story-number>.md` per conventions `## Write as you go`: create it from the template on first write, Edit each section the moment it settles, and check it against the template only in the final step
+- Write `story-<story-number>-design.md` per conventions `## Write as you go`: create it from the template on first write, Edit each section the moment it settles, and check it against the template only in the final step
 - Set `status` to `done` only on the user's final "design is ready" approval, per conventions `## Document header`
 
 ## Step 1: Resolve required inputs
@@ -77,11 +77,11 @@ Agree ONE story's design with the user, then record it. This command should:
 
 Read (stop if any are missing):
 - `$EPIC_DIR/story-<story-number>.md`
-- `$EPIC_DIR/architecture.md`
+- `$EPIC_DIR/epic-architecture.md`
 - `$EPIC_DIR/epic.md`
-- `~/.claude/commands/a-templates/design.md`
+- `~/.claude/commands/a-templates/story-design.md`
 
-Read `## Findings` only, in every other `story-*.md` under `$EPIC_DIR`, per conventions `## Findings`.
+Read `## Findings` only, in every other `story-N.md` under `$EPIC_DIR`, never its `-design` or `-ac` files, per conventions `## Findings`.
 
 Follow all references from planning artifacts. Stop and report any unreadable reference.
 
@@ -91,7 +91,7 @@ Every confirmed finding read above overrides the text it corrects, per conventio
 
 `story-<story-number>.md` carries a row this story's implementation requires still `open` or `cascaded` → STOP, per conventions `## Assumptions`. Report the row and send the user to `/a-edit story <story-number> <guidance>`. A row this story's implementation does not require stays cascaded; it is not a gate here.
 
-`design-<story-number>.md` already exists → read it. This run revises that document; NEVER start a second one, and NEVER discard an agreed decision without saying so. It has no header → it is legacy; this run's first write adds one, per conventions `## Document header`.
+`story-<story-number>-design.md` already exists → read it. This run revises that document; NEVER start a second one, and NEVER discard an agreed decision without saying so. It has no header → it is legacy; this run's first write adds one, per conventions `## Document header`.
 
 Output:
 ```text
@@ -106,11 +106,11 @@ UI references: <list or none>
 Existing design: <yes, revising | no, new>
 ```
 
-`design-<story-number>.md` does not exist → Write it now from `~/.claude/commands/a-templates/design.md`'s `## Shape`, per conventions `## Write as you go`: the header with `status: draft`, the title, and every H2 heading, empty otherwise.
+`story-<story-number>-design.md` does not exist → Write it now from `~/.claude/commands/a-templates/story-design.md`'s `## Shape`, per conventions `## Write as you go`: the header with `status: draft`, the title, and every H2 heading, empty otherwise.
 
 ## Step 2: Ground the design in the codebase
 
-Scope the exploration with `architecture.md` and each touched repo's `README.md`, `CLAUDE.md`, `CONTRIBUTING.md` and `CONTEXT.md`.
+Scope the exploration with `epic-architecture.md` and each touched repo's `README.md`, `CLAUDE.md`, `CONTRIBUTING.md` and `CONTEXT.md`.
 
 These four axes are **independent** — dispatch one `Agent` with type `Explore` per axis, all in a single message so they run concurrently. Don't run them sequentially.
 
@@ -119,13 +119,13 @@ These four axes are **independent** — dispatch one `Agent` with type `Explore`
 3. reuse: existing components, services, types, utilities and tests this story can use instead of writing
 4. the contracts the story touches: current signatures, routes, types, schema and migrations
 
-Each result reports paths, symbols, why they matter, and any conflict with `architecture.md` or a repo's `CONTEXT.md`.
+Each result reports paths, symbols, why they matter, and any conflict with `epic-architecture.md` or a repo's `CONTEXT.md`.
 
 NEVER accept a result without a file and a symbol behind it.
 
 Discover and invoke a repo or package skill about file structure, reuse or contracts per conventions `## Skills`, in each touched repo.
 
-Display the findings, then Edit `design-<story-number>.md`'s `## File Structure`, `## Architecture` and `### Reuse Opportunities` sections, per conventions `## Write as you go`. `### Extractions` holds decisions, not findings; it locks in Step 3.
+Display the findings, then Edit `story-<story-number>-design.md`'s `## File Structure`, `## Architecture` and `### Reuse Opportunities` sections, per conventions `## Write as you go`. `### Extractions` holds decisions, not findings; it locks in Step 3.
 
 ## Step 3: Agree the design with the user
 
@@ -141,7 +141,7 @@ This is the command's core. Work the design out loud with the user, one decision
 1. The user decided with no stated reason → write `User decision.`, then your own reasoning, marked as yours
 1. The story needs a rollout flag → invoke the posthog-feature-flags skill for that decision, per Skills above
 
-Reuse the canonical terminology from `architecture.md` and each touched repo's `CONTEXT.md`. A genuinely new name goes in `## New Glossary` with an example value.
+Reuse the canonical terminology from `epic-architecture.md` and each touched repo's `CONTEXT.md`. A genuinely new name goes in `## New Glossary` with an example value.
 
 Edit `## Goal`, `## New Glossary`, `## Decision Registry`, `### Extractions` and the contract sections (`## API Endpoints`, `## DB Migrations`) as each one locks.
 
@@ -194,7 +194,7 @@ The two diagrams show different things. NEVER let one repeat the other:
 | `## Class Diagram` | `class` | The story-relevant entities, tables, value objects and components, and their relations. Each concept appears ONCE, in its DB representation. NEVER show both a table and its TypeScript interface for the same concept. Mark `((NEW))`, `((CHANGED))` and `((DELETED))` only for real persisted schema changes. An unchanged field appears only when the story needs it. The story changes no schema → show the structural relations anyway, never `None` |
 | `## Sequence Diagram` | `sequence` | The story's runtime interactions ACROSS tech boundaries. Participants make the runtime and deployment boundaries obvious first: apps, API surfaces, workers, Lambdas, queues, databases, AWS services, third-party systems. Group participants by boundary. Arrow labels name the boundary-crossing contract: an HTTP route, a webhook, a queue publish or consume, an event, an SDK call, a SQL operation. Happy path first, then the `alt` and `opt` blocks for errors. NEVER let it collapse into an internal function-call trace |
 
-`architecture.md` already holds the epic's diagrams. These two cover THIS story only.
+`epic-architecture.md` already holds the epic's diagrams. These two cover THIS story only.
 
 ## Step 7: Define the happy path automated tests
 
@@ -227,19 +227,19 @@ Edit `## Current Weaknesses & Risks` now.
 
 Per conventions `## Assumptions`.
 
-1. Inherit only the rows routed to `design-<story-number>.md`, per conventions `## Assumptions`, and reprint each under its original ID. Cite every other settled row by ID; NEVER reprint it
+1. Inherit only the rows routed to `story-<story-number>-design.md`, per conventions `## Assumptions`, and reprint each under its original ID. Cite every other settled row by ID; NEVER reprint it
 1. Add a row under `A-STORY-<story-number>-<n>`, continuing that story's numbering, for every claim this design acts on without evidence
 1. Step 2 and Step 8's fourth axis already reported what the codebase proves. Mark each new row `verified` or `invalidated`, citing the file, line or test
 1. Put every row still `open` to the user, one at a time, with what it blocks and what changes if it is false, using the ask-user-question skill, per conventions `## Skills`
 1. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`, in their words, with its impact
 1. The user cannot settle a row → stop. That is a gate: report the row, what it blocks, and the decision needed. NEVER hand `/a-plan` an `open` row
-1. An `invalidated` row already baked into `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` also goes to `## Findings`, per Step 10
+1. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` also goes to `## Findings`, per Step 10
 
 Edit `## Assumptions` now.
 
 ## Step 10: Record findings
 
-Designing the story against real code uncovers what `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` should eventually reflect: a boundary or contract the epic architecture states wrongly, a dependency that changes the story order, a durable domain name. NEVER write any of those three files from this command.
+Designing the story against real code uncovers what `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` should eventually reflect: a boundary or contract the epic architecture states wrongly, a dependency that changes the story order, a durable domain name. NEVER write any of those three files from this command.
 
 Append each finding to `story-<story-number>.md`'s `## Findings` section instead, per conventions `## Findings`, capped per conventions `## Size caps`: the target doc, the finding, the suggested change.
 
@@ -249,9 +249,9 @@ Append only. NEVER edit a row `/a-story` already wrote, and NEVER touch another 
 
 `/a-finish` applies whichever findings are still confirmed, once the story's last criterion lands.
 
-## Step 11: Finalize `design-<story-number>.md`
+## Step 11: Finalize `story-<story-number>-design.md`
 
-Read `~/.claude/commands/a-templates/design.md`'s `## Shape` and check `design-<story-number>.md` against it. Edit in only the sections still missing; every other section was already written as it settled, per conventions `## Write as you go`.
+Read `~/.claude/commands/a-templates/story-design.md`'s `## Shape` and check `story-<story-number>-design.md` against it. Edit in only the sections still missing; every other section was already written as it settled, per conventions `## Write as you go`.
 
 Summarize for the user:
 1. the design document path
@@ -269,18 +269,18 @@ The user's final "design is ready" approval → Edit the header's `status` line 
 
 ## Success Criteria
 
-- [ ] `design-<story-number>.md` was created from its template on the first write, then Edited section by section as each one settled, per conventions `## Write as you go`
+- [ ] `story-<story-number>-design.md` was created from its template on the first write, then Edited section by section as each one settled, per conventions `## Write as you go`
 - [ ] `story-<story-number>.md` was read, and no row this story's implementation requires was left `open` or `cascaded` when this command started, per conventions `## Assumptions`
-- [ ] all required inputs and followed references were validated before design work continued, including `## Findings` in `story-<story-number>.md` and in every other `story-*.md` of the epic
+- [ ] all required inputs and followed references were validated before design work continued, including `## Findings` in `story-<story-number>.md` and in every other `story-N.md` of the epic, never its `-design` or `-ac` files
 - [ ] every acceptance criterion in `story-<story-number>.md` is covered by the design
 - [ ] every design decision was approved by the user before the next was proposed, or the user explicitly lifted the gate per conventions `## Bulk approval`
 - [ ] `## Sequence Diagram` and `## Class Diagram` were authored by the `uml-diagram` agent and pasted verbatim, or omitted with a stated reason
-- [ ] neither diagram repeats `architecture.md`'s epic-level diagrams
+- [ ] neither diagram repeats `epic-architecture.md`'s epic-level diagrams
 - [ ] UI stories carry `## UX Definition`, `## UI Sketch` and `## Components`; non-UI stories write `- None` in each
 - [ ] the four-axis review ran, and its findings are rows in `## Current Weaknesses & Risks`
 - [ ] every assumption this design coined is `verified`, `resolved`, or `invalidated`; none is left `open` or `cascaded`
 - [ ] every assumption row routed to this doc appears under its original ID; every other settled row is cited by ID, never reprinted
-- [ ] any incongruity against `epic.md`, `architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
+- [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
 - [ ] no section of `story-<story-number>.md` other than `## Findings` changed
 - [ ] every speculation in the document is marked `TODO`
 - [ ] no implementation steps, task packets, waves, or model and effort tables appear in the document
@@ -296,6 +296,6 @@ When stopping due to a missing, unreadable, or malformed input:
 
 - **`story-<story-number>.md` missing** — name `/a-story <story-number>` as the command that must run first, and stop
 - **A required assumption row is still `open` or `cascaded`, per conventions `## Assumptions`** — print the row, and send the user to `/a-edit story <story-number> <guidance>`. NEVER settle it here
-- **The story's criteria contradict `architecture.md`, with no confirmed finding covering it yet** — report the contradiction, append it to `## Findings`, and ask the user which one holds before designing against either
+- **The story's criteria contradict `epic-architecture.md`, with no confirmed finding covering it yet** — report the contradiction, append it to `## Findings`, and ask the user which one holds before designing against either
 - **The `uml-diagram` agent returns no diagram** — omit that section, and record the agent's stated reason in one clause
 - **No relevant code found** — say so explicitly, treat the area as greenfield, and still follow project-wide patterns

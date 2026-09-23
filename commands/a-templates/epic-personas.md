@@ -1,11 +1,11 @@
 ---
-description: "Template: personas.md, the epic's actors and usage context produced by /a-epic"
+description: "Template: epic-personas.md, the epic's actors and usage context produced by /a-epic"
 disable-model-invocation: true
 ---
 
 # Personas document template
 
-`personas.md` lives at `$EPIC_DIR/personas.md`, beside `epic.md`. `/a-epic` writes it; `/a-edit personas` revises it.
+`epic-personas.md` lives at `$EPIC_DIR/epic-personas.md`, beside `epic.md`. `/a-epic` writes it; `/a-edit personas` revises it.
 
 ## Shape
 
