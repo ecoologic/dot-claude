@@ -15,6 +15,7 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 1. Every write to `epic-progress.md` refreshes its own `updated` header, per conventions `## Document header`
 1. Tick a row only when Step 2 or Step 4 sets its Status to `done`, per the template's `## Rules`, or when seeding the `a-epic` row per its `## Legacy matrix`. NEVER a hash, a SHA, or any other manufactured evidence
 1. NEVER record a command's prose. Record what it actually produced
+1. A doc's `status: done` means the user approved the doc, per conventions `## Document header` — NEVER that its code exists or its criteria pass. Only a ticked `a-implement` or `a-finish` row records delivery. NEVER report a `done` story or design as delivered
 1. A gate stops the WHOLE run. Write `## Blocked`. Tick nothing further. Report. NEVER retry
 1. A command cannot invoke another command. READ the command file, then follow its text
 1. Run exactly ONE stage per invocation, then stop and print the next command to type
@@ -105,7 +106,8 @@ Print the exact command to type next, using the row that is now first unticked, 
 
 ## Report
 
-1. The stage that ran, and the status its artefact's header now shows
+1. The stage that ran, and the status its artefact's header now shows, labelled as doc approval
+1. Delivery per story: the story's ticked `a-implement` rows by criterion, or `no code yet` when none is ticked
 1. Any row refreshed this run, and the artefact behind it
 1. The stage that gated, or `complete`
 1. The path of `epic-progress.md`

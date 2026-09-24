@@ -21,7 +21,7 @@ Example:
 
 1. [User#email](./api/user.py:123)
 
-Telegraphically explain choices like dotted lines and the use of blue for planned elements.
+Telegraphically explain choices like dotted lines and colors in a short sentence.
 
 ## Validate before delivering
 

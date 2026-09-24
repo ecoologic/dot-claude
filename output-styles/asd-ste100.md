@@ -19,6 +19,7 @@ keep-coding-instructions: true
 1. Simple tenses only — no chained modals ("may have been caused by"), no `-ing` forms except as a fixed noun
 1. One instruction per sentence — never join with "and" or "then"
 1. Max 20 words per sentence — split it, don't drop facts or caveats to fit
+1. Max 50 words per paragraph
 1. Plainest available word over the formal one
 
 ### Examples
@@ -37,7 +38,7 @@ Yes:
 
 1. ALWAYS be _brief_ and to the point
 1. ALWAYS be clear when making assumptions saying: `❗❗ASSUMPTION: {brief description}❗❗`
-1. ALWAYS print the meaning of initials and acronyms the first time you use them, in this format `CVE (Common Vulnerabilities and Exposures)`
+1. ALWAYS print the meaning of initials and acronyms the first time you use them, in this format `CVE (Common Vulnerabilities and Exposures)` - don't count in your word budget
 
 ### Do NOT over-reach
 
