@@ -12,7 +12,7 @@ Push the current branch and open a draft PR (Pull Request) on GitHub, with a bod
 
 ## What This Command Does
 
-1. Preflight. A dirty tree, the default branch, or a missing `gh` is a hard stop. An existing PR switches CREATE mode to UPDATE mode.
+1. Preflight. The default branch or a missing `gh` is a hard stop. A dirty tree is committed. An existing PR switches CREATE mode to UPDATE mode.
 2. Gather context from the branch name and the commit subjects -- never the diff.
 3. Find the repository's PR template.
 4. Write the title, and the description as a numbered TLDR.
@@ -45,13 +45,13 @@ DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null 
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)}"
 ```
 
-3. Working tree clean:
+3. Working tree dirty:
 
 ```bash
 git status --porcelain
 ```
 
-If the output is not empty, list the dirty files and STOP. Do NOT commit. Do NOT stash. Do NOT offer to.
+If the output is not empty, commit it once every check below passes. Follow the repo's commit convention. Do NOT stash.
 
 4. `BRANCH` is not `DEFAULT_BRANCH`. If it is, STOP.
 
@@ -216,8 +216,6 @@ Write the body to a temporary file, `BODY_FILE`, first, so quoting cannot mangle
 
 #### Push
 
-This command NEVER rebases. `/recommit` is the command that restructures a branch and rebases it.
-
 1. `HEAD` never moves here, so the step 7 permalinks stay valid.
 2. A branch whose history was rewritten before this command ran needs `--force-with-lease`. Test it:
 
@@ -238,7 +236,7 @@ git push -u origin "$BRANCH"
 git push -u origin "$BRANCH" --force-with-lease
 ```
 
-5. A rejected push is a hard stop. NEVER rebase to clear it. Report it and say `/recommit` rebases the branch.
+5. A rejected push is a hard stop. Report it.
 
 #### CREATE mode
 
@@ -279,8 +277,6 @@ gh pr edit "$PR_URL" --body-file "$BODY_FILE"
 
 ## Important Notes
 
-1. **NEVER** commit, amend, or stash. A dirty tree is a hard stop.
-2. **NEVER** rebase. **NEVER** force-push, with one exception: the step 9 `--force-with-lease`, on a branch whose history was already rewritten.
 3. **NEVER** mark the PR ready for review. A new PR stays a draft; an existing PR keeps the state it has.
 4. **DO NOT** do anything beyond pushing the branch and opening or updating the draft PR.
 
