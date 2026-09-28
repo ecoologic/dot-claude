@@ -56,7 +56,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 
 ## Where a command runs
 
-1. Planning stages are `a-epic`, `a-architecture`, `a-story` and `a-design`. They run from the main repo root only
+1. Planning stages are `a-epic`, `a-architecture`, `a-story` and `a-design`. They run from the main repo root only, and so does `a-finish`, since a worktree cannot remove itself
 1. A planning stage started inside a worktree stops and says so. It is a worktree when the two lines of the `## Path resolution` command differ
 
 1. A planning stage on a branch other than the default one prints a one-line warning and carries on. The default branch is `git symbolic-ref --short refs/remotes/origin/HEAD` without its `origin/` prefix
@@ -124,13 +124,13 @@ pr: foo-bar#123
 | Key | On | Content |
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
-| `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. On `story-N-acM.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
+| `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-acM.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
 | `branch` | `story-N.md`, `story-N-acM.md` | `<epic-slug>/<n>-<story-slug>`. `story-N.md` sets it once the slug locks; `/wt` and `a-implement` read it from there. `a-implement` copies it into `story-N-acM.md` |
 | `pr` | `story-N-acM.md` only | `<repo>#<number>` per repo with an open PR for the branch, comma-separated, else `none`. Set by `a-implement` |
 
 1. Update each key with one exact Edit of its line. NEVER rewrite the header block as a whole
-1. A later revision of a `done` or `implemented` doc keeps its status and refreshes `updated`
-1. `a-implement` records its status in `story-N-acM.md`'s header. `a-finish` writes no doc and records its status in its `epic-progress.md` row only
+1. A later revision of a doc past `draft` keeps its status and refreshes `updated`
+1. `a-implement` records its status in `story-N-acM.md`'s header. `a-finish` records its status in `story-N.md`'s header
 1. A doc without a header is legacy. Its owning command, or `/a-edit`, adds the header the next time it writes that doc. NEVER bulk-migrate
 
 ## Write as you go
@@ -212,7 +212,8 @@ A story's own stages touch one planning doc each. None of them write `epic.md`, 
 
 1. `a-story`, `a-design`, `a-plan`, `a-implement`, and `a-check` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves: the target doc, the finding, the suggested change
 1. A confirmed finding overrides the shared doc it targets. Every later stage reads `## Findings` beside `epic-architecture.md` and acts on the finding, NEVER on the text it corrects
-1. Until `a-finish` exists, a stage also reads `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, since nothing has applied them upstream yet
+1. A stage also reads `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, and skips each row whose Suggested Change cell carries `Applied to <doc> on <YYYY-MM-DD>` or `Rejected on <YYYY-MM-DD>: <reason>`
+1. Only `a-finish` marks a row, by appending one of those two marks to its Suggested Change cell
 1. `a-finish` is the only command that applies confirmed findings from `## Findings` to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands
 1. A story-order conflict takes the same route: the finding targets `epic.md`'s `## Story Order`, names the position the story must move to, and names the dependency that forces it. Per `## Story numbers`, it NEVER renumbers
 

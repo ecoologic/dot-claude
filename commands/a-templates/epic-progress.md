@@ -49,10 +49,10 @@ Repos: <repo>, <repo>, ...
 
 | Column | Content |
 | --- | --- |
-| Done | `[x]` only when Status is `done`, else `[ ]`. An `a-plan` row ticks on `done` or any status starting `implemented`; an `a-implement` row on any status starting `implemented`; an `a-check` row only on `implemented, simplified, reviewed`. One exception: the seeded `a-epic` row, per `## Legacy matrix` |
+| Done | `[x]` only when Status is `done`, else `[ ]`. An `a-story` row ticks on `done` or `finished`; an `a-finish` row only on `finished`. An `a-plan` row ticks on `done` or any status starting `implemented`; an `a-implement` row on any status starting `implemented`; an `a-check` row only on `implemented, simplified, reviewed`. One exception: the seeded `a-epic` row, per `## Legacy matrix` |
 | Stage | The command and its selector, exactly as `/a-cont` prints it: `a-epic`, `a-architecture`, `a-story 3`, `a-design 3`, `a-plan 3-1`, `a-implement 3-1`, `a-check 3-1`, `a-finish 3` |
-| Artefact | The doc's file name under `$EPIC_DIR`. An `a-implement` or `a-check` row names its criterion's `story-N-acM.md`. `a-finish` writes no doc: `-` |
-| Status | Copied from the artefact's `status` header. `a-finish`: the command's own report. A headerless artefact: `legacy` |
+| Artefact | The doc's file name under `$EPIC_DIR`. An `a-implement` or `a-check` row names its criterion's `story-N-acM.md`. An `a-finish` row names its `story-N.md` |
+| Status | Copied from the artefact's `status` header. A headerless artefact: `legacy` |
 | Updated | Copied from the artefact's `updated` header, or `-` |
 | Branch | `-` until the story's `story-N.md` sets its `branch` header, then that branch on every row of the story |
 
@@ -61,7 +61,7 @@ The matrix follows `## Story Order`, never the number sequence: story 3 above ru
 ## Row shape
 
 1. Row 1 is always `a-epic`, row 2 is always `a-architecture`
-2. Then exactly ONE `a-story <n>` row: the first story in `epic.md`'s `## Story Order` whose `story-N.md` is missing or not `done`. NEVER seed a row per story, and NEVER seed more than one story ahead
+2. Then exactly ONE `a-story <n>` row: the first story in `epic.md`'s `## Story Order` whose `story-N.md` is missing or neither `done` nor `finished`. NEVER seed a row per story, and NEVER seed more than one story ahead
 3. A story's `a-story` row ticks → append that story's `a-design` row, immediately below it
 4. A story's `a-story` row ticks → read `story-N.md`'s acceptance criteria list, and append one `a-plan`, one `a-implement` and one `a-check` row per criterion, in order, below the story's `a-design` row
 5. A story's last criterion's `a-check` row ticks → append that story's `a-finish` row

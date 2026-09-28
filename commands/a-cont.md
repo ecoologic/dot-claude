@@ -43,13 +43,12 @@ Read `~/.claude/commands/a-templates/epic-progress.md` and follow its `## Row sh
 
 Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row from its artefact's header, so this command stays idempotent no matter how it drifted.
 
-1. A row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the last for the `a-plan`, the `a-implement` and the `a-check` row) → Read only its header, `limit: 6`, never the whole file, never `shasum`
+1. Every row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md` for the `a-story` and `a-finish` rows, `story-N-design.md`, `story-N-acM.md` for the `a-plan`, `a-implement` and `a-check` rows) → Read only its header, `limit: 6`, never the whole file, never `shasum`
 1. The header's `updated` matches the row's Updated cell → the row is current, leave Status and Updated alone
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
 1. The artefact is missing from disk → leave the row `[ ]`, Status and Updated unchanged
-1. A row's Artefact is `-` (`a-finish`) → it carries no header; its Status and Updated are only the command's own report from Step 4, never touched here
-1. Every row of a story copies its Branch from `story-N.md`'s own `branch` header, once that header sets one — never from the row's own artefact, and never skipped for the `a-finish` row
+1. Every row of a story copies its Branch from `story-N.md`'s own `branch` header, once that header sets one — never from the row's own artefact
 1. Tick a row `[x]` only when its refreshed Status ticks it, per the Done rule in the template's `## Columns`. NEVER downgrade or remove a tick already present
 1. A row refreshed here, or newly ticked, triggers the same `## Row shape` appends a tick in Step 4 triggers. Append those rows, then reconcile them too
 1. Repeat until a pass changes nothing further
@@ -91,8 +90,8 @@ Print the exact command to type next, using the row that is now first unticked, 
 | `a-implement <n-m>` | `/a-implement <n> <m>` |
 | `a-check <n-m>`, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then: verify the criterion yourself, then `/a-check <n> <m>` |
 | `a-check <n-m>`, reached directly | `/a-check <n> <m>` |
-| `a-finish <n>`, right after the story's last `a-check` row ticks | `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <n>` |
-| `a-finish <n>`, reached directly (`/pr-draft` already ran) | `/a-finish <n>` |
+| `a-finish <n>`, right after the story's last `a-check` row ticks | `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <n>` from the main repo root |
+| `a-finish <n>`, reached directly (`/pr-draft` already ran) | `/a-finish <n>`, from the main repo root |
 | none — every row ticked and `## Story Order` is exhausted | nothing to run; report the epic complete |
 
 ## Important notes

@@ -141,7 +141,7 @@ Summarize:
 5. the plan's `status`
 6. findings appended to `story-<story-number>.md`
 
-Then name the next command: `/a-plan <story-number> <criterion-number + 1>` when the story has another criterion, else `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <story-number>`. Then stop. NEVER start it, and NEVER offer to.
+Then name the next command: `/a-plan <story-number> <criterion-number + 1>` when the story has another criterion, else `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <story-number>` from the main repo root. Then stop. NEVER start it, and NEVER offer to.
 
 ## Success Criteria
 

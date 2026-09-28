@@ -56,7 +56,7 @@ This command should:
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. This is a planning stage: follow `## Where a command runs`, and resolve the selector per `## Selector resolution`'s Planning stages row — this command's own argument, then memory, then ask; never the current branch.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (memory, then ask).
-1. No story number in `$ARGUMENTS` → memory holds one for this epic and its `story-N.md` is not `status: done` → use it. Otherwise compute the default: read `epic.md`'s `## Story Order` in its listed sequence, and take the first entry whose `story-N.md` is missing or not `status: done`. Present that number to the user for confirmation, alongside the other available numbers, per the `ask-user-question` skill.
+1. No story number in `$ARGUMENTS` → memory holds one for this epic and its `story-N.md` is neither `status: done` nor `status: finished` → use it. Otherwise compute the default: read `epic.md`'s `## Story Order` in its listed sequence, and take the first entry whose `story-N.md` is missing or neither `status: done` nor `status: finished`. Present that number to the user for confirmation, alongside the other available numbers, per the `ask-user-question` skill.
 1. Record the resolved story number in memory now.
 
 Read (stop if any are missing):
@@ -91,9 +91,9 @@ The moment the slug locks, set `branch: <epic-slug>/<n>-<story-slug>`.
 
 `story-<story-number>.md` missing → create it now from `a-templates/story.md`'s `## Shape`: the header (`status: draft`, `branch` set), the title, the story statement, `## User Context` filled from `epic.md`, `## References`, and every other H2 heading present but empty, per conventions `## Write as you go`. Go to Step 2.
 
-`story-<story-number>.md` exists and its `status` is `done` → this command does not re-enter a done story; report that and stop.
+`story-<story-number>.md` exists and its `status` is `done` or `finished` → this command does not re-enter it; report that and stop.
 
-`story-<story-number>.md` exists and its `status` is not `done` (`draft`, `blocked`, or no header at all) → bring it current, then resume:
+`story-<story-number>.md` exists and its `status` is neither `done` nor `finished` (`draft`, `blocked`, or no header at all) → bring it current, then resume:
 1. No header → add one now: `status: draft`, `updated` from `date`, and `branch` from its legacy `> Slug:` line if one exists within conventions `## Size caps`, else derive and confirm a slug of 5 words at most per the ordering above
 2. `status: blocked` → Edit it back to `draft`
 3. A heading still carrying the pre-rename findings name → Edit it to `## Findings`, keeping its existing rows
