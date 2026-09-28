@@ -160,7 +160,7 @@ Report what this revision just made stale. Do not rewrite any of it in this run.
 | `epic-architecture.md` | every `story-N.md`, its own cascaded assumption rows, and every later stage for this epic |
 | `story-N.md` | that story's `story-N-design.md`, its `story-N-acM.md` files, and every later stage for that story |
 | `story-N-design.md` | that story's `story-N-acM.md` files, and every later stage for that story |
-| `story-N-acM.md` | that criterion's `/a-implement` run, and that story's `a-finish` |
+| `story-N-acM.md` | that criterion's `/a-implement` and `/a-check` runs, and that story's `a-finish` |
 
 Also report, every run:
 1. the artifact's row in `epic-progress.md` now lags the doc header; `/a-cont` refreshes its Status and Updated on its next run

@@ -11,7 +11,8 @@ A pipeline for taking an idea from a rough note through to a shipped story using
 | Story | `/a-story` | Working |
 | Design | `/a-design` | Working |
 | Plan | `/a-plan` | Working |
-| Implement | `/a-implement` | Does not exist yet |
+| Implement | `/a-implement` | Working |
+| Check | `/a-check` | Working |
 | Finish | `/a-finish` | Does not exist yet |
 
 `/a-cont` drives any row above marked Working. It stops the moment it reaches a row that is not.
@@ -28,19 +29,25 @@ A pipeline for taking an idea from a rough note through to a shipped story using
 /a-story
 /a-design
 /a-plan                 # one criterion at a time
+
+/a-implement            # ends by printing the /compact instructions
+/compact                # paste what a-implement printed
+                        # verify the criterion yourself
+/a-check                # simplify, then code-review high --fix, same branch
+/a-plan                 # the next criterion
 ```
 
 `/a-cont <slug>` runs the next unticked stage of this instead, one at a time, and prints the exact next command to type.
 
 ## The three loops
 
-The full pipeline has three loops. The first is complete; the per-story loop stops after `a-design`, and the per-criterion loop stops after `a-plan`.
+The full pipeline has three loops. The first and the per-criterion loops are complete; the per-story loop stops after `a-design`.
 
 | Loop | Commands | Artefacts |
 | --- | --- | --- |
 | Epic, once | `a-epic`, `a-architecture` | `epic.md`, `personas.md`, `stretch-goals.md`, `architecture.md` |
 | Per story | `a-story`, `a-design`, `a-finish` | `story-N.md`, `design-N.md` |
-| Per criterion | `a-plan`, `a-implement` | `plan-N-M.md`, code, commits |
+| Per criterion | `a-plan`, `a-implement`, `a-check` | `plan-N-M.md`, code, commits |
 
 ## Folder layout
 
@@ -113,7 +120,7 @@ Trailing text after the selector passes straight through to the command as high-
 | `architecture.md` | `a-architecture` | The epic's architecture: critique, decisions, diagrams, terminology, change inventory. There is no other architecture document — repo-level context comes from each repo's README, `CLAUDE.md`, `CONTRIBUTING.md`, and `CONTEXT.md`. `a-finish` is the only later command that writes it |
 | `story-N.md` | `a-story` | WHAT the story delivers: its slug, user context, Given/When/Then acceptance criteria, UI references, a settled assumption ledger, and a `## Findings` log that every later stage appends to and only `a-finish` applies. It carries no technical design |
 | `design-N.md` | `a-design` | HOW the story is built: goal, UX, UI sketch, components, file structure, reuse and extractions, contracts, migrations, the two story-level diagrams, happy-path test lines, risks, and the decision registry |
-| `plan-N-M.md` | `a-plan` | HOW one acceptance criterion gets built: the criterion verbatim, its outcome and dependencies, the exact files, the numbered steps, the contracts copied from the design, the test lines, the verification commands, and what is out of scope |
+| `plan-N-M.md` | `a-plan` | HOW one acceptance criterion gets built: the criterion verbatim, its outcome and dependencies, the exact files, the numbered steps, the contracts copied from the design, the test lines, the verification commands, and what is out of scope. `a-implement` ticks its steps and sets `status: implemented`, `branch` and `pr` in its header; `a-check` appends `, simplified` and `, reviewed` to that status; `a-cont` ticks the `a-implement` and `a-check` rows from there |
 | `progress.md` | `a-cont` | The completion matrix: Done, Stage, Artefact, Status, Updated, Branch columns. `a-cont` ticks a row only on `status: done`, read from the artefact's own header |
 | `CONTEXT.md` (in each repo) | `a-architecture` | That repo's naming baseline. `a-epic` puts candidate terms in `epic.md`'s `## Candidate Terms` instead of writing here; `a-architecture` confirms them. Later stages record term findings in `story-N.md`; `a-finish` applies them |
 
@@ -124,8 +131,9 @@ These key on the current git branch, not on a slug, and this flow does not chang
 | Command | Fits in |
 | --- | --- |
 | `/rtd` | Run at the start of a session, before `/a-epic` and again before `/a-story` |
-| `/wt` | Creates the worktree `/a-implement` will use, once that stage exists |
-| `/simplify`, `/code-review`, `/security-review`, `/pr-draft`, `/recommit` | Run after `/a-implement`, once that stage exists |
+| `/wt` | Creates the story worktree. `/a-implement` follows it on a story's first criterion, and reuses that worktree after |
+| `/simplify`, `/code-review` | Run by `/a-check`, once per criterion, as skills |
+| `/pr-draft`, `/security-review`, `/recommit` | Run in the story worktree after a story's last `/a-check`, before `/a-finish` |
 
 `/clear` and `/compact` are the user's own calls between stages; no `a-*` command runs them.
 

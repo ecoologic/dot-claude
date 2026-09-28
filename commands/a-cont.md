@@ -13,7 +13,7 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 
 1. `epic-progress.md` is the state. Read it first, then seed or extend it, editing it row by row, section by section — NEVER rewrite the whole file, except the one-time legacy migration, per the template's `## Legacy matrix`
 1. Every write to `epic-progress.md` refreshes its own `updated` header, per conventions `## Document header`
-1. Tick a row only when Step 2 or Step 4 sets its Status to `done`, per the template's `## Rules`, or when seeding the `a-epic` row per its `## Legacy matrix`. NEVER a hash, a SHA, or any other manufactured evidence
+1. Tick a row only when Step 2 or Step 4 sets a Status that ticks it, per the Done rule in the template's `## Columns`, or when seeding the `a-epic` row per its `## Legacy matrix`. NEVER a hash, a SHA, or any other manufactured evidence
 1. NEVER record a command's prose. Record what it actually produced
 1. A doc's `status: done` means the user approved the doc, per conventions `## Document header` — NEVER that its code exists or its criteria pass. Only a ticked `a-implement` or `a-finish` row records delivery. NEVER report a `done` story or design as delivered
 1. A gate stops the WHOLE run. Write `## Blocked`. Tick nothing further. Report. NEVER retry
@@ -43,14 +43,14 @@ Read `~/.claude/commands/a-templates/epic-progress.md` and follow its `## Row sh
 
 Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row from its artefact's header, so this command stays idempotent no matter how it drifted.
 
-1. A row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md`) → Read only its header, `limit: 6`, never the whole file, never `shasum`
+1. A row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the last for the `a-plan`, the `a-implement` and the `a-check` row) → Read only its header, `limit: 6`, never the whole file, never `shasum`
 1. The header's `updated` matches the row's Updated cell → the row is current, leave Status and Updated alone
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
 1. The artefact is missing from disk → leave the row `[ ]`, Status and Updated unchanged
-1. A row's Artefact is a commit or `-` (`a-implement`, `a-finish`) → it carries no header; its Status and Updated are only the command's own report from Step 4, never touched here
-1. Every row of a story copies its Branch from `story-N.md`'s own `branch` header, once that header sets one — never from the row's own artefact, and never skipped for a commit row
-1. Tick a row `[x]` only when its refreshed Status is `done`. NEVER downgrade or remove a tick already present
+1. A row's Artefact is `-` (`a-finish`) → it carries no header; its Status and Updated are only the command's own report from Step 4, never touched here
+1. Every row of a story copies its Branch from `story-N.md`'s own `branch` header, once that header sets one — never from the row's own artefact, and never skipped for the `a-finish` row
+1. Tick a row `[x]` only when its refreshed Status ticks it, per the Done rule in the template's `## Columns`. NEVER downgrade or remove a tick already present
 1. A row refreshed here, or newly ticked, triggers the same `## Row shape` appends a tick in Step 4 triggers. Append those rows, then reconcile them too
 1. Repeat until a pass changes nothing further
 
@@ -65,7 +65,7 @@ Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row
 ## Step 4: Run the stage
 
 1. Read `~/.claude/commands/<stage>.md`. Follow its text in THIS session, with the row's selector and `[details]` from Step 0 as its `$ARGUMENTS`. Never `a-epic` — Step 3 gates before any such row reaches here
-1. It finishes and reports its output → re-read the artefact's header, per Step 2, and refresh the row from it. Tick only if Status is now `done`. Empty `## Blocked` if it held an earlier gate, then go to Step 6
+1. It finishes and reports its output → re-read the artefact's header, per Step 2, and refresh the row from it. Tick only if Status now ticks it, per the Done rule in the template's `## Columns`. Empty `## Blocked` if it held an earlier gate, then go to Step 6
 1. It stops or asks the user something → that is a gate, not a failure. Go to Step 5
 
 ## Step 5: Gate
@@ -89,9 +89,10 @@ Print the exact command to type next, using the row that is now first unticked, 
 | `a-design <n>` | `/a-design <n>` |
 | `a-plan <n-m>` | `/a-plan <n> <m>` |
 | `a-implement <n-m>` | `/a-implement <n> <m>` |
-| `a-plan <n-m>`, the SAME criterion, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then `/a-plan <n> <m>` |
-| `a-finish <n>`, right after the story's last `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then `/simplify`, `/clear`, `/code-review high --fix`, `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <n>` |
-| `a-finish <n>`, reached directly (the review chain already ran) | `/a-finish <n>` |
+| `a-check <n-m>`, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then: verify the criterion yourself, then `/a-check <n> <m>` |
+| `a-check <n-m>`, reached directly | `/a-check <n> <m>` |
+| `a-finish <n>`, right after the story's last `a-check` row ticks | `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <n>` |
+| `a-finish <n>`, reached directly (`/pr-draft` already ran) | `/a-finish <n>` |
 | none — every row ticked and `## Story Order` is exhausted | nothing to run; report the epic complete |
 
 ## Important notes

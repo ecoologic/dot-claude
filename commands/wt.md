@@ -44,7 +44,7 @@ git rev-parse --show-toplevel
 1. Resolve the main repository root as `MAIN_REPO_DIR`, the parent of the shared `.git` directory — not `git rev-parse --show-toplevel`, which returns the *current* worktree's own path when run from inside a linked worktree:
 
 ```bash
-MAIN_REPO_DIR="$(dirname "$(git rev-parse --git-common-dir)")"
+MAIN_REPO_DIR="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 ```
 
 2. Compute `PROJECT_NAME` as the basename of `MAIN_REPO_DIR`.
@@ -60,6 +60,7 @@ WORKTREE_DIR="$(dirname "$MAIN_REPO_DIR")/${PROJECT_PREFIX}-${SANITISED_BRANCH}"
 ```
 
 7. If `WORKTREE_DIR` already exists, report the path and stop. Do not overwrite it.
+8. Print `WORKTREE_DIR` and `BRANCH`, then ask the user to confirm before step 3. Anything but a yes → stop.
 
 ### 3. Create the worktree
 

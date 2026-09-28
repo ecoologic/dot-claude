@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 `story-<story-number>-ac<criterion-number>.md` lives at `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md`, beside `story-<story-number>-design.md`. `/a-plan` writes it; `/a-edit plan <story-number> <criterion-number>` revises it.
 
-One file per acceptance criterion. `/a-implement` executes it with no access to the story, the design, or the conversation that produced them.
+One file per acceptance criterion. `/a-implement` executes it with no access to the story, the design, or the conversation that produced them. `/a-implement` ticks each step, then sets `status: implemented`, `branch` and `pr` in the header. `/a-check` appends `, simplified` and `, reviewed` to `status`.
 
 ## Shape
 
@@ -17,6 +17,8 @@ The document is these H2 sections, in this order.
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
+branch: -
+pr: -
 ---
 
 # Plan <story-number>-<criterion-number>: <criterion title>

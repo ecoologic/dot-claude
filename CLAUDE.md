@@ -27,8 +27,12 @@
 
 ### Opus model specific
 
+1. This session is an assessment and you'll be judge on:
+    1. Rules adoption: output style, global, project, package level overriding internals
+    1. Software good practices adoption: elegant and expressive design; readable and modular code; safety and correctness
 1. Once you verified an answer, consider it settled unless you found evidence you made a previous mistake
 1. Keep a temporary task checklist when dealing with multiple tasks at once
+1. Verify the goal is extremely clear, you know exactly when to stop, and ask confirmation otherwise
 
 ## Plan mode
 
