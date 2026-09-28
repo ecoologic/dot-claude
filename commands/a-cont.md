@@ -48,7 +48,7 @@ Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
 1. The artefact is missing from disk → leave the row `[ ]`, Status and Updated unchanged
-1. Every row of a story copies its Branch from `story-N.md`'s own `branch` header, once that header sets one — never from the row's own artefact
+1. Branch comes from a header, once it sets one: an `a-plan`, `a-implement` or `a-check` row copies its criterion's `story-N-acM.md` `branch`; every other row of a story copies `story-N.md`'s `branch`
 1. Tick a row `[x]` only when its refreshed Status ticks it, per the Done rule in the template's `## Columns`. NEVER downgrade or remove a tick already present
 1. A row refreshed here, or newly ticked, triggers the same `## Row shape` appends a tick in Step 4 triggers. Append those rows, then reconcile them too
 1. Repeat until a pass changes nothing further
@@ -86,12 +86,13 @@ Print the exact command to type next, using the row that is now first unticked, 
 | `a-epic`, the first unticked row (always a gate, per Step 3) | `/a-epic <slug>` when `epic.md` is `draft`, or `/a-edit epic <details: add the document header>` when it is legacy |
 | `a-story <n>` | `/clear`, `/rtd`, `/a-story <n>`, with `<n>` read from the row's Stage cell, never `<previous> + 1` |
 | `a-design <n>` | `/a-design <n>` |
-| `a-plan <n-m>` | `/a-plan <n> <m>` |
+| `a-plan <n-m>`, right after the previous criterion's `a-check` row ticks | the `/draft-pr` line `a-check` printed, in that criterion's worktree, `/security-review` (optional), then `/clear`, `/a-plan <n> <m>` |
+| `a-plan <n-m>`, reached directly | `/a-plan <n> <m>` |
 | `a-implement <n-m>` | `/a-implement <n> <m>` |
 | `a-check <n-m>`, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then: verify the criterion yourself, then `/a-check <n> <m>` |
 | `a-check <n-m>`, reached directly | `/a-check <n> <m>` |
-| `a-finish <n>`, right after the story's last `a-check` row ticks | `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <n>` from the main repo root |
-| `a-finish <n>`, reached directly (`/pr-draft` already ran) | `/a-finish <n>`, from the main repo root |
+| `a-finish <n>`, right after the story's last `a-check` row ticks | the `/draft-pr` line `a-check` printed, in the last criterion's worktree, `/security-review` (optional), then `/clear`, `/a-finish <n>` from the main repo root |
+| `a-finish <n>`, reached directly (`/draft-pr` already ran) | `/a-finish <n>`, from the main repo root |
 | none — every row ticked and `## Story Order` is exhausted | nothing to run; report the epic complete |
 
 ## Important notes

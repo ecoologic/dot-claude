@@ -1,5 +1,5 @@
 ---
-description: Implement one acceptance criterion from its approved plan, in the story worktree, then commit
+description: Implement one acceptance criterion from its approved plan, on its own branch and worktree, then commit
 argument-hint: "[<story-number>] [<criterion-number>] [details]"
 allowed-tools: [Read, Glob, Grep, Write, Edit, Bash, Agent, AskUserQuestion, Skill]
 disable-model-invocation: true
@@ -12,12 +12,12 @@ disable-model-invocation: true
 | Direction | File | Description |
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
-| **In** | `~/.claude/commands/wt.md` | How the story worktree is created, when none exists yet |
-| **In/Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The approved plan. Tick `## Steps`, add rows to `## Assumptions`, set the header's `status`, `branch` and `pr`. NEVER change any other section |
-| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | The `branch` header, and `## Findings`. Append to `## Findings` only. NEVER change any other section |
+| **In** | `~/.claude/commands/wt.md` | How the criterion worktree is created, when none exists yet |
+| **In/Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The approved plan. Read its `branch` header. Tick `## Steps`, add rows to `## Assumptions`, set the header's `status` and `pr`. NEVER change any other section |
+| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | `## Findings`. Append to `## Findings` only. NEVER change any other section |
 | **In** | `$EPIC_DIR/epic.md` | Touched repos |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
-| **Out** | the story worktree, per touched repo | Code changes, tests, and commits on the story branch |
+| **Out** | the criterion worktree, per touched repo | Code changes, tests, and commits on the criterion branch |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -28,14 +28,14 @@ Discover and invoke project skills per `~/.claude/commands/a-templates/conventio
 ## Purpose
 
 Implement ONE acceptance criterion exactly as its approved plan says, then commit it. This command should:
-- find the story worktree, or create it when this is the story's first criterion
+- find the criterion worktree, or create it on its base, per conventions `## Criterion branches`
 - execute the plan's steps in order, in the main session
 - dispatch subagents only for the steps the plan marks independent
 - validate up the ladder, using only the plan's verification commands
-- commit every working increment on the story branch
+- commit every working increment on the criterion branch
 - settle every assumption it coins, and cite by ID the rows it inherits
 - record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding
-- mark the plan `implemented`, with its branch and PR number
+- mark the plan `implemented`, with its PR number
 - print the `/compact` instructions for the next stage
 
 ## Rules
@@ -48,7 +48,7 @@ Implement ONE acceptance criterion exactly as its approved plan says, then commi
 - NEVER mention epic, story, acceptance criteria, AC, or similar workflow jargon in code comments, user-facing copy, or committed implementation text; use plain language that still makes sense later without process context
 - NEVER introduce in comments or UI outdated history context that refers to implementation detail changes eg: The rename of a model
 - NEVER detect a verification command. Run only the plan's `## Verification` rows, see Step 5
-- NEVER create a second worktree for a story, see Step 2
+- NEVER create a second worktree for a criterion, see Step 2
 - NEVER push, and NEVER pass `--no-verify`. The hooks run
 - NEVER write `epic.md`, `epic-architecture.md`, `epic-progress.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
 - NEVER apply a finding yourself; `/a-finish` applies them
@@ -76,7 +76,7 @@ Gates, before any code changes:
 1. The plan's header `status` starts with `implemented` → report the plan's `branch` and `pr`, and stop. This criterion is done
 1. The plan's header reads anything but `status: done` → STOP. Send the user to `/a-plan <story-number> <criterion-number>`
 1. The plan carries a row in `## Assumptions` still `open` or `cascaded` → STOP. Report the row and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`
-1. `story-<story-number>.md` has no `branch` header → STOP. Send the user to `/a-edit story <story-number> <details: set the branch header>`
+1. The plan's `branch` header is `-` or missing → STOP. Send the user to `/a-edit plan <story-number> <criterion-number> <details: set the branch header>`
 1. The plan's `### Dependencies` names an earlier criterion whose `story-<story-number>-ac<n>.md` has no `status` starting with `implemented` → STOP. Report that criterion, and name `/a-implement <story-number> <n>` as the command that must run first
 
 Output:
@@ -89,22 +89,23 @@ Repos: <repo>, <repo>
 Plan: approved, <step count> steps, <independent count> independent
 ```
 
-## Step 2: Enter the story worktree
+## Step 2: Enter the criterion worktree
 
-The repos this criterion touches are the ones the plan's `> Repos:` line and the Repo column of its `## Verification` name. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`.
+The repos this criterion touches are the ones the plan's `> Repos:` line and the Repo column of its `## Verification` name. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`. `<branch>` is the plan's `branch` header.
 
 Once per touched repo:
-1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. A `branch refs/heads/<branch>` entry → its `worktree` line is the story worktree. Use it
-1. No entry → read `~/.claude/commands/wt.md` and follow its text from `<dev-root>/<repo>`, with `<branch>` as its argument. Then run `./scripts/setup-worktree.sh` from the new worktree when it exists
+1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. A `branch refs/heads/<branch>` entry → its `worktree` line is the criterion worktree. Use it
+1. No entry, and no local `<branch>` → resolve the base per conventions `## Criterion branches`. Run `git -C <dev-root>/<repo> fetch origin <default-branch>`, then `git -C <dev-root>/<repo> branch <branch> <base>`
+1. No entry → read `~/.claude/commands/wt.md` and follow its text from `<dev-root>/<repo>`, with `<branch>` as its argument. It checks out the local branch. Then run `./scripts/setup-worktree.sh` from the new worktree when it exists
 1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
 
 From here on, every Read, Edit and Write uses an absolute path inside the worktree. Every Bash command runs with the worktree as its working directory.
 
-Report each worktree path and whether this run created it.
+Report each worktree path, its base, and whether this run created it.
 
 ## Step 3: Reconcile the plan against the worktree
 
-The plan was written against the main repo. Check that it still holds in the worktree, where earlier criteria of this story already landed.
+The plan was written against the main repo. Check that it still holds in the worktree, where the earlier criteria already merged to the default branch, or stacked below this one, landed.
 
 1. A path the plan marks `edit` does not exist → create it only if the repo's conventions confirm the path is correct; otherwise follow the nearest valid convention, and record it as an assumption row in Step 7
 1. A path the plan marks `create` already exists → read it. If part of the criterion is already implemented, reuse it and finish only the missing coverage
@@ -146,7 +147,7 @@ On merge conflicts, continue only if the criterion's scope remains intact. Other
 
 ## Step 6: Commit
 
-1. Commit in each touched worktree, on the story branch only
+1. Commit in each touched worktree, on the criterion branch only
 1. Every commit is a working increment, per conventions.md's Vertical slicing rule. NEVER commit a half-wired criterion
 1. Stage by exact path every file this run wrote: the plan's files, plus each supporting or corrected path recorded in Step 7. NEVER `git add -A`
 1. After each commit, `git status --porcelain` in that worktree prints nothing. Anything left → commit it, or stop and report it
@@ -184,8 +185,7 @@ Append only. NEVER edit a row an earlier stage already wrote, and NEVER touch an
 Only when every step is ticked, validation passed per Step 5, and every touched worktree has its commit and a clean `git status --porcelain`. Otherwise leave `status: done`, and report the gate in Step 10.
 
 Per conventions `## Document header`, one Edit per key of the plan's header:
-1. `branch` → the story branch
-1. `pr` → per touched repo, the open PR for the branch, from `gh pr list --head <branch> --state open --json number` run in its worktree: `<repo>#<number>`, comma-separated. No open PR → `none`
+1. `pr` → per touched repo, the open PR for the criterion branch, from `gh pr list --head <branch> --state open --json number` run in its worktree: `<repo>#<number>`, comma-separated. No open PR → `none`
 1. `status` → `implemented`
 1. `updated` → now
 
@@ -198,7 +198,7 @@ Summarize:
 2. the criterion covered, in one sentence
 3. the validation result, per `## Verification` row, and every rung skipped
 4. the commits, as `<repo> <7-char sha> <subject>`
-5. the plan's header: `status`, `branch`, `pr`
+5. the plan's header: `status`, `branch`, `pr`, and the base per worktree
 6. the assumption ledger: rows verified, rows the user resolved, rows invalidated
 7. findings appended to `story-<story-number>.md`
 8. blockers or risks
@@ -217,16 +217,16 @@ Then name the next command: `/a-check <story-number> <criterion-number>`, once t
 
 - [ ] the plan's header read `status: done` when this command started, and its `## Assumptions` carried no `open` or `cascaded` row
 - [ ] exactly one acceptance criterion is implemented: the one requested
-- [ ] one worktree per touched repo holds the story branch; none was created when one existed
+- [ ] one worktree per touched repo holds the criterion branch, created on its base per conventions `## Criterion branches`; none was created when one existed
 - [ ] the steps ran in order; only steps marked independent ran in subagents, dispatched in one message
 - [ ] no subagent ran a `git` command
 - [ ] every verification command came from the plan's `## Verification`; none was detected
-- [ ] every commit is a working increment on the story branch, staged by exact path; nothing was pushed, and no hook was skipped
+- [ ] every commit is a working increment on the criterion branch, staged by exact path; nothing was pushed, and no hook was skipped
 - [ ] no code, comment, copy or commit message mentions epic, story, acceptance criterion, AC, or workflow history
 - [ ] only the plan's `## Steps` ticks, `## Assumptions` rows and header changed in `story-<story-number>-ac<criterion-number>.md`
 - [ ] every assumption this run coined is `verified`, `resolved`, or `invalidated`; none is left `open` or `cascaded`
 - [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
-- [ ] `status: implemented` is set only after every step ticked, validation passed, and every commit landed, with `branch` and `pr` set
+- [ ] `status: implemented` is set only after every step ticked, validation passed, and every commit landed, with `pr` set
 - [ ] `epic-progress.md` did not change
 - [ ] the `/compact` instructions were printed, and no offer to start the next criterion was made
 - [ ] the story number and the criterion number are recorded in memory
@@ -242,6 +242,7 @@ When stopping due to a missing, unreadable, or malformed input:
 - **An assumption row in the plan is still `open` or `cascaded`** — print the row, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`. NEVER settle it here
 - **The plan does not match the worktree** — report exactly what differs, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`. NEVER invent a step
 - **A worktree has uncommitted changes** — print `git status --porcelain`, and stop. NEVER stash, reset or discard
+- **The base does not resolve, or `git branch` fails** — report the command and its output, and stop
 - **`/wt` fails or the user declines its confirmation** — report the step `wt.md` stopped at, and stop
 - **An in-scope failure stays red after fixing** — leave `status: done`, report the command and its output, and stop
 - **`gh` is missing or unauthenticated** — set `pr: none`, and report it as a risk

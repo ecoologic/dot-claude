@@ -1,5 +1,6 @@
 ---
 description: Push the current branch, then open a draft PR or update the existing one, following the repo template
+argument-hint: "[--base <branch>]"
 allowed-tools: Bash, Read, Glob, Grep, Agent
 model: haiku
 effort: xhigh
@@ -55,13 +56,23 @@ If the output is not empty, commit it once every check below passes. Follow the 
 
 4. `BRANCH` is not `DEFAULT_BRANCH`. If it is, STOP.
 
-5. `gh` (GitHub CLI) is installed and authenticated:
+5. Resolve `BASE_BRANCH`: the branch after `--base` in `$ARGUMENTS`, else `DEFAULT_BRANCH`. A `BASE_BRANCH` other than `DEFAULT_BRANCH` makes this PR a layer of a GitHub stack. It must exist on the remote:
+
+```bash
+git rev-parse --verify "origin/$BASE_BRANCH"
+```
+
+If it fails, STOP. The branch below has not been pushed.
+
+A `BASE_BRANCH` other than `DEFAULT_BRANCH` whose own PR is merged (`gh pr list --head "$BASE_BRANCH" --state merged --json number` prints one) → STOP. Report that the branch needs a rebase onto `DEFAULT_BRANCH` first.
+
+6. `gh` (GitHub CLI) is installed and authenticated:
 
 ```bash
 gh auth status
 ```
 
-6. An existing PR on the branch selects the mode:
+7. An existing PR on the branch selects the mode:
 
 ```bash
 gh pr view --json url -q .url
@@ -72,7 +83,7 @@ If it prints a URL, record it as `PR_URL` and run in UPDATE mode. Otherwise run 
 ### 2. Gather context
 
 ```bash
-git log --oneline "origin/$DEFAULT_BRANCH..HEAD"
+git log --oneline "origin/$BASE_BRANCH..HEAD"
 ```
 
 The branch name and these commit subjects are the ONLY sources for the title (step 4) and the description's numbered list (step 4). Do NOT read the diff here -- it is read once, in step 5, and it feeds steps 6 and 7 alone.
@@ -108,7 +119,7 @@ EVERY `git diff` in this command carries the exclude pathspecs below, so lockfil
 1. Measure the change, so that a dependency bump cannot trigger a diagram:
 
 ```bash
-git diff --shortstat "origin/$DEFAULT_BRANCH...HEAD" -- . \
+git diff --shortstat "origin/$BASE_BRANCH...HEAD" -- . \
   ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
   ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
@@ -118,7 +129,7 @@ Add insertions + deletions into `DIFF_TOTAL`.
 2. `DIFF_TOTAL` above 100: read the full diff.
 
 ```bash
-git diff "origin/$DEFAULT_BRANCH...HEAD" -- . \
+git diff "origin/$BASE_BRANCH...HEAD" -- . \
   ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
   ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
@@ -126,7 +137,7 @@ git diff "origin/$DEFAULT_BRANCH...HEAD" -- . \
 3. `DIFF_TOTAL` of 100 or less: narrow before reading any content. List the changed paths first:
 
 ```bash
-git diff --name-only "origin/$DEFAULT_BRANCH...HEAD" -- . \
+git diff --name-only "origin/$BASE_BRANCH...HEAD" -- . \
   ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
   ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
 ```
@@ -134,7 +145,7 @@ git diff --name-only "origin/$DEFAULT_BRANCH...HEAD" -- . \
 Keep only the paths that can carry an interface change -- route and controller files, a package's declared public entry point (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`), and migrations (`migrations/`, `db/migrate/`, `prisma/schema.prisma`, `alembic/versions/`). When nothing matches, there is no interface change: skip to step 7 with nothing to report. Otherwise read only those paths:
 
 ```bash
-git diff "origin/$DEFAULT_BRANCH...HEAD" -- $CANDIDATE_PATHS
+git diff "origin/$BASE_BRANCH...HEAD" -- $CANDIDATE_PATHS
 ```
 
 4. A `DIFF_TOTAL` of 300 or less means step 7 draws no diagram, whatever step 6 found.
@@ -241,8 +252,16 @@ git push -u origin "$BRANCH" --force-with-lease
 #### CREATE mode
 
 ```bash
-gh pr create --draft --base "$DEFAULT_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
+gh pr create --draft --base "$BASE_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
 ```
+
+`BASE_BRANCH` is not `DEFAULT_BRANCH` → link the new PR onto the PR of the branch below, bottom first. Pass PR numbers only: a branch-name argument makes `gh stack link` push it:
+
+```bash
+gh stack link "$(gh pr view "$BASE_BRANCH" --json number -q .number)" "$(gh pr view --json number -q .number)"
+```
+
+`gh stack` is missing (`gh extension list` does not show `github/gh-stack`) → skip the link, and report `gh extension install github/gh-stack`. The PR still targets `BASE_BRANCH`.
 
 #### UPDATE mode
 
@@ -265,15 +284,17 @@ gh pr edit "$PR_URL" --body-file "$BODY_FILE"
 ```
 
 1. NEVER pass `--title`. A person may have renamed the PR. Report your derived title when it differs.
-2. NEVER pass `--draft` or `--ready`. The PR keeps the state it has.
+2. Retarget only when `--base` was passed and differs from the PR's base (`gh pr view "$PR_URL" --json baseRefName -q .baseRefName`), or when the PR's base has a merged PR of its own: then also pass `--base "$BASE_BRANCH"`. A rebased layer moves to `DEFAULT_BRANCH` this way. NEVER retarget otherwise
+3. NEVER pass `--draft` or `--ready`. The PR keeps the state it has.
 
 ### 10. Report
 
 1. Print the PR URL. Say whether the command created the PR or updated it.
-2. Say whether the push was plain or `--force-with-lease`.
-3. Name the template items step 8 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
-4. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
-5. When `DIFF_TOTAL` was above 300 and no diagram was drawn, add one clause saying why.
+2. Print the base, and whether the PR was linked into a stack or retargeted.
+3. Say whether the push was plain or `--force-with-lease`.
+4. Name the template items step 8 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
+5. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
+6. When `DIFF_TOTAL` was above 300 and no diagram was drawn, add one clause saying why.
 
 ## Important Notes
 

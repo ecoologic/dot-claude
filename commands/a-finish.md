@@ -1,5 +1,5 @@
 ---
-description: Close one story after its last criterion - apply its findings upstream, record drift, remove the worktree
+description: Close one story after its last criterion - apply its findings upstream, record drift, remove the criterion worktrees
 argument-hint: "[<story-number>] [details]"
 allowed-tools: [Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion, Skill]
 disable-model-invocation: true
@@ -12,12 +12,12 @@ disable-model-invocation: true
 | Direction | File | Description |
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
-| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | The criteria, the `branch` header, and `## Findings`. Mark findings applied or rejected, and set `status: finished`. NEVER change any other section |
+| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | The criteria, the story `branch` header, and `## Findings`. Mark findings applied or rejected, and set `status: finished`. NEVER change any other section |
 | **In** | `$EPIC_DIR/story-<story-number>-design.md` | What the story was designed to change |
-| **In/Out** | `$EPIC_DIR/story-<story-number>-ac*.md` | Every criterion's plan. Read the header; set `pr` only |
+| **In/Out** | `$EPIC_DIR/story-<story-number>-ac*.md` | Every criterion's plan. Read the header, its criterion `branch` included; set `pr` only |
 | **In/Out** | `$EPIC_DIR/epic.md` | Apply the confirmed findings that target it |
 | **In/Out** | `$EPIC_DIR/epic-architecture.md` | Apply the confirmed findings that target it. Bring `## Change Inventory` and `## Story Mapping` in line with what shipped |
-| **In/Out** | `<worktree>/CONTEXT.md`, per touched repo | Apply the confirmed term findings, committed on the story branch |
+| **In/Out** | `<worktree>/CONTEXT.md`, per touched repo | Apply the confirmed term findings, committed on the branch Step 4 picks |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -31,7 +31,7 @@ Close ONE story once every criterion is checked. This command should:
 - apply the story's confirmed findings to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`
 - record what the story actually changed against what its design said
 - set each plan's `pr`
-- remove the story worktree, only on the user's confirmation, and only when nothing would be lost
+- remove each criterion worktree, only on the user's confirmation, and only when nothing would be lost
 - mark the story `finished`, and name the next story from `## Story Order`
 
 ## Rules
@@ -71,28 +71,28 @@ Gates:
 Output:
 ```text
 Story: <story-number> — <title>
-Branch: <branch>
+Branches: <criterion branch>, <criterion branch>
 Epic dir: <EPIC_DIR>
 Criteria: <count>, all reviewed
 Findings: <count not yet marked Applied or Rejected>
 ```
 
-## Step 2: Locate the story worktree
+## Step 2: Locate the criterion worktrees
 
-The repos are every plan's `> Repos:` line. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`.
+The repos are every plan's `> Repos:` line. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`. Each plan's `branch` header is its criterion branch, per conventions `## Criterion branches`.
 
-Once per touched repo:
-1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the story worktree
-1. No entry → record `none` for that repo. Step 4 then writes that repo's `CONTEXT.md` nowhere, and reports the terms instead
+Once per plan, per repo it touches:
+1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the criterion worktree
+1. No entry → record `none` for that plan and repo
 1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
 
 ## Step 3: Set each plan's `pr`
 
-Per touched worktree, run `gh pr list --head <branch> --state open --json number`.
+Per plan, per repo it touches, run `gh pr list --head <branch> --state all --json number,state` from `<dev-root>/<repo>`.
 
-1. Set `pr` in every `story-<story-number>-ac*.md` header: `<repo>#<number>` per repo, comma-separated, else `none`. One Edit per plan, per conventions `## Document header`. Refresh `updated`
+1. Set `pr` in each `story-<story-number>-ac*.md` header: `<repo>#<number>` per repo, comma-separated, else `none`. One Edit per plan, per conventions `## Document header`. Refresh `updated`
 1. `gh` is missing or unauthenticated → leave `pr` as it is, and report it as a risk
-1. No open PR in a repo → report it. `/pr-draft` has not run there
+1. No PR for a branch → report it. `/draft-pr` has not run there
 
 ## Step 4: Apply the findings
 
@@ -102,28 +102,34 @@ Read `story-<story-number>.md`'s `## Findings`. Skip every row whose Suggested C
 1. Apply each confirmed row to its target doc, with Edit on the section it names:
    - `epic.md` → the section the finding names. A story-order finding rewrites `## Story Order` only
    - `epic-architecture.md` → the section the finding names
-   - `<repo>/CONTEXT.md` → the story worktree's copy, per conventions `## Terminology`
+   - `<repo>/CONTEXT.md` → the copy in the worktree picked below, per conventions `## Terminology`
 1. Refresh the target doc's `updated`, and keep its `status`
 1. Append ` Applied to <doc> on <YYYY-MM-DD>` to the row's Suggested Change cell, now, with one Edit. A rejected row gets ` Rejected on <YYYY-MM-DD>: <reason>`
 1. A left row stays as it is. It blocks nothing; a later stage reads it, per conventions `## Findings`
-1. A repo whose worktree is `none`, per Step 2 → leave its `CONTEXT.md` rows as they are, and report them
 
-Commit every `CONTEXT.md` change in its worktree, on the story branch. Stage it by exact path; follow the repo's own commit message convention. NEVER push.
+Pick one branch per repo with a confirmed `CONTEXT.md` row, before its first Edit there:
+1. This run's guidance, or the user's words earlier in this chat, names the branch → use it
+1. The last criterion branch in that repo is merged, per conventions `## Criterion branches`, or has no worktree → the story branch, from `story-<story-number>.md`'s `branch` header, is the only option. Use it
+1. Otherwise → ask, per the `ask-user-question` skill: the last criterion branch, riding its open PR, or the story branch, with a PR of its own
+1. The story branch has no worktree → when it has no local branch either, run `git -C <dev-root>/<repo> fetch origin <default-branch>`, then `git -C <dev-root>/<repo> branch <story-branch> origin/<default-branch>`. Then follow `~/.claude/commands/wt.md` as `a-implement` Step 2 does
+
+Commit every `CONTEXT.md` change in the worktree of the branch picked. Stage it by exact path; follow the repo's own commit message convention. NEVER push.
 
 ## Step 5: Record the drift
 
 Compare what the story shipped with what `story-<story-number>-design.md` said.
 
-1. Per touched worktree, list the changed files: `git diff --name-status <fork-point>..HEAD`, where the fork point is `git merge-base HEAD origin/<default-branch>`, with the default branch per conventions `## Where a command runs`
+1. Per plan, per repo, list the changed files: `git diff --name-status <fork-point>..HEAD` in its criterion worktree, with the fork point per conventions `## Criterion branches`. A worktree that is `none` → use the plan's merged PR, `gh pr diff <number> --name-only`. Merge the lists
 1. Compare them with the design's `## File Structure`: a file shipped but not designed, a file designed but not shipped, a file whose role changed
 1. Bring `epic-architecture.md`'s `## Change Inventory` and this story's row of `## Story Mapping` in line with what shipped, with Edit on those two sections only. Per conventions `## Single source of facts`, NEVER copy the design into them
 1. No drift → leave both sections as they are, and say so in Step 7
 
-## Step 6: Remove the worktree
+## Step 6: Remove the worktrees
 
-Once per touched worktree:
+Once per criterion worktree, and per story-branch worktree Step 4 created:
 1. Run `git -C <worktree> status --porcelain` and `git -C <worktree> rev-list --count @{u}..HEAD`
-1. Uncommitted changes, no upstream, or a count above `0` → do not remove it. Report why, and the exact line to run once it is pushed: `git -C <dev-root>/<repo> worktree remove <worktree>`
+1. The branch is merged, per conventions `## Criterion branches`, and the tree is clean → it is safe, even with no upstream left
+1. Otherwise: uncommitted changes, no upstream, or a count above `0` → do not remove it. Report why, and the exact line to run once it is pushed: `git -C <dev-root>/<repo> worktree remove <worktree>`
 1. Clean and pushed → print the worktree path, then ask the user to confirm the removal. Anything but a yes → keep it, and report the line above
 1. Confirmed → run `git -C <dev-root>/<repo> worktree remove <worktree>`. NEVER `--force`. NEVER delete the branch
 
@@ -135,7 +141,7 @@ Once per touched worktree:
 Summarize:
 1. each plan's `pr`
 2. findings applied, rejected, and left, per target doc
-3. `CONTEXT.md` commits, as `<repo> <7-char sha> <subject>`, and whether they still need a push
+3. `CONTEXT.md` commits, as `<repo> <branch> <7-char sha> <subject>`, and whether they still need a push: `/draft-pr` from that worktree
 4. the drift: files shipped but not designed, designed but not shipped, changed role
 5. each worktree: removed, or kept with its reason and its `git worktree remove` line
 6. the next story, and the command to type: `/clear`, `/rtd`, `/a-story <n>`. None left → the epic is complete
@@ -149,7 +155,7 @@ Then stop. NEVER start the next story, and NEVER offer to.
 - [ ] every plan's `pr` is set, or the reason it is not is reported
 - [ ] every finding applied was confirmed by the user in this run, and is marked `Applied to <doc> on <YYYY-MM-DD>`
 - [ ] every rejected finding is marked `Rejected on <YYYY-MM-DD>: <reason>`
-- [ ] `CONTEXT.md` changes are committed on the story branch; nothing was pushed, and no hook was skipped
+- [ ] `CONTEXT.md` changes are committed on the branch Step 4 picked; nothing was pushed, and no hook was skipped
 - [ ] only `## Change Inventory` and this story's `## Story Mapping` row changed for drift in `epic-architecture.md`
 - [ ] no worktree was removed with uncommitted changes, unpushed commits, or without the user's confirmation; no `--force` was used, and no branch was deleted
 - [ ] `story-<story-number>.md` reads `status: finished`, and only its header and its `## Findings` cells changed

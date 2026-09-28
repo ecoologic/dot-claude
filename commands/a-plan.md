@@ -19,7 +19,7 @@ disable-model-invocation: true
 | **In** | `$EPIC_DIR/story-<story-number>-ac*.md` | The criteria of this story already planned, and the verification commands already recorded |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Findings` only. NEVER change any other section |
-| **Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The implementation plan for ONE acceptance criterion |
+| **Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The implementation plan for ONE acceptance criterion, and its criterion branch in the header |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -89,6 +89,7 @@ Output:
 Story: <story-number> — <title>
 Criterion: <criterion-number> of <count>
 Slug: <story-slug>
+Branch: <criterion branch>
 Epic dir: <EPIC_DIR>
 Repos: <repo>, <repo>
 Design: loaded
@@ -97,6 +98,8 @@ Existing plan: <yes, revising | no, new>
 ```
 
 No plan on disk → create `story-<story-number>-ac<criterion-number>.md` from the template with `status: draft`, and keep its header per conventions `## Document header`.
+
+The plan's `branch` header is `-` or missing → set it now to `<epic-slug>/s<story-number>-<criterion-number>-<ac-slug>`, with an AC slug picked per conventions `## Selector resolution`. A set `branch` NEVER changes. Per conventions `## Criterion branches`.
 
 ## Step 2: Reconcile the criterion against the codebase
 
@@ -244,6 +247,7 @@ Then present for approval and set `status: done` only on the user's final approv
 ## Success Criteria
 
 - [ ] `story-<story-number>-ac<criterion-number>.md` exists under `$EPIC_DIR`
+- [ ] its header's `branch` is `<epic-slug>/s<story-number>-<criterion-number>-<ac-slug>`, set once and never changed
 - [ ] exactly one acceptance criterion is planned, and it appears verbatim in `## Criterion`
 - [ ] `story-<story-number>-design.md` was read, and its assumption ledger carried no `open` or `cascaded` row when this command started
 - [ ] `story-<story-number>.md`'s `## Findings` was read, and every confirmed finding is reflected in the steps; none was applied upstream

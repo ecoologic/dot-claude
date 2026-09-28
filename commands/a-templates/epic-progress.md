@@ -54,7 +54,7 @@ Repos: <repo>, <repo>, ...
 | Artefact | The doc's file name under `$EPIC_DIR`. An `a-implement` or `a-check` row names its criterion's `story-N-acM.md`. An `a-finish` row names its `story-N.md` |
 | Status | Copied from the artefact's `status` header. A headerless artefact: `legacy` |
 | Updated | Copied from the artefact's `updated` header, or `-` |
-| Branch | `-` until the story's `story-N.md` sets its `branch` header, then that branch on every row of the story |
+| Branch | `-` until the header sets `branch`. `a-plan`, `a-implement` and `a-check` rows: the criterion branch from `story-N-acM.md`. Every other story row: the story branch from `story-N.md`. Per conventions `## Criterion branches` |
 
 The matrix follows `## Story Order`, never the number sequence: story 3 above runs first because `epic.md` puts it first.
 

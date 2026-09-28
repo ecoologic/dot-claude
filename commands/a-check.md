@@ -1,5 +1,5 @@
 ---
-description: Simplify, then review with fixes, one implemented acceptance criterion on its story branch
+description: Simplify, then review with fixes, one implemented acceptance criterion on its criterion branch, then ready it for push
 argument-hint: "[<story-number>] [<criterion-number>] [details]"
 allowed-tools: [Read, Glob, Grep, Edit, Bash, Agent, AskUserQuestion, Skill]
 disable-model-invocation: true
@@ -12,9 +12,9 @@ disable-model-invocation: true
 | Direction | File | Description |
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
-| **In/Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The implemented plan. Read its header, `## Verification` and `## Out Of Scope`. Append to the header's `status` only. NEVER change any other section |
-| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | The `branch` header, and `## Findings`. Append to `## Findings` only. NEVER change any other section |
-| **Out** | the story worktree, per touched repo | The fixes `simplify` and `code-review` apply, and their commits on the story branch |
+| **In/Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The implemented plan. Read its header, `## Verification` and `## Out Of Scope`, and the previous criterion's `branch` header. Append to the header's `status` only. NEVER change any other section |
+| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | `## Findings`. Append to `## Findings` only. NEVER change any other section |
+| **Out** | the criterion worktree, per touched repo | The fixes `simplify` and `code-review` apply, their commits on the criterion branch, and the rebase before push |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -26,16 +26,17 @@ Discover repo and package skills per conventions `## Skills` lookup rule. A skil
 
 ## Purpose
 
-Check ONE implemented acceptance criterion, once the user has verified it, on the same story branch. This command should:
-- run `simplify` on the story branch, validate, and commit
-- run `code-review high --fix` on the story branch, validate, and commit
+Check ONE implemented acceptance criterion, once the user has verified it, on its criterion branch. This command should:
+- run `simplify` on the criterion branch, validate, and commit
+- run `code-review high --fix` on the criterion branch, validate, and commit
 - append `simplified`, then `reviewed`, to the plan's `status`
 - record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding
+- rebase onto the default branch once the previous criterion has merged, per conventions `## Criterion branches`
 
 ## Rules
 
 - NEVER check a criterion whose plan `status` does not start with `implemented`
-- NEVER switch branch, and NEVER create a worktree. The story worktree already exists
+- NEVER switch branch, and NEVER create a worktree. The criterion worktree already exists
 - NEVER broaden scope into unrelated cleanup, opportunistic refactors, or the next acceptance criterion
 - NEVER apply a fix that breaks a line of the plan's `## Out Of Scope`
 - NEVER detect a verification command. Run only the plan's `## Verification` rows, see Step 5
@@ -56,9 +57,10 @@ Check ONE implemented acceptance criterion, once the user has verified it, on th
 Read (stop if any are missing):
 - `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md`: its header, `## Verification` and `## Out Of Scope`
 - `$EPIC_DIR/story-<story-number>.md`: its header only
+- `$EPIC_DIR/story-<story-number>-ac<criterion-number - 1>.md`: its header only, when the criterion is not the story's first
 
 Gates, before any change:
-1. `status` is `implemented, simplified, reviewed` → report it, and stop. This criterion is checked
+1. `status` is `implemented, simplified, reviewed` → skip Steps 3 to 7. Only the rebase, Step 8, runs
 1. `status` is `implemented, simplified` → skip Step 3
 1. `status` does not start with `implemented` → STOP. Send the user to `/a-implement <story-number> <criterion-number>`
 
@@ -68,24 +70,24 @@ Story: <story-number> — <title>
 Criterion: <criterion-number>
 Branch: <branch>
 Status: <status>
-Next: <simplify | code-review>
+Next: <simplify | code-review | rebase>
 ```
 
-## Step 2: Enter the story worktree
+## Step 2: Enter the criterion worktree
 
-The repos are the ones the plan's `> Repos:` line and the Repo column of its `## Verification` name. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`.
+The repos are the ones the plan's `> Repos:` line and the Repo column of its `## Verification` name. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`. `<branch>` is the plan's `branch` header.
 
 Once per touched repo:
-1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the story worktree
+1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the criterion worktree
 1. No entry → STOP. Report the branch, and send the user to `/a-implement <story-number> <criterion-number>`
 1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
-1. The fork point is `git -C <worktree> merge-base HEAD origin/<default-branch>`, with the default branch per conventions `## Where a command runs`
+1. The fork point is per conventions `## Criterion branches`. On a stacked branch, the previous criterion's commits stay out of every range below
 
 From here on, every Read and Edit uses an absolute path inside the worktree. Every Bash command runs with the worktree as its working directory.
 
 ## Step 3: Simplify
 
-Invoke the `simplify` skill in each worktree. Its target is the story branch's changes since the fork point. Pass the plan's `## Out Of Scope` list and this run's guidance as its arguments.
+Invoke the `simplify` skill in each worktree. Its target is the criterion branch's changes since the fork point. Pass the plan's `## Out Of Scope` list and this run's guidance as its arguments.
 
 1. Validate, per Step 5
 1. Commit, per Step 6. No change → no commit
@@ -93,9 +95,9 @@ Invoke the `simplify` skill in each worktree. Its target is the story branch's c
 
 ## Step 4: Review with fixes
 
-Invoke the `code-review` skill in each worktree, with `high --fix` and the story branch as its target. Pass the plan's `## Out Of Scope` list and this run's guidance.
+Invoke the `code-review` skill in each worktree, with `high --fix` and the criterion branch's changes since the fork point as its target. Pass the plan's `## Out Of Scope` list and this run's guidance.
 
-1. A finding the skill did not fix → report it in Step 8. NEVER fix it outside the skill's own pass
+1. A finding the skill did not fix → report it in Step 9. NEVER fix it outside the skill's own pass
 1. Validate, per Step 5
 1. Commit, per Step 6. No change → no commit
 1. Append `, reviewed` to the plan's `status`, with one Edit, per conventions `## Document header`. Refresh `updated`
@@ -107,13 +109,13 @@ Run the plan's `## Verification` rows only, in this order:
 2. Targeted lint, format, or type checks
 3. The full test suite
 
-A failure a skill's fix caused → revert that fix only, rerun, and report it in Step 8. A failure that is pre-existing or unrelated → report the command and the failure, and do not block completion.
+A failure a skill's fix caused → revert that fix only, rerun, and report it in Step 9. A failure that is pre-existing or unrelated → report the command and the failure, and do not block completion.
 
-A rung has no `## Verification` row, or its row is `- None` → skip it, and report it as a risk in Step 8. NEVER substitute a detected command.
+A rung has no `## Verification` row, or its row is `- None` → skip it, and report it as a risk in Step 9. NEVER substitute a detected command.
 
 ## Step 6: Commit
 
-1. Commit in each worktree with changes, on the story branch only
+1. Commit in each worktree with changes, on the criterion branch only
 1. Stage by exact path every file the skill changed. NEVER `git add -A`
 1. After each commit, `git status --porcelain` in that worktree prints nothing. Anything left → commit it, or stop and report it
 1. Follow the repo's own commit message convention, from its `CLAUDE.md` or `CONTRIBUTING.md`. The message follows the workflow-jargon rule above
@@ -131,7 +133,17 @@ Append each finding to `story-<story-number>.md`'s `## Findings` section instead
 
 Append only. NEVER edit a row an earlier stage already wrote, and NEVER touch another section of that file.
 
-## Step 8: Present to user
+## Step 8: Rebase before push
+
+Once per worktree, per conventions `## Criterion branches`:
+1. Stacked, and the previous branch is merged → rebase onto `origin/<default-branch>` from the fork point. Then validate, per Step 5
+1. Stacked, and the previous branch is not merged → no rebase. The PR stacks on the previous branch
+1. Not stacked → no rebase
+1. A conflict → abort, report the files, and stop. `status` keeps `reviewed`; this step reruns on the next `/a-check`
+
+Record the base per worktree for Step 9.
+
+## Step 9: Present to user
 
 Summarize:
 1. what `simplify` changed, per worktree, or `nothing`
@@ -140,17 +152,19 @@ Summarize:
 4. the commits, as `<repo> <7-char sha> <subject>`
 5. the plan's `status`
 6. findings appended to `story-<story-number>.md`
+7. the rebase, and the base, per worktree
 
-Then name the next command: `/a-plan <story-number> <criterion-number + 1>` when the story has another criterion, else `/clear`, `/pr-draft`, `/security-review` (optional), then `/a-finish <story-number>` from the main repo root. Then stop. NEVER start it, and NEVER offer to.
+Then name the next commands, in each worktree: `/draft-pr`, or `/draft-pr --base <previous-branch>` when the base is the previous branch, then `/security-review` (optional). Then `/clear`, and `/a-plan <story-number> <criterion-number + 1>` when the story has another criterion, else `/a-finish <story-number>` from the main repo root. Then stop. NEVER start them, and NEVER offer to.
 
 ## Success Criteria
 
 - [ ] the plan's `status` started with `implemented` when this command started
-- [ ] `simplify` ran before `code-review`, and each ran on the story branch in its existing worktree
+- [ ] `simplify` ran before `code-review`, and each ran on the criterion branch's changes since the fork point, in its existing worktree
 - [ ] no worktree was created, and no branch was switched
 - [ ] every verification command came from the plan's `## Verification`; none was detected
-- [ ] every commit is on the story branch, staged by exact path; nothing was pushed, and no hook was skipped
+- [ ] every commit is on the criterion branch, staged by exact path; nothing was pushed, and no hook was skipped
 - [ ] every worktree has a clean `git status --porcelain` at the end
+- [ ] a stacked branch whose previous branch merged was rebased onto the default branch from its fork point, and validated
 - [ ] only the header's `status` and `updated` changed in `story-<story-number>-ac<criterion-number>.md`
 - [ ] `status` reads `implemented, simplified, reviewed` only after both skills ran, validated and committed
 - [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
@@ -165,7 +179,8 @@ When stopping due to a missing, unreadable, or malformed input:
 
 - **`story-<story-number>-ac<criterion-number>.md` missing** — name `/a-plan <story-number> <criterion-number>` as the command that must run first, and stop
 - **The plan's `status` does not start with `implemented`** — print it, name `/a-implement <story-number> <criterion-number>`, and stop
-- **No worktree holds the story branch** — print `git worktree list --porcelain`, and stop
+- **No worktree holds the criterion branch** — print `git worktree list --porcelain`, and stop
 - **A worktree has uncommitted changes** — print `git status --porcelain`, and stop. NEVER stash, reset or discard
 - **A skill is not available** — name it, leave `status` as it is, and stop
+- **The rebase conflicts** — run `git rebase --abort`, print the conflicting files, and stop. NEVER resolve them by guessing
 - **A fix stays red after reverting it** — leave `status` as it is, report the command and its output, and stop

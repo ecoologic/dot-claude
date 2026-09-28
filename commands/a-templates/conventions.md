@@ -12,7 +12,7 @@ Every `a-*` command reads this file as its own step 1 and follows it. A command 
 ```text
 <dev-root>/
 ├── foo-bar/                          # main repo, tracks ./CONTEXT.md
-├── fb-checkout-flow-1-guest-email/   # /wt worktree, sibling, per story
+├── fb-checkout-flow-s1-1-guest-email/ # /wt worktree, sibling, per criterion
 └── planning/                         # git repo, the user commits it by hand
     └── checkout-flow/                # epic slug
         ├── epic-architecture.md      # /a-architecture
@@ -34,7 +34,7 @@ Every file name doubles as its alphabetical sort key: an `epic-` or `story-<stor
 
 1. `N` is permanent identity: assigned once by `a-epic`, never reused, never changed
 1. The execution order lives in `epic.md`'s `## Story Order`, never in the numbers, so the two are free to disagree
-1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the branch name and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
+1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the branch names and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
 
 ## Path resolution
 
@@ -52,7 +52,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 
 1. NEVER hard-code the dev root or the user's home directory, in a command or in its checks
 1. Report the folder a command works in before it writes to it
-1. A command writes only inside `$EPIC_DIR`, with three exceptions: the memory file, a repo's `./CONTEXT.md` where the command's own step allows it, and the code `a-implement` and `a-check` write in the story worktrees
+1. A command writes only inside `$EPIC_DIR`, with three exceptions: the memory file, a repo's `./CONTEXT.md` where the command's own step allows it, and the code `a-implement` and `a-check` write in the criterion worktrees
 
 ## Where a command runs
 
@@ -60,18 +60,19 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 1. A planning stage started inside a worktree stops and says so. It is a worktree when the two lines of the `## Path resolution` command differ
 
 1. A planning stage on a branch other than the default one prints a one-line warning and carries on. The default branch is `git symbolic-ref --short refs/remotes/origin/HEAD` without its `origin/` prefix
-1. `/wt` makes the story worktree from `story-N.md`'s `branch` header, for `a-implement` onwards. `a-cont`, `a-edit` and `a-plan` run from either place
+1. `/wt` makes each criterion worktree from `story-N-acM.md`'s `branch` header, per `## Criterion branches`, for `a-implement` onwards. `a-cont`, `a-edit` and `a-plan` run from either place
 
 ## Selector resolution, in order
 
 | Command | Order |
 | --- | --- |
 | Planning stages | 1. The command's own argument 2. Memory 3. Stop and ask |
-| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/<n>-<story-slug>` and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
+| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/s<n>-<m>-<ac-slug>` (story `n`, criterion `m`) or `<epic-slug>/<n>-<story-slug>` (story `n`), and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
 
 1. NEVER guess, NEVER create `$EPIC_DIR` from a guess
 1. A new epic slug or story slug is confirmed by the user before anything is written under it
 1. A story slug is kebab-case, 5 words at most
+1. An AC slug is kebab-case, 3 words at most. `a-plan` picks it from the criterion; it needs no confirmation
 
 ## Memory
 
@@ -96,11 +97,25 @@ metadata:
 
 1. A command overwrites this file with its own resolved selector before it finishes. NEVER append, NEVER add prose, history or decisions: those live in the planning docs
 1. The memory directory's `MEMORY.md` carries one pointer line to this file. Add it when it is missing; NEVER duplicate it
-1. `a-finish` is the last command that needs a selector. The non-`a-*` commands after `a-check` (`/pr-draft`, `/security-review`) key on the current git branch instead
+1. `a-finish` is the last command that needs a selector. The non-`a-*` commands after `a-check` (`/draft-pr`, `/security-review`) key on the current git branch instead
+
+## Criterion branches
+
+One acceptance criterion, one branch, one worktree and one PR per touched repo. Main is the base whenever it can be; a stack only bridges an unmerged previous criterion.
+
+1. The criterion branch is `<epic-slug>/s<n>-<m>-<ac-slug>`, eg `checkout-flow/s1-2-email-format`. Criterion code lands only there, NEVER on the story branch
+1. The previous branch is the `branch` header of `story-<n>-ac<m-1>.md`. Criterion 1 has none
+1. Merged: `gh pr list --head <branch> --state merged --json number` prints a PR. NEVER test ancestry; a squash merge leaves none
+1. Base: the previous branch, when it exists locally and is not merged. Otherwise `origin/<default-branch>`, the default branch per `## Where a command runs`
+1. Stacked: after `git fetch origin <default-branch>`, the previous branch exists locally, and `M=$(git merge-base HEAD <previous-branch>)` is not on the default branch: `git merge-base --is-ancestor "$M" origin/<default-branch>` fails. It holds after the previous branch gains commits, and after it squash-merges
+1. Fork point: `M` when stacked, else `git merge-base HEAD origin/<default-branch>`. Every range a command reviews or diffs starts there
+1. Rebase before push: stacked and the previous branch is merged → `git rebase --onto origin/<default-branch> <fork-point>`. A conflict → `git rebase --abort`, report the files, and stop. NEVER resolve it by guessing
+1. The PR targets the base. A base other than the default branch is a GitHub stack: `/draft-pr --base <previous-branch>`
+1. The story branch is used only by `a-finish`, per its own step
 
 ## Cold-start rule
 
-The user clears and compacts context between stages. Every `a-*` command runs from an empty context, given only its selector: read what it needs from `$EPIC_DIR` and the repo. NEVER rely on conversation history.
+The user clears and compacts context between stages. Every `a-*` command runs from an empty context, given only its selector: read what it needs from `$EPIC_DIR` and the repo. NEVER rely on conversation history. One exception: `a-finish` Step 4 may take the `CONTEXT.md` branch from the user's words in this chat
 
 ## Templates
 
@@ -116,7 +131,7 @@ Every planning doc starts with YAML frontmatter, above its `#` title:
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
-branch: checkout-flow/1-guest-email
+branch: checkout-flow/s1-1-guest-email
 pr: foo-bar#123
 ---
 ```
@@ -125,8 +140,8 @@ pr: foo-bar#123
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
 | `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-acM.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
-| `branch` | `story-N.md`, `story-N-acM.md` | `<epic-slug>/<n>-<story-slug>`. `story-N.md` sets it once the slug locks; `/wt` and `a-implement` read it from there. `a-implement` copies it into `story-N-acM.md` |
-| `pr` | `story-N-acM.md` only | `<repo>#<number>` per repo with an open PR for the branch, comma-separated, else `none`. Set by `a-implement` |
+| `branch` | `story-N.md`, `story-N-acM.md` | `story-N.md`: the story branch, `<epic-slug>/<n>-<story-slug>`, set by `a-story` once the slug locks. `story-N-acM.md`: the criterion branch, `<epic-slug>/s<n>-<m>-<ac-slug>`, set by `a-plan` on its first write. Per `## Criterion branches` |
+| `pr` | `story-N-acM.md` only | `<repo>#<number>` per repo with a PR for the criterion branch, comma-separated, else `none`. Set by `a-implement`, refreshed by `a-finish` |
 
 1. Update each key with one exact Edit of its line. NEVER rewrite the header block as a whole
 1. A later revision of a doc past `draft` keeps its status and refreshes `updated`
@@ -179,6 +194,7 @@ A command that gates approval one item at a time (one acceptance criterion, one 
 | A finding | 60 words |
 | A question to the user | 40 words |
 | A story slug | 5 words |
+| An AC slug | 3 words |
 
 ## Assumptions
 

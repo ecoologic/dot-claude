@@ -33,13 +33,13 @@ A pipeline for taking an idea from a rough note through to a shipped story using
 /a-implement            # ends by printing the /compact instructions
 /compact                # paste what a-implement printed
                         # verify the criterion yourself
-/a-check                # simplify, then code-review high --fix, same branch
+/a-check                # simplify, then code-review high --fix, then rebase onto main once the previous PR merged
+/draft-pr               # one PR per criterion; --base <previous-branch> when stacked
+/security-review        # optional
+/clear
 /a-plan                 # the next criterion
 
-/clear                  # after the story's last /a-check
-/pr-draft
-/security-review        # optional
-/a-finish               # from the main repo: applies findings, records drift, removes the worktree
+/a-finish               # after the story's last /draft-pr, from the main repo: applies findings, records drift, removes the worktrees
 ```
 
 `/a-cont <slug>` runs the next unticked stage of this instead, one at a time, and prints the exact next command to type.
@@ -79,7 +79,7 @@ Every doc's shape lives in its own template, `~/.claude/commands/a-templates/<do
 
 ## Where commands run
 
-`a-epic`, `a-architecture`, `a-story` and `a-design` run from the main repo root, and stop if started inside a worktree. `/wt` makes the story worktree for `a-implement` onwards, from `story-N.md`'s `branch` header.
+`a-epic`, `a-architecture`, `a-story` and `a-design` run from the main repo root, and stop if started inside a worktree. `/wt` makes each criterion worktree for `a-implement` onwards, from `story-N-acM.md`'s `branch` header.
 
 ## Document header
 
@@ -136,9 +136,9 @@ These key on the current git branch, not on a slug, and this flow does not chang
 | Command | Fits in |
 | --- | --- |
 | `/rtd` | Run at the start of a session, before `/a-epic` and again before `/a-story` |
-| `/wt` | Creates the story worktree. `/a-implement` follows it on a story's first criterion, and reuses that worktree after |
+| `/wt` | Creates each criterion worktree. `/a-implement` follows it once per criterion, on the base conventions `## Criterion branches` picks |
 | `/simplify`, `/code-review` | Run by `/a-check`, once per criterion, as skills |
-| `/pr-draft`, `/security-review`, `/recommit` | Run in the story worktree after a story's last `/a-check`, before `/a-finish`. `/a-finish` then reads the PR number |
+| `/draft-pr`, `/security-review`, `/recommit` | Run in each criterion worktree after its `/a-check`. `/a-finish` then reads each PR number |
 
 `/clear` and `/compact` are the user's own calls between stages; no `a-*` command runs them.
 
