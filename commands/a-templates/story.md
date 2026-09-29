@@ -15,7 +15,6 @@ The document is these H2 sections, in this order.
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
-branch: checkout-flow/1-guest-email
 ---
 
 # Story <story-number>: <title>
@@ -62,7 +61,7 @@ branch: checkout-flow/1-guest-email
 
 | Section | Rule |
 | --- | --- |
-| Header | Per conventions `## Document header`. `branch` is set the moment the story slug locks: `<epic-slug>/<n>-<story-slug>`. It is the story branch; criterion code lands on each criterion's own branch, per conventions `## Criterion branches` |
+| Header | Per conventions `## Document header` |
 | User Context | Carried over from `epic.md`'s `### User Context` for this story |
 | Acceptance Criteria | Numbered, each phrased _Given_ / _When_ / _Then_, per conventions `## Canonical blocks`. Later stages select a criterion by number |
 | UI References | The story-relevant subset of `epic.md`'s `## UI Design References`, plus any story-local reference followed this run. No UI → `- None` |

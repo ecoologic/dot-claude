@@ -287,7 +287,7 @@ Inherit every `A-EPIC` row routed here, per conventions `## Assumptions`. Add a 
 
 1. This run's codebase investigation is the evidence. Settle a row `verified` or `invalidated` the moment it settles, citing the file, line, or test
 2. The inferred ERD, its entities, and its relationships stay assumptions until Step 7's critique settles them; carry them as rows, NEVER as confident prose
-3. A row no architecture decision requires → cascade it straight to the `story-<n>.md` whose implementation requires it, or `every story-N.md`, per conventions `## Assumptions`. NEVER gate Step 10 on it. No story requires it either → that is a gate, not a cascade; put it to the user at Step 10 instead
+3. A row no architecture decision requires → cascade it straight to the `story-<story-number>.md` whose implementation requires it, or `every story-N.md`, per conventions `## Assumptions`. NEVER gate Step 10 on it. No story requires it either → that is a gate, not a cascade; put it to the user at Step 10 instead
 4. A row an architecture decision requires, still unsettled from code → put it to the user at Step 10, one at a time, with what it affects and what changes if it is false
 5. Still unsettled after Step 10 → cascade it the same way as point 3
 6. An `invalidated` row already baked into `epic.md` → surface its impact at Step 10 and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
@@ -377,7 +377,7 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] no story number was changed; any reordering was applied to `epic.md`'s `## Story Order` alone
 - [ ] every `A-EPIC` row routed to this doc was inherited into `## Assumptions` under its original ID, per conventions `## Assumptions`
 - [ ] every assumption this run could settle from the codebase is `verified` or `invalidated`, with its evidence cited
-- [ ] the Step 10 gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<n>.md` or `every story-N.md`, never gated here
+- [ ] the Step 10 gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<story-number>.md` or `every story-N.md`, never gated here
 - [ ] every gated row this run could not settle was put to the user, and is `resolved`
 - [ ] `epic.md`'s `## Candidate Terms` were confirmed into the relevant repo's `CONTEXT.md`, or left explicit as conflicts for user review
 - [ ] any other safe durable `CONTEXT.md` update was applied, in the correct repo

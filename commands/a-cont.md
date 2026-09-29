@@ -43,12 +43,12 @@ Read `~/.claude/commands/a-templates/epic-progress.md` and follow its `## Row sh
 
 Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row from its artefact's header, so this command stays idempotent no matter how it drifted.
 
-1. Every row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md` for the `a-story` and `a-finish` rows, `story-N-design.md`, `story-N-acM.md` for the `a-plan`, `a-implement` and `a-check` rows) → Read only its header, `limit: 6`, never the whole file, never `shasum`
+1. Every row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md` for the `a-story` and `a-finish` rows, `story-N-design.md`, `story-N-ac-M.md` for the `a-implement` and `a-check` rows and a legacy `a-plan <n-m>` row, every `story-N-ac-*.md` for an `a-plan <n>` row) → Read only each header, `limit: 6`, never the whole file, never `shasum`
 1. The header's `updated` matches the row's Updated cell → the row is current, leave Status and Updated alone
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
 1. The artefact is missing from disk → leave the row `[ ]`, Status and Updated unchanged
-1. Branch comes from a header, once it sets one: an `a-plan`, `a-implement` or `a-check` row copies its criterion's `story-N-acM.md` `branch`; every other row of a story copies `story-N.md`'s `branch`
+1. Branch comes from a header, once it sets one: an `a-implement` or `a-check` row copies its criterion's `story-N-ac-M.md` `branch`; every other row keeps `-`
 1. Tick a row `[x]` only when its refreshed Status ticks it, per the Done rule in the template's `## Columns`. NEVER downgrade or remove a tick already present
 1. A row refreshed here, or newly ticked, triggers the same `## Row shape` appends a tick in Step 4 triggers. Append those rows, then reconcile them too
 1. Repeat until a pass changes nothing further
@@ -79,19 +79,19 @@ Before printing the next command, append one line per finding this run produced 
 
 ## Step 7: Report the next command
 
-Print the exact command to type next, using the row that is now first unticked, then stop. Render its Stage cell as a slash command: prefix `/`, and a hyphenated number pair (story-criterion) becomes two space-separated numbers — `a-plan 3-1` renders as `/a-plan 3 1`, per `a-plan`'s argument-hint.
+Print the exact command to type next, using the row that is now first unticked, then stop. Render its Stage cell as a slash command: prefix `/`, and a hyphenated number pair (story-criterion) becomes two space-separated numbers — `a-implement 3-1` renders as `/a-implement 3 1`, per its argument-hint. A legacy `a-plan <n-m>` row renders as `/a-edit plan <n> <m>` when its plan exists, else `/a-plan <n>`.
 
 | Next unticked row | Print |
 | --- | --- |
 | `a-epic`, the first unticked row (always a gate, per Step 3) | `/a-epic <slug>` when `epic.md` is `draft`, or `/a-edit epic <details: add the document header>` when it is legacy |
 | `a-story <n>` | `/clear`, `/rtd`, `/a-story <n>`, with `<n>` read from the row's Stage cell, never `<previous> + 1` |
 | `a-design <n>` | `/a-design <n>` |
-| `a-plan <n-m>`, right after the previous criterion's `a-check` row ticks | the `/draft-pr` line `a-check` printed, in that criterion's worktree, `/security-review` (optional), then `/clear`, `/a-plan <n> <m>` |
-| `a-plan <n-m>`, reached directly | `/a-plan <n> <m>` |
-| `a-implement <n-m>` | `/a-implement <n> <m>` |
-| `a-check <n-m>`, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then: verify the criterion yourself, then `/a-check <n> <m>` |
+| `a-plan <n>` | `/a-plan <n>` |
+| `a-implement <n-m>`, right after an `a-check` row ticks | the `/draft-pr` line `a-check` printed, in that criterion's worktree, `/security-review` (optional), then `/clear`, then every ready criterion's `/a-implement <n> <m>`, per conventions `## Criterion branches`, one session each |
+| `a-implement <n-m>`, reached directly | every ready criterion's `/a-implement <n> <m>`, one session each |
+| `a-check <n-m>`, right after its `a-implement` row ticks | the `/compact` instructions `a-implement` already printed, then: review the browser result, verify what it did not cover, then `/a-check <n> <m>` |
 | `a-check <n-m>`, reached directly | `/a-check <n> <m>` |
-| `a-finish <n>`, right after the story's last `a-check` row ticks | the `/draft-pr` line `a-check` printed, in the last criterion's worktree, `/security-review` (optional), then `/clear`, `/a-finish <n>` from the main repo root |
+| `a-finish <n>`, right after the story's last unticked `a-check` row ticks | the `/draft-pr` line `a-check` printed, in the last criterion's worktree, `/security-review` (optional), then `/clear`, `/a-finish <n>` from the main repo root |
 | `a-finish <n>`, reached directly (`/draft-pr` already ran) | `/a-finish <n>`, from the main repo root |
 | none — every row ticked and `## Story Order` is exhausted | nothing to run; report the epic complete |
 
@@ -101,7 +101,6 @@ Print the exact command to type next, using the row that is now first unticked, 
 1. NEVER create `$EPIC_DIR` or `epic.md`. `/a-epic` creates them
 1. NEVER infer the next story by incrementing the last one; per conventions `## Story numbers`, `## Story Order` is the only sequence
 1. NEVER edit `epic.md`, `epic-architecture.md`, `story-N.md`, or `story-N-design.md` as inputs; each owning command edits its own output only
-1. NEVER detect a test, lint, or verification command. The owning command's own contract is the only source
 1. Per conventions `## Git`: `$PLANNING_ROOT` is a git repository; the user commits it by hand; `a-cont` never commits
 1. DO NOT do anything beyond the steps above
 

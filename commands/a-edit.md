@@ -33,7 +33,7 @@ This command is not a pipeline stage. It NEVER appears in `epic-progress.md`, an
 | `architecture` | none | `/a-architecture` | `$EPIC_DIR/epic-architecture.md` |
 | `story` | `<story-number>` | `/a-story` | `$EPIC_DIR/story-<story-number>.md` |
 | `design` | `<story-number>` | `/a-design` | `$EPIC_DIR/story-<story-number>-design.md` |
-| `plan` | `<story-number> <criterion-number>` | `/a-plan` | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` |
+| `plan` | `<story-number> <criterion-number>` | `/a-plan` | `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md` |
 
 An artifact type whose owner command file does not exist under `~/.claude/commands/` is unsupported. Stop and say which command must be written first; NEVER reconstruct a contract from the artifact alone.
 
@@ -61,9 +61,9 @@ This command should:
 - NEVER write application code, create commits, or write files outside `$EPIC_DIR` and whatever the owner command is itself allowed to write
 - NEVER write `epic-progress.md`
 - NEVER write a file the owner command is forbidden to write. Revising `story-<story-number>.md` or `story-<story-number>-design.md` carries the same ban on `epic.md`, `epic-architecture.md`, and a repo's `CONTEXT.md`; record the change in `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
-- NEVER edit any section of `story-<story-number>.md` except `## Findings` while revising `story-<story-number>-design.md` or `story-<story-number>-ac<criterion-number>.md`; `/a-design` and `/a-plan` are bound by the same rule
-- NEVER edit `story-<story-number>-design.md` while revising `story-<story-number>-ac<criterion-number>.md`; a design gap is revised with `/a-edit design <story-number>` first, then the plan is revised against it
-- NEVER detect a verification command while revising a plan; it comes from the user or from an earlier `story-<story-number>-ac*.md`, per `/a-plan`'s own rule
+- NEVER edit any section of `story-<story-number>.md` except `## Findings` while revising `story-<story-number>-design.md` or `story-<story-number>-ac-<criterion-number>.md`; `/a-design` and `/a-plan` are bound by the same rule
+- NEVER edit `story-<story-number>-design.md` while revising `story-<story-number>-ac-<criterion-number>.md`; a design gap is revised with `/a-edit design <story-number>` first, then the plan is revised against it
+- A plan revision follows `/a-plan`'s `## Per-criterion procedure` for the sections it touches, its P7 verification commands included. It runs in the main session, so it may ask the user
 - NEVER change a story number. Sequencing guidance rewrites `epic.md`'s `## Story Order`, per conventions.md
 - NEVER drop, renumber, or silently re-status a row in `## Assumptions`, per conventions.md's Assumptions rule
 - NEVER collapse a canonical _As a_ / _I want_ / _So that_ or _Given_ / _When_ / _Then_ block, per conventions.md's Canonical blocks rule
@@ -83,7 +83,7 @@ This command should:
 1. Empty guidance text → stop and ask what to revise.
 1. Unsupported artifact type → print the Supported Targets table and stop.
 1. `story` or `design` with no selector → fall through selector resolution: the current branch, then memory, then list the story numbers on disk and ask.
-1. `plan` takes two numbers. Missing the story number → resolve it as above. Missing the criterion number → list the `story-<story-number>-ac*.md` files on disk and ask which one to revise.
+1. `plan` takes two numbers. Missing the story number → resolve it as above. Missing the criterion number → list the `story-<story-number>-ac-*.md` files on disk and ask which one to revise.
 1. Resolve `$EPIC_DIR`. Record the resolved selector in memory.
 
 ## Step 2: Load the owner contract and the artifact
@@ -158,9 +158,9 @@ Report what this revision just made stale. Do not rewrite any of it in this run.
 | `epic-personas.md` | `epic-architecture.md` and every `story-N.md` |
 | `epic-stretch-goals.md` | nothing in the active pipeline, unless a now-versus-later boundary moved |
 | `epic-architecture.md` | every `story-N.md`, its own cascaded assumption rows, and every later stage for this epic |
-| `story-N.md` | that story's `story-N-design.md`, its `story-N-acM.md` files, and every later stage for that story |
-| `story-N-design.md` | that story's `story-N-acM.md` files, and every later stage for that story |
-| `story-N-acM.md` | that criterion's `/a-implement` and `/a-check` runs, and that story's `a-finish` |
+| `story-N.md` | that story's `story-N-design.md`, its `story-N-ac-M.md` files, and every later stage for that story |
+| `story-N-design.md` | that story's `story-N-ac-M.md` files, and every later stage for that story |
+| `story-N-ac-M.md` | that criterion's `/a-implement` and `/a-check` runs, and that story's `a-finish` |
 
 Also report, every run:
 1. the artifact's row in `epic-progress.md` now lags the doc header; `/a-cont` refreshes its Status and Updated on its next run

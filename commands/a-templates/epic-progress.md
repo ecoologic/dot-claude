@@ -25,8 +25,8 @@ Repos: <repo>, <repo>, ...
 | --- | --- | --- | --- | --- | --- |
 | [x] | a-epic | epic.md | done | 2026-09-21T16:54+1000 | - |
 | [x] | a-architecture | epic-architecture.md | done | 2026-09-22T10:02+1000 | - |
-| [x] | a-story 3 | story-3.md | done | 2026-09-22T19:23+1000 | checkout-flow/3-guest-email |
-| [ ] | a-design 3 | story-3-design.md | draft | 2026-09-23T09:40+1000 | checkout-flow/3-guest-email |
+| [x] | a-story 3 | story-3.md | done | 2026-09-22T19:23+1000 | - |
+| [ ] | a-design 3 | story-3-design.md | draft | 2026-09-23T09:40+1000 | - |
 
 ## Blocked
 
@@ -49,12 +49,12 @@ Repos: <repo>, <repo>, ...
 
 | Column | Content |
 | --- | --- |
-| Done | `[x]` only when Status is `done`, else `[ ]`. An `a-story` row ticks on `done` or `finished`; an `a-finish` row only on `finished`. An `a-plan` row ticks on `done` or any status starting `implemented`; an `a-implement` row on any status starting `implemented`; an `a-check` row only on `implemented, simplified, reviewed`. One exception: the seeded `a-epic` row, per `## Legacy matrix` |
-| Stage | The command and its selector, exactly as `/a-cont` prints it: `a-epic`, `a-architecture`, `a-story 3`, `a-design 3`, `a-plan 3-1`, `a-implement 3-1`, `a-check 3-1`, `a-finish 3` |
-| Artefact | The doc's file name under `$EPIC_DIR`. An `a-implement` or `a-check` row names its criterion's `story-N-acM.md`. An `a-finish` row names its `story-N.md` |
-| Status | Copied from the artefact's `status` header. A headerless artefact: `legacy` |
-| Updated | Copied from the artefact's `updated` header, or `-` |
-| Branch | `-` until the header sets `branch`. `a-plan`, `a-implement` and `a-check` rows: the criterion branch from `story-N-acM.md`. Every other story row: the story branch from `story-N.md`. Per conventions `## Criterion branches` |
+| Done | `[x]` only when Status is `done`, else `[ ]`. An `a-story` row ticks on `done` or `finished`; an `a-finish` row only on `finished`. An `a-plan <n>` row ticks when every plan of the story is `done` or starts with `implemented`; a legacy `a-plan <n-m>` row ticks on its one plan's `done` or any status starting `implemented`; an `a-implement` row on any status starting `implemented`; an `a-check` row only on `implemented, simplified, reviewed`. One exception: the seeded `a-epic` row, per `## Legacy matrix` |
+| Stage | The command and its selector, exactly as `/a-cont` prints it: `a-epic`, `a-architecture`, `a-story 3`, `a-design 3`, `a-plan 3`, `a-implement 3-1`, `a-check 3-1`, `a-finish 3` |
+| Artefact | The doc's file name under `$EPIC_DIR`. An `a-plan <n>` row names `story-N-ac-*.md`, every plan of the story. An `a-implement` or `a-check` row names its criterion's `story-N-ac-M.md`. An `a-finish` row names its `story-N.md` |
+| Status | Copied from the artefact's `status` header. A headerless artefact: `legacy`. An `a-plan <n>` row: the status of its least advanced plan, in the order `draft`, `done`, `implemented` |
+| Updated | Copied from the artefact's `updated` header, or `-`. An `a-plan <n>` row: the latest `updated` across its plans |
+| Branch | `a-implement` and `a-check` rows: the criterion branch from `story-N-ac-M.md`, per conventions `## Criterion branches`, or `-` until the header sets it. Every other row: `-` |
 
 The matrix follows `## Story Order`, never the number sequence: story 3 above runs first because `epic.md` puts it first.
 
@@ -63,14 +63,14 @@ The matrix follows `## Story Order`, never the number sequence: story 3 above ru
 1. Row 1 is always `a-epic`, row 2 is always `a-architecture`
 2. Then exactly ONE `a-story <n>` row: the first story in `epic.md`'s `## Story Order` whose `story-N.md` is missing or neither `done` nor `finished`. NEVER seed a row per story, and NEVER seed more than one story ahead
 3. A story's `a-story` row ticks → append that story's `a-design` row, immediately below it
-4. A story's `a-story` row ticks → read `story-N.md`'s acceptance criteria list, and append one `a-plan`, one `a-implement` and one `a-check` row per criterion, in order, below the story's `a-design` row
-5. A story's last criterion's `a-check` row ticks → append that story's `a-finish` row
+4. A story's `a-story` row ticks → append one `a-plan <n>` row below the story's `a-design` row. Then read `story-N.md`'s acceptance criteria list, and append one `a-implement` and one `a-check` row per criterion, in criterion order
+5. Every `a-check` row of a story ticks → append that story's `a-finish` row
 6. A story's `a-finish` row ticks → re-read `epic.md`'s `## Story Order` and append the next story's `a-story` row, chosen per rule 2. No entry left → the epic is complete
 
 ## Mutability
 
 1. Stage and Artefact are set once. NEVER edit, move, or remove a row. Everything above the pending rows is the epic's history, in the order it actually happened
-1. An `a-implement` row whose Artefact is `-` or `commit <sha>` takes its criterion's `story-N-acM.md` as Artefact, once, on the next `/a-cont` run. This is the only change to a set Artefact
+1. An `a-implement` row whose Artefact is `-` or `commit <sha>` takes its criterion's `story-N-ac-M.md` as Artefact, once, on the next `/a-cont` run. This is the only change to a set Artefact
 1. An `a-implement` row with no `a-check` row directly below it gains one there, once, on the next `/a-cont` run. This is the only insertion between existing rows
 1. Status, Updated and Branch refresh from the artefact's header on every `/a-cont` run. Done follows Status
 1. NEVER untick a row. A revised `done` doc keeps `status: done`, per conventions `## Document header`

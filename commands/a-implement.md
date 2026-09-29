@@ -13,9 +13,8 @@ disable-model-invocation: true
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
 | **In** | `~/.claude/commands/wt.md` | How the criterion worktree is created, when none exists yet |
-| **In/Out** | `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md` | The approved plan. Read its `branch` header. Tick `## Steps`, add rows to `## Assumptions`, set the header's `status` and `pr`. NEVER change any other section |
-| **In/Out** | `$EPIC_DIR/story-<story-number>.md` | `## Findings`. Append to `## Findings` only. NEVER change any other section |
-| **In** | `$EPIC_DIR/epic.md` | Touched repos |
+| **In/Out** | `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md` | The approved plan, the only planning doc this command reads. Read its `branch` header and `> Repos:` line. Tick `## Steps`, add rows to `## Assumptions` and `## Findings`, set the header's `status` and `pr`. NEVER change any other section |
+| **In** | `$EPIC_DIR/story-<story-number>-ac-*.md` | The parent plans' headers only: `status` and `branch` |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out** | the criterion worktree, per touched repo | Code changes, tests, and commits on the criterion branch |
 
@@ -31,7 +30,7 @@ Implement ONE acceptance criterion exactly as its approved plan says, then commi
 - find the criterion worktree, or create it on its base, per conventions `## Criterion branches`
 - execute the plan's steps in order, in the main session
 - dispatch subagents only for the steps the plan marks independent
-- validate up the ladder, using only the plan's verification commands
+- validate up the ladder, using only the plan's verification commands, the `browser` row last
 - commit every working increment on the criterion branch
 - settle every assumption it coins, and cite by ID the rows it inherits
 - record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding
@@ -41,51 +40,51 @@ Implement ONE acceptance criterion exactly as its approved plan says, then commi
 ## Rules
 
 - NEVER implement a different acceptance criterion than the one requested
-- NEVER broaden scope into unrelated cleanup, opportunistic refactors, or the next acceptance criterion
+- NEVER broaden scope into unrelated cleanup, opportunistic refactors, or another acceptance criterion
 - NEVER start without an approved plan. The plan's header reads `status: done`, see Step 1
 - NEVER change the plan's steps, files, contracts or scope here. A plan gap is a gate, see Step 3
 - NEVER propose speculative abstractions or extractions for future use
 - NEVER mention epic, story, acceptance criteria, AC, or similar workflow jargon in code comments, user-facing copy, or committed implementation text; use plain language that still makes sense later without process context
 - NEVER introduce in comments or UI outdated history context that refers to implementation detail changes eg: The rename of a model
-- NEVER detect a verification command. Run only the plan's `## Verification` rows, see Step 5
+- Run only the plan's `## Verification` rows, see Step 5
 - NEVER create a second worktree for a criterion, see Step 2
 - NEVER push, and NEVER pass `--no-verify`. The hooks run
-- NEVER write `epic.md`, `epic-architecture.md`, `epic-progress.md`, or a repo's `CONTEXT.md`; append the finding to `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
+- NEVER read or write `story-<story-number>.md` or `story-<story-number>-design.md`. The plan carries everything this command needs
+- NEVER write `epic.md`, `epic-architecture.md`, `epic-progress.md`, or a repo's `CONTEXT.md`; append the finding to the plan's `## Findings` instead, per conventions `## Findings`
 - NEVER apply a finding yourself; `/a-finish` applies them
 - NEVER auto-chain into the next criterion, and NEVER offer to
 - Prefer existing code patterns, file placement conventions, and interfaces over inventing new ones
 - Implementation steps may be story-coherent rather than artificially isolated; if the criterion needs a full table, all story-relevant fields belong in scope
 - Add or update tests when the repo already has a relevant testing pattern and the criterion changes behavior
 - Interactions in chat stay brief and follow the active output style
-- write `story-<story-number>-ac<criterion-number>.md` as each step settles, per conventions `## Write as you go`
+- write `story-<story-number>-ac-<criterion-number>.md` as each step settles, per conventions `## Write as you go`
 
 ## Step 1: Resolve required inputs
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution.
 1. `$ARGUMENTS` = `[<story-number>] [<criterion-number>] [details]`. The first integer is the story number, the second is the criterion number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (branch, then memory, then ask).
-1. No story number in `$ARGUMENTS` → fall through selector resolution: the current branch, then memory, then list the story numbers that have a `story-N-acM.md` on disk with `status: done`, and ask.
-1. No criterion number in `$ARGUMENTS` → resolve the lowest criterion of that story whose `story-<story-number>-ac<criterion-number>.md` has `status: done`. Report which one that resolved to before continuing.
+1. No story number in `$ARGUMENTS` → fall through selector resolution: the current branch, then memory, then list the story numbers that have a `story-N-ac-M.md` on disk with `status: done`, and ask.
+1. No criterion number in `$ARGUMENTS` → resolve the lowest ready criterion of that story, per conventions `## Criterion branches`. Report which one that resolved to before continuing.
 1. Record the resolved story number and criterion number in memory.
 
 Read (stop if any are missing):
-- `$EPIC_DIR/story-<story-number>-ac<criterion-number>.md`
-- `$EPIC_DIR/story-<story-number>.md`: its header and its `## Findings` only
-- `$EPIC_DIR/epic.md`: its `## Repos` only
+- `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md`
+- each parent plan named by an `AC <criterion-number>` line of its `### Dependencies`: its header only
 
 Gates, before any code changes:
 1. The plan's header `status` starts with `implemented` → report the plan's `branch` and `pr`, and stop. This criterion is done
-1. The plan's header reads anything but `status: done` → STOP. Send the user to `/a-plan <story-number> <criterion-number>`
+1. The plan's header reads anything but `status: done` → STOP. Send the user to `/a-plan <story-number>`
 1. The plan carries a row in `## Assumptions` still `open` or `cascaded` → STOP. Report the row and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`
 1. The plan's `branch` header is `-` or missing → STOP. Send the user to `/a-edit plan <story-number> <criterion-number> <details: set the branch header>`
-1. The plan's `### Dependencies` names an earlier criterion whose `story-<story-number>-ac<n>.md` has no `status` starting with `implemented` → STOP. Report that criterion, and name `/a-implement <story-number> <n>` as the command that must run first
+1. A parent plan has no `status` starting with `implemented` → STOP. Report that parent, and name `/a-implement <story-number> <parent-criterion-number>` as the command that must run first
 
 Output:
 ```text
-Story: <story-number> — <title>
-Criterion: <criterion-number> of <count>
+Plan: <the plan's # title>
+Parents: <criterion numbers, or none>
 Branch: <branch>
 Epic dir: <EPIC_DIR>
-Repos: <repo>, <repo>
+Repos: <the plan's > Repos: line>
 Plan: approved, <step count> steps, <independent count> independent
 ```
 
@@ -105,13 +104,12 @@ Report each worktree path, its base, and whether this run created it.
 
 ## Step 3: Reconcile the plan against the worktree
 
-The plan was written against the main repo. Check that it still holds in the worktree, where the earlier criteria already merged to the default branch, or stacked below this one, landed.
+The plan was written against the main repo. Check that it still holds in the worktree, where the parent criteria, merged to the default branch or stacked below this one, already landed.
 
 1. A path the plan marks `edit` does not exist → create it only if the repo's conventions confirm the path is correct; otherwise follow the nearest valid convention, and record it as an assumption row in Step 7
 1. A path the plan marks `create` already exists → read it. If part of the criterion is already implemented, reuse it and finish only the missing coverage
 1. A contract in `## Contracts` no longer matches the code → STOP. Report the mismatch and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`
 1. The plan misses a file or a step the criterion needs → STOP, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`. NEVER silently plan around it
-1. Read `story-<story-number>.md`'s `## Findings`. A confirmed finding that changes this criterion's files, contracts or steps, and that the plan does not reflect → STOP, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`
 
 ## Step 4: Execute the steps
 
@@ -138,10 +136,11 @@ Run the plan's `## Verification` rows only, in this order:
 1. Targeted tests for the changed module, component or endpoint
 2. Targeted lint, format, or type checks
 3. The full test suite
+4. The `browser` row, when the plan has one: invoke the `run` skill to start the app with the row's command, then the `claude-in-chrome` skill to follow `### Browser` step by step. Record a GIF of the run as evidence
 
 If a failure is in scope: fix, rerun, repeat. If a failure is pre-existing or unrelated: report the command and the failure, explain why it is out of scope, and do not block completion.
 
-A rung has no `## Verification` row, or its row is `- None` → skip it, and report it as a risk in Step 10. NEVER substitute a detected command. No automated validation at all → state this, and review the code against the criterion's _Given_ / _When_ / _Then_ manually.
+A rung has no `## Verification` row, or its row is `- None` → skip it, and report it as a risk in Step 10. The Chrome extension is not connected → skip the `browser` rung, and report that the user must check it by hand. No automated validation at all → state this, and review the code against the criterion's _Given_ / _When_ / _Then_ manually.
 
 On merge conflicts, continue only if the criterion's scope remains intact. Otherwise stop and report.
 
@@ -160,7 +159,7 @@ On merge conflicts, continue only if the criterion's scope remains intact. Other
 Per conventions.md's Assumptions rule.
 
 1. Cite by ID every plan row this implementation depends on. NEVER renumber one, NEVER drop one by omission
-1. Add a row under `A-STORY-<story-number>-<n>`, continuing that story's numbering, for every claim this run acted on without evidence: a created path, a followed convention, a reused partial implementation
+1. Add a row under `A-AC-<story-number>-<criterion-number>-<n>`, continuing this plan's own numbering, for every claim this run acted on without evidence: a created path, a followed convention, a reused partial implementation
 1. Mark each new row `verified` or `invalidated`, citing the file, line, test or commit
 1. Put every row still `open` to the user, one at a time, with what it blocks and what changes if it is false
 1. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`, in their words, with its impact
@@ -173,7 +172,7 @@ Write the plan's `## Assumptions` rows now.
 
 Implementing the criterion against real code uncovers what `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` should eventually reflect. NEVER write any of those three files from this command.
 
-Append each finding to `story-<story-number>.md`'s `## Findings` section instead:
+Append each finding to the plan's `## Findings` section instead:
 - the target doc: `epic.md`, `epic-architecture.md`, or `<repo>/CONTEXT.md`
 - the finding
 - the suggested change
@@ -196,11 +195,11 @@ Per conventions `## Document header`, one Edit per key of the plan's header:
 Summarize:
 1. files changed, per worktree
 2. the criterion covered, in one sentence
-3. the validation result, per `## Verification` row, and every rung skipped
+3. the `browser` result first, with the GIF path, or why it did not run. Then the validation result, per `## Verification` row, and every rung skipped
 4. the commits, as `<repo> <7-char sha> <subject>`
 5. the plan's header: `status`, `branch`, `pr`, and the base per worktree
 6. the assumption ledger: rows verified, rows the user resolved, rows invalidated
-7. findings appended to `story-<story-number>.md`
+7. findings appended to the plan
 8. blockers or risks
 9. whether another criterion is unblocked
 
@@ -220,12 +219,12 @@ Then name the next command: `/a-check <story-number> <criterion-number>`, once t
 - [ ] one worktree per touched repo holds the criterion branch, created on its base per conventions `## Criterion branches`; none was created when one existed
 - [ ] the steps ran in order; only steps marked independent ran in subagents, dispatched in one message
 - [ ] no subagent ran a `git` command
-- [ ] every verification command came from the plan's `## Verification`; none was detected
+- [ ] every verification command came from the plan's `## Verification`; the `browser` row, when present, ran last in Chrome
 - [ ] every commit is a working increment on the criterion branch, staged by exact path; nothing was pushed, and no hook was skipped
 - [ ] no code, comment, copy or commit message mentions epic, story, acceptance criterion, AC, or workflow history
-- [ ] only the plan's `## Steps` ticks, `## Assumptions` rows and header changed in `story-<story-number>-ac<criterion-number>.md`
+- [ ] only the plan's `## Steps` ticks, `## Assumptions` and `## Findings` rows and header changed in `story-<story-number>-ac-<criterion-number>.md`; no other planning doc changed
 - [ ] every assumption this run coined is `verified`, `resolved`, or `invalidated`; none is left `open` or `cascaded`
-- [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` was appended to `story-<story-number>.md`'s `## Findings`, never applied directly
+- [ ] any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` was appended to the plan's `## Findings`, never applied directly
 - [ ] `status: implemented` is set only after every step ticked, validation passed, and every commit landed, with `pr` set
 - [ ] `epic-progress.md` did not change
 - [ ] the `/compact` instructions were printed, and no offer to start the next criterion was made
@@ -237,8 +236,8 @@ When stopping due to a missing, unreadable, or malformed input:
 1. Print the exact absolute path that was checked
 2. Print which step of this command failed (step number and name)
 
-- **`story-<story-number>-ac<criterion-number>.md` missing** — name `/a-plan <story-number> <criterion-number>` as the command that must run first, and stop
-- **The plan is not `status: done`** — print its status, name `/a-plan <story-number> <criterion-number>`, and stop
+- **`story-<story-number>-ac-<criterion-number>.md` missing** — name `/a-plan <story-number>` as the command that must run first, and stop
+- **The plan is not `status: done`** — print its status, name `/a-plan <story-number>`, and stop
 - **An assumption row in the plan is still `open` or `cascaded`** — print the row, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`. NEVER settle it here
 - **The plan does not match the worktree** — report exactly what differs, and send the user to `/a-edit plan <story-number> <criterion-number> <guidance>`. NEVER invent a step
 - **A worktree has uncommitted changes** — print `git status --porcelain`, and stop. NEVER stash, reset or discard

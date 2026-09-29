@@ -11,30 +11,30 @@ Every `a-*` command reads this file as its own step 1 and follows it. A command 
 
 ```text
 <dev-root>/
-├── foo-bar/                          # main repo, tracks ./CONTEXT.md
-├── fb-checkout-flow-s1-1-guest-email/ # /wt worktree, sibling, per criterion
-└── planning/                         # git repo, the user commits it by hand
-    └── checkout-flow/                # epic slug
-        ├── epic-architecture.md      # /a-architecture
-        ├── epic-personas.md          # /a-epic
-        ├── epic-progress.md          # the whole epic's state, /a-cont
-        ├── epic-requirements.md      # /a-epic Step 0, from the raw idea
-        ├── epic-stretch-goals.md     # /a-epic
-        ├── epic.md                   # /a-epic
-        ├── story-1-ac1.md            # /a-plan, story 1 criterion 1
-        ├── story-1-ac2.md
-        ├── story-1-design.md         # /a-design
-        ├── story-1.md                # /a-story
-        └── story-2.md                # ... one set per story
+├── foo-bar/                                  # main repo, tracks ./CONTEXT.md
+├── fb-checkout-flow-story-1-ac-1-guest-email/ # /wt worktree, sibling, per criterion
+└── planning/                                 # git repo, the user commits it by hand
+    └── checkout-flow/                        # epic slug
+        ├── epic-architecture.md              # /a-architecture
+        ├── epic-personas.md                  # /a-epic
+        ├── epic-progress.md                  # the whole epic's state, /a-cont
+        ├── epic-requirements.md              # /a-epic Step 0, from the raw idea
+        ├── epic-stretch-goals.md             # /a-epic
+        ├── epic.md                           # /a-epic
+        ├── story-1-ac-1.md                   # /a-plan, story 1 criterion 1
+        ├── story-1-ac-2.md
+        ├── story-1-design.md                 # /a-design
+        ├── story-1.md                        # /a-story
+        └── story-2.md                        # ... one set per story
 ```
 
-Every file name doubles as its alphabetical sort key: an `epic-` or `story-<story-number>-` prefix, plus a trailing detail (`-design`, `-ac<criterion-number>`) or none for the stage's own root doc (`epic.md`, `story-<story-number>.md`). `ls` groups every epic-level doc together and every story's own artefacts together, in the order shown above. One flat epic folder; any artefact resolves from numbers alone. Past 9 stories or 9 criteria, the two-digit numbers (`story-10-*.md`, `story-<n>-ac10.md`) sort lexicographically inside their group, not numerically, but the group itself stays contiguous.
+Every file name doubles as its alphabetical sort key: an `epic-` or `story-<story-number>-` prefix, plus a trailing detail (`-design`, `-ac-<criterion-number>`) or none for the stage's own root doc (`epic.md`, `story-<story-number>.md`). `ls` groups every epic-level doc together and every story's own artefacts together, in the order shown above. One flat epic folder; any artefact resolves from numbers alone. Past 9 stories or 9 criteria, the two-digit numbers (`story-10-*.md`, `story-<story-number>-ac-10.md`) sort lexicographically inside their group, not numerically, but the group itself stays contiguous.
 
 ## Story numbers
 
 1. `N` is permanent identity: assigned once by `a-epic`, never reused, never changed
 1. The execution order lives in `epic.md`'s `## Story Order`, never in the numbers, so the two are free to disagree
-1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `story-N-design.md`, `story-N-acM.md`, the branch names and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
+1. NEVER renumber a story, and NEVER offer to. `story-N.md`, `story-N-design.md`, `story-N-ac-M.md`, the branch names and the memory file all key on `N`. Reorder only by rewriting `## Story Order`, which moves nothing on disk
 
 ## Path resolution
 
@@ -60,18 +60,17 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 1. A planning stage started inside a worktree stops and says so. It is a worktree when the two lines of the `## Path resolution` command differ
 
 1. A planning stage on a branch other than the default one prints a one-line warning and carries on. The default branch is `git symbolic-ref --short refs/remotes/origin/HEAD` without its `origin/` prefix
-1. `/wt` makes each criterion worktree from `story-N-acM.md`'s `branch` header, per `## Criterion branches`, for `a-implement` onwards. `a-cont`, `a-edit` and `a-plan` run from either place
+1. `/wt` makes each criterion worktree from `story-N-ac-M.md`'s `branch` header, per `## Criterion branches`, for `a-implement` onwards. `a-cont`, `a-edit` and `a-plan` run from either place
 
 ## Selector resolution, in order
 
 | Command | Order |
 | --- | --- |
 | Planning stages | 1. The command's own argument 2. Memory 3. Stop and ask |
-| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/s<n>-<m>-<ac-slug>` (story `n`, criterion `m`) or `<epic-slug>/<n>-<story-slug>` (story `n`), and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
+| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
 
 1. NEVER guess, NEVER create `$EPIC_DIR` from a guess
-1. A new epic slug or story slug is confirmed by the user before anything is written under it
-1. A story slug is kebab-case, 5 words at most
+1. A new epic slug is confirmed by the user before anything is written under it
 1. An AC slug is kebab-case, 3 words at most. `a-plan` picks it from the criterion; it needs no confirmation
 
 ## Memory
@@ -101,21 +100,22 @@ metadata:
 
 ## Criterion branches
 
-One acceptance criterion, one branch, one worktree and one PR per touched repo. Main is the base whenever it can be; a stack only bridges an unmerged previous criterion.
+One acceptance criterion, one branch, one worktree and one PR per touched repo. Main is the base whenever it can be; a stack only bridges an unmerged parent criterion. Criteria with no unmerged parent run in parallel.
 
-1. The criterion branch is `<epic-slug>/s<n>-<m>-<ac-slug>`, eg `checkout-flow/s1-2-email-format`. Criterion code lands only there, NEVER on the story branch
-1. The previous branch is the `branch` header of `story-<n>-ac<m-1>.md`. Criterion 1 has none
+1. The criterion branch is `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, eg `checkout-flow/story-1-ac-2-email-format`. Criterion code lands only there
+1. The parents are the `AC <criterion-number>` lines of the plan's `### Dependencies`. A parent may carry a higher number than its child. The parent branch is the parent plan's `branch` header
 1. Merged: `gh pr list --head <branch> --state merged --json number` prints a PR. NEVER test ancestry; a squash merge leaves none
-1. Base: the previous branch, when it exists locally and is not merged. Otherwise `origin/<default-branch>`, the default branch per `## Where a command runs`
-1. Stacked: after `git fetch origin <default-branch>`, the previous branch exists locally, and `M=$(git merge-base HEAD <previous-branch>)` is not on the default branch: `git merge-base --is-ancestor "$M" origin/<default-branch>` fails. It holds after the previous branch gains commits, and after it squash-merges
+1. Base: no parent, or every parent merged → `origin/<default-branch>`, the default branch per `## Where a command runs`. Exactly one unmerged parent that exists locally → that parent branch. More than one unmerged parent → STOP, and name the parents to merge first
+1. Stacked: after `git fetch origin <default-branch>`, the parent branch exists locally, and `M=$(git merge-base HEAD <parent-branch>)` is not on the default branch: `git merge-base --is-ancestor "$M" origin/<default-branch>` fails. It holds after the parent branch gains commits, and after it squash-merges
 1. Fork point: `M` when stacked, else `git merge-base HEAD origin/<default-branch>`. Every range a command reviews or diffs starts there
-1. Rebase before push: stacked and the previous branch is merged → `git rebase --onto origin/<default-branch> <fork-point>`. A conflict → `git rebase --abort`, report the files, and stop. NEVER resolve it by guessing
-1. The PR targets the base. A base other than the default branch is a GitHub stack: `/draft-pr --base <previous-branch>`
-1. The story branch is used only by `a-finish`, per its own step
+1. Rebase before push: stacked and the parent branch is merged → `git rebase --onto origin/<default-branch> <fork-point>`. A conflict → `git rebase --abort`, report the files, and stop. NEVER resolve it by guessing
+1. The PR targets the base. A base other than the default branch is a GitHub stack: `/draft-pr --base <parent-branch>`
+1. Ready: a criterion whose plan is `done` and whose parents all have a `status` starting with `implemented`. Every ready criterion can run `/a-implement` in its own session
+1. The context branch `<epic-slug>/story-<story-number>-context` carries only `a-finish`'s `CONTEXT.md` commits, per its own step
 
 ## Cold-start rule
 
-The user clears and compacts context between stages. Every `a-*` command runs from an empty context, given only its selector: read what it needs from `$EPIC_DIR` and the repo. NEVER rely on conversation history. One exception: `a-finish` Step 4 may take the `CONTEXT.md` branch from the user's words in this chat
+The user clears and compacts context between stages. Every `a-*` command runs from an empty context, given only its selector: read what it needs from `$EPIC_DIR` and the repo. NEVER rely on conversation history
 
 ## Templates
 
@@ -131,7 +131,7 @@ Every planning doc starts with YAML frontmatter, above its `#` title:
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
-branch: checkout-flow/s1-1-guest-email
+branch: checkout-flow/story-1-ac-1-guest-email
 pr: foo-bar#123
 ---
 ```
@@ -139,13 +139,13 @@ pr: foo-bar#123
 | Key | On | Content |
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
-| `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-acM.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-acM.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
-| `branch` | `story-N.md`, `story-N-acM.md` | `story-N.md`: the story branch, `<epic-slug>/<n>-<story-slug>`, set by `a-story` once the slug locks. `story-N-acM.md`: the criterion branch, `<epic-slug>/s<n>-<m>-<ac-slug>`, set by `a-plan` on its first write. Per `## Criterion branches` |
-| `pr` | `story-N-acM.md` only | `<repo>#<number>` per repo with a PR for the criterion branch, comma-separated, else `none`. Set by `a-implement`, refreshed by `a-finish` |
+| `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-ac-M.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-ac-M.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
+| `branch` | `story-N-ac-M.md` only | The criterion branch, set by `a-plan` on its first write. Per `## Criterion branches` |
+| `pr` | `story-N-ac-M.md` only | `<repo>#<number>` per repo with a PR for the criterion branch, comma-separated, else `none`. Set by `a-implement`, refreshed by `a-finish` |
 
 1. Update each key with one exact Edit of its line. NEVER rewrite the header block as a whole
 1. A later revision of a doc past `draft` keeps its status and refreshes `updated`
-1. `a-implement` records its status in `story-N-acM.md`'s header. `a-finish` records its status in `story-N.md`'s header
+1. `a-implement` records its status in `story-N-ac-M.md`'s header. `a-finish` records its status in `story-N.md`'s header
 1. A doc without a header is legacy. Its owning command, or `/a-edit`, adds the header the next time it writes that doc. NEVER bulk-migrate
 
 ## Write as you go
@@ -185,6 +185,7 @@ A command that gates approval one item at a time (one acceptance criterion, one 
 1. Present the whole drafted batch together for one round of revision. Bulk drafting is NEVER a shortcut past revision; the user still revises the batch before it locks, same as a single item would
 1. Bulk-lifting one gate lifts only that gate. NEVER skip a later step's own checkpoint because an earlier gate was bulk-approved
 1. Absent that request, the default stays one item at a time
+1. One exception: `a-plan` drafts every criterion of its story in one run by default, and presents the batch for one round of revision
 
 ## Size caps
 
@@ -193,7 +194,6 @@ A command that gates approval one item at a time (one acceptance criterion, one 
 | A table cell | 25 words |
 | A finding | 60 words |
 | A question to the user | 40 words |
-| A story slug | 5 words |
 | An AC slug | 3 words |
 
 ## Assumptions
@@ -202,7 +202,7 @@ Findings travel up; assumptions travel down. Every stage records what it acted o
 
 | Column | Content |
 | --- | --- |
-| ID | `A-<STAGE>-<n>`: `A-EPIC-<n>`, `A-ARCH-<n>`, `A-STORY-<story-number>-<n>`. The prefix names the stage that coined it; `n` numbers that stage's assumptions. Assigned once. NEVER reassign, reuse, or renumber one |
+| ID | `A-<STAGE>-<n>`: `A-EPIC-<n>`, `A-ARCH-<n>`, `A-STORY-<story-number>-<n>`, `A-AC-<story-number>-<criterion-number>-<n>`. The prefix names the stage that coined it; `n` numbers that stage's assumptions. `A-AC-` rows are coined by `a-implement` in one plan, so parallel criteria never collide. Assigned once. NEVER reassign, reuse, or renumber one |
 | Assumption | The claim, stated so it can be proven true or false |
 | Why It Matters | What breaks, or what changes, if it turns out false |
 | Status | `open`, `verified`, `resolved`, `invalidated`, or `cascaded` |
@@ -212,7 +212,7 @@ Findings travel up; assumptions travel down. Every stage records what it acted o
 1. Routing: every `a-epic` row routes to `epic-architecture.md`. A `cascaded` row routes to the doc its Evidence cell names (`story-3.md`, or `every story-N.md`)
 1. A stage inherits only the `open` and `cascaded` rows routed to its own doc, and reprints each under its original ID. NEVER drop a routed row by omission
 1. A settled row is cited by ID, NEVER reprinted
-1. One ID, one truth: the most downstream doc's status wins, in the order `epic.md` → `epic-architecture.md` → `story-N.md` → `story-N-design.md` → `story-N-acM.md`. NEVER go back to update the upstream row
+1. One ID, one truth: the most downstream doc's status wins, in the order `epic.md` → `epic-architecture.md` → `story-N.md` → `story-N-design.md` → `story-N-ac-M.md`. NEVER go back to update the upstream row
 1. A stage settles what its own evidence settles: `verified` when the codebase, a test, or a followed reference proves it; `invalidated` when they disprove it
 1. It cannot settle a row from evidence → put it to the user. Their call is `resolved`, recorded in their words
 1. It can settle a row neither way → `cascaded`, naming the doc that inherits it. A cascade is the ONLY way to leave a row unsettled, and a cascade with nowhere left to go is a gate, not a pass
@@ -226,11 +226,11 @@ Findings travel up; assumptions travel down. Every stage records what it acted o
 
 A story's own stages touch one planning doc each. None of them write `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` directly.
 
-1. `a-story`, `a-design`, `a-plan`, `a-implement`, and `a-check` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves: the target doc, the finding, the suggested change
-1. A confirmed finding overrides the shared doc it targets. Every later stage reads `## Findings` beside `epic-architecture.md` and acts on the finding, NEVER on the text it corrects
-1. A stage also reads `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, and skips each row whose Suggested Change cell carries `Applied to <doc> on <YYYY-MM-DD>` or `Rejected on <YYYY-MM-DD>: <reason>`
+1. `a-story`, `a-design` and `a-plan` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves: the target doc, the finding, the suggested change. `a-implement` and `a-check` append theirs to their own `story-N-ac-M.md`'s `## Findings`, the same way
+1. A confirmed finding overrides the shared doc it targets. Every later `a-story`, `a-design` and `a-plan` run reads `## Findings` beside `epic-architecture.md` and acts on the finding, NEVER on the text it corrects. `a-implement` and `a-check` read their plan only
+1. Those three stages also read `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, and skips each row whose Suggested Change cell carries `Applied to <doc> on <YYYY-MM-DD>` or `Rejected on <YYYY-MM-DD>: <reason>`
 1. Only `a-finish` marks a row, by appending one of those two marks to its Suggested Change cell
-1. `a-finish` is the only command that applies confirmed findings from `## Findings` to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands
+1. `a-finish` is the only command that applies confirmed findings to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands. It reads `## Findings` in `story-N.md` and in every `story-N-ac-M.md` of the story
 1. A story-order conflict takes the same route: the finding targets `epic.md`'s `## Story Order`, names the position the story must move to, and names the dependency that forces it. Per `## Story numbers`, it NEVER renumbers
 
 ## Skills
@@ -247,6 +247,8 @@ Global and plugin skills, per stage:
 | `engineering:testing-strategy` | `a-design` happy-path test lines |
 | `simplify` | `a-check`, first |
 | `code-review` | `a-check`, second, as `high --fix` |
+| `run` | `a-implement` and `a-check`, to start the app for the `Browser` verification row |
+| `claude-in-chrome` | `a-implement` and `a-check`, to drive the `Browser` verification row |
 
 Repo and package skills:
 

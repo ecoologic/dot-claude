@@ -96,7 +96,6 @@ Every confirmed finding read above overrides the text it corrects, per conventio
 Output:
 ```text
 Story: <story-number> — <title>
-Slug: <story-slug>
 Epic: <epic name>
 Epic dir: <EPIC_DIR>
 Repos: <repo>, <repo>

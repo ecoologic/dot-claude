@@ -16,7 +16,7 @@ disable-model-invocation: true
 | **In** | `$EPIC_DIR/epic-architecture.md` | Epic-specific architecture from `/a-architecture`, and the assumptions it cascaded to this story |
 | **In** | `$EPIC_DIR/epic-personas.md` | Personas from `/a-epic` |
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
-| **Out** | `$EPIC_DIR/story-<story-number>.md` | Written per `a-templates/story.md`: the slug (in its `branch` header), user context, numbered acceptance criteria, UI references, the assumption ledger, and findings for `/a-design` and, eventually, `/a-finish` |
+| **Out** | `$EPIC_DIR/story-<story-number>.md` | Written per `a-templates/story.md`: user context, numbered acceptance criteria, UI references, the assumption ledger, and findings for `/a-design` and, eventually, `/a-finish` |
 
 `$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
 
@@ -33,7 +33,7 @@ This command should:
 - investigate the codebase far enough to prove each criterion is achievable and correctly named
 - record any incongruity against `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` as a finding, for `/a-finish` to apply later
 - settle, or cascade onward, every assumption it inherits or coins, per conventions `## Assumptions`, before `/a-design`
-- produce a single story artifact with a stable slug and numbered acceptance criteria for `/a-design`
+- produce a single story artifact with numbered acceptance criteria for `/a-design`
 
 ## Rules
 
@@ -52,7 +52,7 @@ This command should:
 - write and update `story-<story-number>.md` incrementally, per conventions `## Write as you go`; every Edit refreshes `updated`, per conventions `## Document header`
 - keep every table cell, finding, and question to the user within conventions `## Size caps`
 
-## Step 1: Resolve the story and lock its slug
+## Step 1: Resolve the story
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. This is a planning stage: follow `## Where a command runs`, and resolve the selector per `## Selector resolution`'s Planning stages row — this command's own argument, then memory, then ask; never the current branch.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (memory, then ask).
@@ -82,19 +82,12 @@ Has UI: <yes | no>
 UI references: <list or none>
 ```
 
-Lock the story's slug and branch, in this order:
-1. `story-<story-number>.md` already carries a `branch` header → reuse its slug, the segment after the story number
-1. No header but a legacy `> Slug:` line → reuse it when it is within conventions `## Size caps`, else propose a slug of 5 words at most and get it confirmed. Give the doc a header per conventions `## Document header` on this write
-1. Neither exists → derive `<story-slug>` as the kebab-case form of the title, capped per conventions `## Size caps`, and get the user's confirmation via the `ask-user-question` skill before the first Write below
-
-The moment the slug locks, set `branch: <epic-slug>/<n>-<story-slug>`.
-
-`story-<story-number>.md` missing → create it now from `a-templates/story.md`'s `## Shape`: the header (`status: draft`, `branch` set), the title, the story statement, `## User Context` filled from `epic.md`, `## References`, and every other H2 heading present but empty, per conventions `## Write as you go`. Go to Step 2.
+`story-<story-number>.md` missing → create it now from `a-templates/story.md`'s `## Shape`: the header (`status: draft`), the title, the story statement, `## User Context` filled from `epic.md`, `## References`, and every other H2 heading present but empty, per conventions `## Write as you go`. Go to Step 2.
 
 `story-<story-number>.md` exists and its `status` is `done` or `finished` → this command does not re-enter it; report that and stop.
 
 `story-<story-number>.md` exists and its `status` is neither `done` nor `finished` (`draft`, `blocked`, or no header at all) → bring it current, then resume:
-1. No header → add one now: `status: draft`, `updated` from `date`, and `branch` from its legacy `> Slug:` line if one exists within conventions `## Size caps`, else derive and confirm a slug of 5 words at most per the ordering above
+1. No header → add one now: `status: draft` and `updated` from `date`
 2. `status: blocked` → Edit it back to `draft`
 3. A heading still carrying the pre-rename findings name → Edit it to `## Findings`, keeping its existing rows
 4. `## Acceptance Criteria` empty → go to Step 2, keeping any `## Findings` and `## Assumptions` rows already there; add to them, never duplicate one
@@ -182,7 +175,6 @@ On approval, Edit the header's `status` to `done`, per conventions `## Document 
 
 - [ ] `story-<story-number>.md` exists, built from `a-templates/story.md`'s `## Shape`
 - [ ] all required inputs and followed references were validated before story work continued
-- [ ] `story-<story-number>.md`'s header carries a `branch` set the moment the slug locked
 - [ ] `story-<story-number>.md` contains numbered acceptance criteria, each phrased as _Given_ / _When_ / _Then_
 - [ ] Step 1 extracted no acceptance criteria from `epic.md`
 - [ ] each acceptance criterion was explicitly approved by the user before the next criterion was drafted, or the user explicitly lifted the gate to bulk-draft the rest, per conventions `## Bulk approval`
