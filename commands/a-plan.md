@@ -21,8 +21,6 @@ disable-model-invocation: true
 | **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Findings` only. NEVER change any other section |
 | **Out** | `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md`, one per criterion | The implementation plan for each acceptance criterion, and its criterion branch in the header |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Discover the repo and package skills per conventions `## Skills`. A skill about coding, APIs, testing, or the project's own stack applies to the procedure step it covers. Embed its real text in each subagent prompt that needs it.
@@ -52,12 +50,12 @@ Turn EVERY acceptance criterion of ONE story into an implementation plan a reade
 - Only the main session asks the user, writes `story-<story-number>.md`, and assigns assumption IDs. A subagent does none of the three
 - NEVER start the implementation, and NEVER offer to; the user runs `/a-implement` when the plans are right
 - Prefer existing code patterns, file placement conventions and interfaces over inventing new ones
-- Interactions in chat stay brief and follow the active output style; express the plans in the documents, not in chat
+- Express the plans in the documents, not in chat
 
 ## Step 1: Resolve required inputs
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution.
-1. `$ARGUMENTS` = `[<story-number>] [details]`. The first integer is the story number; the rest is high-priority guidance for this run, passed to every subagent. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (branch, then memory, then ask).
+1. `$ARGUMENTS` = `[<story-number>] [details]`. The first integer is the story number; the rest is high-priority guidance for this run, passed to every subagent.
 1. No story number in `$ARGUMENTS` → fall through selector resolution: the current branch, then memory, then list the story numbers that have a `story-N-design.md` on disk and ask.
 1. Record the resolved story number in memory, with criterion `none`.
 
@@ -154,7 +152,7 @@ Then:
 1. verification checks with no command found, as risks
 1. anything the design left `TODO` that a criterion needs
 
-Present every plan for one round of revision, per conventions `## Bulk approval`. Set `status: done` on each plan the user approves, per conventions `## Document header`. Then name the next commands: `/a-implement <story-number> <criterion-number>` for each ready criterion, one session each. Then stop. NEVER start the implementation, and NEVER offer to.
+Present every plan together for one round of revision. This batch is the default here, not a lifted gate; the rest of conventions `## Bulk approval` still applies. Set `status: done` on each plan the user approves, per conventions `## Document header`. Then name the next commands: `/a-implement <story-number> <criterion-number>` for each ready criterion, one session each. Then stop. NEVER start the implementation, and NEVER offer to.
 
 ## Per-criterion procedure
 

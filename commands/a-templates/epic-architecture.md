@@ -64,8 +64,6 @@ status: draft
 | Story | System Areas | New | Modified | Reused | Risk |
 | ----- | ------------ | --- | -------- | ------ | ---- |
 
-## CONTEXT.md Updates Applied
-
 ## Assumptions
 | ID | Assumption | Why It Matters | Status | Evidence or Decision |
 | --- | --- | --- | --- | --- |
@@ -93,7 +91,6 @@ status: draft
 | Recommended Epic Sequence Diagrams | One or more epic-wide sequence diagrams, each mapped back to the stories it covers |
 | Change Inventory | Every new or modified artifact later story and criterion work depends on |
 | Story Mapping | One row per story: its system areas, and what is new, modified, reused, and risky |
-| CONTEXT.md Updates Applied | Updates made in this run, per repo, plus conflicts or rename requests left for user review |
 | Assumptions | Per conventions `## Assumptions`. Every `A-EPIC` row routed here, under its original ID, plus this run's own `A-ARCH-<n>` rows. No rows when nothing was assumed and nothing was inherited |
 | Risks and Open Questions | Risks and open questions that are not assumption rows |
 | References | Source docs and artifacts this run relied on |

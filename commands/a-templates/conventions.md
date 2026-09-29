@@ -52,7 +52,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 
 1. NEVER hard-code the dev root or the user's home directory, in a command or in its checks
 1. Report the folder a command works in before it writes to it
-1. A command writes only inside `$EPIC_DIR`, with three exceptions: the memory file, a repo's `./CONTEXT.md` where the command's own step allows it, and the code `a-implement` and `a-check` write in the criterion worktrees
+1. A command writes only inside `$EPIC_DIR`, with three exceptions: the memory file, a repo's `./CONTEXT.md` in `a-finish`'s context worktree, and the code `a-implement` and `a-check` write in the criterion worktrees
 
 ## Where a command runs
 
@@ -69,6 +69,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 | Planning stages | 1. The command's own argument 2. Memory 3. Stop and ask |
 | Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
 
+1. `$ARGUMENTS` never carries an epic slug. The epic resolves per this table
 1. NEVER guess, NEVER create `$EPIC_DIR` from a guess
 1. A new epic slug is confirmed by the user before anything is written under it
 1. An AC slug is kebab-case, 3 words at most. `a-plan` picks it from the criterion; it needs no confirmation
@@ -185,7 +186,6 @@ A command that gates approval one item at a time (one acceptance criterion, one 
 1. Present the whole drafted batch together for one round of revision. Bulk drafting is NEVER a shortcut past revision; the user still revises the batch before it locks, same as a single item would
 1. Bulk-lifting one gate lifts only that gate. NEVER skip a later step's own checkpoint because an earlier gate was bulk-approved
 1. Absent that request, the default stays one item at a time
-1. One exception: `a-plan` drafts every criterion of its story in one run by default, and presents the batch for one round of revision
 
 ## Size caps
 
@@ -232,6 +232,7 @@ A story's own stages touch one planning doc each. None of them write `epic.md`, 
 1. Only `a-finish` marks a row, by appending one of those two marks to its Suggested Change cell
 1. `a-finish` is the only command that applies confirmed findings to `epic.md`, `epic-architecture.md`, and each touched repo's `CONTEXT.md`, once per story, after its last criterion lands. It reads `## Findings` in `story-N.md` and in every `story-N-ac-M.md` of the story
 1. A story-order conflict takes the same route: the finding targets `epic.md`'s `## Story Order`, names the position the story must move to, and names the dependency that forces it. Per `## Story numbers`, it NEVER renumbers
+1. Two rows that contradict each other on the same target: the later stage wins, `story-N-ac-M.md` over `story-N.md`. `a-finish` marks the other `Rejected on <YYYY-MM-DD>: superseded by <file>`
 
 ## Skills
 
@@ -264,9 +265,11 @@ Repo and package skills:
 1. `$PLANNING_ROOT` is a git repository. The user commits it by hand; no `a-*` command ever commits in it
 1. Commits in the code repos are allowed everywhere in this flow
 1. NEVER push. Push is explicit, from the user, never from a command
+1. NEVER pass `--no-verify`. The hooks run
 
 ## Terminology
 
 1. `./CONTEXT.md` in a repo is that repo's naming baseline. Read it before coining a term; when a term already exists there, reuse it exactly
-1. Update `./CONTEXT.md` only with durable, confirmed terms. `a-epic` never writes it: its candidate terms wait in `epic.md` for `a-architecture` to confirm
+1. Update `./CONTEXT.md` only with durable, confirmed terms. Only `a-finish` writes it, from confirmed findings
+1. `a-architecture` confirms `epic.md`'s candidate terms in `epic-architecture.md`'s `## Terminology`. `a-story` routes each `new` or `exists (extend with ...)` row its story uses as a finding that targets that repo's `CONTEXT.md`
 1. NEVER remove an entry. NEVER rename an existing entry without explicit user approval

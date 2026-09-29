@@ -21,8 +21,6 @@ disable-model-invocation: true
 | **In/Out** | `$EPIC_DIR/story-<story-number>.md` | Append to `## Findings` only. NEVER change any other section |
 | **Out** | `$EPIC_DIR/story-<story-number>-design.md` | The agreed design: goal, UX, UI, components, file structure, reuse, contracts, diagrams, risks, decisions |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Global and plugin skills used in this command, per conventions `## Skills`: `ask-user-question` for every question asked to the user, `grill-me` in Step 3 and Step 8, `posthog-feature-flags` in Step 3 only when the story needs a rollout flag, `engineering:testing-strategy` in Step 7.
@@ -64,14 +62,14 @@ Agree ONE story's design with the user, then record it. This command should:
 - NEVER offer to proceed to implementation or to `/a-plan`; the user says when the design is ready
 - The user can be wrong. Clarify and find the correct solution rather than following a mistaken instruction
 - Asked to change an existing interface beyond this story's scope → explain the consequence and ask for confirmation first
-- Interactions in chat stay brief and follow the active output style; express the design in the document, not in chat
+- Express the design in the document, not in chat
 - Write `story-<story-number>-design.md` per conventions `## Write as you go`: create it from the template on first write, Edit each section the moment it settles, and check it against the template only in the final step
 - Set `status` to `done` only on the user's final "design is ready" approval, per conventions `## Document header`
 
 ## Step 1: Resolve required inputs
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its `## Where a command runs` and, for a planning stage, its `## Selector resolution` order: argument, then memory, then ask.
-1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions (memory, then ask).
+1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run.
 1. No story number in `$ARGUMENTS` → memory, then list the story numbers that have a `story-N.md` on disk and ask, using the ask-user-question skill, per conventions `## Skills`.
 1. Record the resolved story number in memory, per conventions `## Memory`.
 

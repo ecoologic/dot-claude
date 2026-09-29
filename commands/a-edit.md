@@ -18,8 +18,6 @@ disable-model-invocation: true
 | **Conditional In** | codebase | Read only when the owner command is code-informed, and only around the guidance |
 | **Conditional In/Out** | `<repo>/CONTEXT.md` | Update only when the owner command itself is allowed to write it |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 This command is not a pipeline stage. It NEVER appears in `epic-progress.md`, and it NEVER writes `epic-progress.md`; `/a-cont` is that file's only writer.
 
 ## Supported Targets

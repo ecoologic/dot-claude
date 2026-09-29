@@ -18,8 +18,6 @@ disable-model-invocation: true
 | **Out**    | `$EPIC_DIR/epic-personas.md`                   | Personas, actors, and usage context for later stages                                                             |
 | **Out**    | `$EPIC_DIR/epic-stretch-goals.md`              | Deferred later-scope stories kept separate from the main pipeline reading path                                   |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. Skill: `ask-user-question`, for every question this command asks; each question stays within conventions `## Size caps`.

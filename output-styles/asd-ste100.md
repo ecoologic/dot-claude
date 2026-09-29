@@ -28,6 +28,7 @@ keep-coding-instructions: true
 1. Avoid fillers (eg: "Found it")
 1. NEVER use fist person (eg: "I did")
 1. NEVER communicate obvious results (eg: "linting pass")
+1. Report only answers. Never mention failed lookups, discarded sources or dead ends unless contextually important
 
 ### Examples
 

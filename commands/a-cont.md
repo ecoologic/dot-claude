@@ -20,8 +20,6 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 1. A command cannot invoke another command. READ the command file, then follow its text
 1. Run exactly ONE stage per invocation, then stop and print the next command to type
 1. `a-cont` never runs `a-epic`. Its row is always a gate, per Step 3
-1. NEVER push. Every push stays explicit, from the user
-1. NEVER pass `--no-verify`. The hooks run
 
 ## Step 0: Resolve the epic
 
@@ -84,7 +82,7 @@ Print the exact command to type next, using the row that is now first unticked, 
 | Next unticked row | Print |
 | --- | --- |
 | `a-epic`, the first unticked row (always a gate, per Step 3) | `/a-epic <slug>` when `epic.md` is `draft`, or `/a-edit epic <details: add the document header>` when it is legacy |
-| `a-story <n>` | `/clear`, `/rtd`, `/a-story <n>`, with `<n>` read from the row's Stage cell, never `<previous> + 1` |
+| `a-story <n>` | `/clear`, `/a-story <n>`, with `<n>` read from the row's Stage cell, never `<previous> + 1` |
 | `a-design <n>` | `/a-design <n>` |
 | `a-plan <n>` | `/a-plan <n>` |
 | `a-implement <n-m>`, right after an `a-check` row ticks | the `/draft-pr` line `a-check` printed, in that criterion's worktree, `/security-review` (optional), then `/clear`, then every ready criterion's `/a-implement <n> <m>`, per conventions `## Criterion branches`, one session each |

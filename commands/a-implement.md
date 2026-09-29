@@ -18,8 +18,6 @@ disable-model-invocation: true
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out** | the criterion worktree, per touched repo | Code changes, tests, and commits on the criterion branch |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Discover and invoke project skills per `~/.claude/commands/a-templates/conventions.md`. A skill about coding, APIs, testing, or the project's own stack applies to the step it covers.
@@ -48,7 +46,6 @@ Implement ONE acceptance criterion exactly as its approved plan says, then commi
 - NEVER introduce in comments or UI outdated history context that refers to implementation detail changes eg: The rename of a model
 - Run only the plan's `## Verification` rows, see Step 5
 - NEVER create a second worktree for a criterion, see Step 2
-- NEVER push, and NEVER pass `--no-verify`. The hooks run
 - NEVER read or write `story-<story-number>.md` or `story-<story-number>-design.md`. The plan carries everything this command needs
 - NEVER write `epic.md`, `epic-architecture.md`, `epic-progress.md`, or a repo's `CONTEXT.md`; append the finding to the plan's `## Findings` instead, per conventions `## Findings`
 - NEVER apply a finding yourself; `/a-finish` applies them
@@ -56,13 +53,12 @@ Implement ONE acceptance criterion exactly as its approved plan says, then commi
 - Prefer existing code patterns, file placement conventions, and interfaces over inventing new ones
 - Implementation steps may be story-coherent rather than artificially isolated; if the criterion needs a full table, all story-relevant fields belong in scope
 - Add or update tests when the repo already has a relevant testing pattern and the criterion changes behavior
-- Interactions in chat stay brief and follow the active output style
 - write `story-<story-number>-ac-<criterion-number>.md` as each step settles, per conventions `## Write as you go`
 
 ## Step 1: Resolve required inputs
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution.
-1. `$ARGUMENTS` = `[<story-number>] [<criterion-number>] [details]`. The first integer is the story number, the second is the criterion number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (branch, then memory, then ask).
+1. `$ARGUMENTS` = `[<story-number>] [<criterion-number>] [details]`. The first integer is the story number, the second is the criterion number; the rest is high-priority guidance for this run.
 1. No story number in `$ARGUMENTS` → fall through selector resolution: the current branch, then memory, then list the story numbers that have a `story-N-ac-M.md` on disk with `status: done`, and ask.
 1. No criterion number in `$ARGUMENTS` → resolve the lowest ready criterion of that story, per conventions `## Criterion branches`. Report which one that resolved to before continuing.
 1. Record the resolved story number and criterion number in memory.
@@ -151,8 +147,7 @@ On merge conflicts, continue only if the criterion's scope remains intact. Other
 1. Stage by exact path every file this run wrote: the plan's files, plus each supporting or corrected path recorded in Step 7. NEVER `git add -A`
 1. After each commit, `git status --porcelain` in that worktree prints nothing. Anything left → commit it, or stop and report it
 1. Follow the repo's own commit message convention, from its `CLAUDE.md` or `CONTRIBUTING.md`. The message follows the workflow-jargon rule above
-1. A hook fails → fix the cause, then commit again. NEVER pass `--no-verify`
-1. NEVER push
+1. A hook fails → fix the cause, then commit again, per conventions `## Git`
 
 ## Step 7: Settle the assumption ledger
 

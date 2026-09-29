@@ -18,8 +18,6 @@ disable-model-invocation: true
 | **In** | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out** | `$EPIC_DIR/story-<story-number>.md` | Written per `a-templates/story.md`: user context, numbered acceptance criteria, UI references, the assumption ledger, and findings for `/a-design` and, eventually, `/a-finish` |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Discover and invoke skills per conventions `## Skills`. A skill applies here only when it helps phrase or scope an acceptance criterion; the technical skills belong to `/a-design`. Use the `ask-user-question` skill for every question this command asks.
@@ -55,7 +53,7 @@ This command should:
 ## Step 1: Resolve the story
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. This is a planning stage: follow `## Where a command runs`, and resolve the selector per `## Selector resolution`'s Planning stages row — this command's own argument, then memory, then ask; never the current branch.
-1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run. `$ARGUMENTS` never carries an epic slug — the epic itself resolves per conventions.md (memory, then ask).
+1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run.
 1. No story number in `$ARGUMENTS` → memory holds one for this epic and its `story-N.md` is neither `status: done` nor `status: finished` → use it. Otherwise compute the default: read `epic.md`'s `## Story Order` in its listed sequence, and take the first entry whose `story-N.md` is missing or neither `status: done` nor `status: finished`. Present that number to the user for confirmation, alongside the other available numbers, per the `ask-user-question` skill.
 1. Record the resolved story number in memory now.
 
@@ -111,10 +109,11 @@ The three axes below are **independent** — dispatch one `Agent` with type `Exp
 
 Each result reports a verdict with a file, a line, or a test behind it. NEVER accept an opinion without one.
 
-Use the results for three things:
+Use the results for four things:
 1. informing the acceptance criteria drafted next in Step 3, and revising one the codebase later contradicts, with the user
 2. settling an inherited row: `verified` or `invalidated` when evidence allows; otherwise `open`, when this story's implementation requires it, or `cascaded`, when it does not, per conventions `## Assumptions`
 3. recording a finding, per conventions `## Findings`, the moment it surfaces — including a story-order conflict, which targets `epic.md`'s `## Story Order` and names the dependency forcing the move, never a renumber
+4. routing each `new` or `exists (extend with ...)` row of `epic-architecture.md`'s `## Terminology` that this story uses as a finding that targets that repo's `CONTEXT.md`, per conventions `## Terminology`. Skip a term another `story-N.md`'s `## Findings` already carries
 
 Display the findings and the settled assumption rows before proceeding.
 

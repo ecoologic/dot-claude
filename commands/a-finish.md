@@ -19,8 +19,6 @@ disable-model-invocation: true
 | **In/Out** | `$EPIC_DIR/epic-architecture.md` | Apply the confirmed findings that target it. Bring `## Change Inventory` and `## Story Mapping` in line with what shipped |
 | **In/Out** | `<worktree>/CONTEXT.md`, per touched repo | Apply the confirmed term findings, committed on the context branch, per conventions `## Criterion branches` |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Global skills used in this command, per conventions `## Skills`: `ask-user-question` for every question asked to the user.
@@ -41,19 +39,17 @@ Close ONE story once every criterion is checked. This command should:
 - NEVER remove a worktree with uncommitted changes or unpushed commits, and NEVER pass `--force`
 - NEVER remove a worktree without the user's confirmation in this run
 - NEVER delete a branch
-- NEVER push, and NEVER pass `--no-verify`. The hooks run
 - NEVER renumber a story, per conventions `## Story numbers`. A story-order finding rewrites `## Story Order` only
 - NEVER remove a `CONTEXT.md` entry, and NEVER rename one without the user's explicit approval, per conventions `## Terminology`
 - NEVER write `epic-progress.md`
 - A revised `done` doc keeps its status and refreshes `updated`, per conventions `## Document header`
-- Interactions in chat stay brief and follow the active output style
 
 ## Step 1: Resolve required inputs
 
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its selector resolution.
 1. Run from the main repo root. Started inside a worktree → stop and say so, per conventions `## Where a command runs`. A worktree cannot remove itself.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. The first integer is the story number; the rest is high-priority guidance for this run.
-1. No story number in `$ARGUMENTS` → fall through selector resolution: memory, then ask.
+1. No story number in `$ARGUMENTS` → fall through selector resolution, per conventions `## Selector resolution`.
 1. Record the resolved story number in memory, with `Criterion: none`.
 
 Read (stop if any are missing):
@@ -112,7 +108,7 @@ Per repo with a confirmed `CONTEXT.md` row, before its first Edit there, enter t
 1. No local context branch → run `git -C <dev-root>/<repo> fetch origin <default-branch>`, then `git -C <dev-root>/<repo> branch <context-branch> origin/<default-branch>`
 1. No worktree → follow `~/.claude/commands/wt.md` as `a-implement` Step 2 does
 
-Commit every `CONTEXT.md` change in the context worktree. Stage it by exact path; follow the repo's own commit message convention. NEVER push.
+Commit every `CONTEXT.md` change in the context worktree. Stage it by exact path; follow the repo's own commit message convention.
 
 ## Step 5: Record the drift
 
@@ -143,7 +139,7 @@ Summarize:
 3. `CONTEXT.md` commits, as `<repo> <branch> <7-char sha> <subject>`, and whether they still need a push: `/draft-pr` from that worktree
 4. the drift: files shipped but not designed, designed but not shipped, changed role
 5. each worktree: removed, or kept with its reason and its `git worktree remove` line
-6. the next story, and the command to type: `/clear`, `/rtd`, `/a-story <n>`. None left → the epic is complete
+6. the next story, and the command to type: `/clear`, `/a-story <n>`. None left → the epic is complete
 
 Then stop. NEVER start the next story, and NEVER offer to.
 

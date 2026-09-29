@@ -18,9 +18,6 @@ disable-model-invocation: true
 | **In**     | `$EPIC_DIR/epic-personas.md`                                                           | Personas from `/a-epic`                                            |
 | **In**     | `<repo>/README.md`, `<repo>/CLAUDE.md` (root and package level), `<repo>/CONTRIBUTING.md`, `<repo>/CONTEXT.md`, per touched repo | Existing repo conventions and naming baseline |
 | **Out**    | `$EPIC_DIR/epic-architecture.md`                                                       | Epic-specific architecture, critique, and change mapping           |
-| **Out**    | `<repo>/CONTEXT.md`, per touched repo                                             | Durable confirmed terms, including `epic.md`'s confirmed candidate terms |
-
-`$EPIC_DIR` resolves per conventions.md.
 
 ## Purpose
 
@@ -58,14 +55,14 @@ Discover and invoke project skills per conventions `## Skills`; it also names th
 
 ## Rules
 
-- NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR` or a touched repo's `CONTEXT.md`
+- NEVER write or modify application code, create commits, or write files outside `$EPIC_DIR`
 - NEVER start with broad codebase exploration before understanding the epic inputs
 - NEVER silently trust a prototype or UI-shaped data model
 - NEVER define synonyms; a repo's `CONTEXT.md` terms stay canonical unless the user explicitly approves a rename
 - Treat inferred models as hypotheses until challenged against the codebase and project conventions; every surviving hypothesis is a row in `## Assumptions`, never confident prose
 - Prefer existing code and established conventions over prototype structure when they conflict
-- Update a repo's `CONTEXT.md` only for durable confirmed terms or mappings; ask before renaming an existing term
-- `epic.md`'s `## Candidate Terms` are unconfirmed until this command confirms them into a repo's `CONTEXT.md`; `a-epic` never writes `CONTEXT.md`
+- NEVER write a repo's `CONTEXT.md`. Terms reach it only through `a-finish`, per conventions `## Terminology`
+- `epic.md`'s `## Candidate Terms` are unconfirmed until this command confirms them in `## Terminology`
 - `epic-architecture.md` is the only architecture document; there is no separate cross-epic file to promote findings into
 - prefer reordering `epic.md`'s `## Story Order` to match implementation dependency order over having an earlier story silently absorb a later story's prerequisite; either resolution is surfaced to the user, NEVER decided silently
 - NEVER change a story number; the number is identity. `## Story Order` carries the sequence, and it is the only ordering this command may rewrite
@@ -201,8 +198,7 @@ Status values:
 
 Rules:
 - existing `CONTEXT.md` terms remain canonical unless the user approves a change
-- confirm `epic.md`'s `## Candidate Terms` into the relevant repo's `CONTEXT.md` when safe and durable; this is their first landing point, since `a-epic` never writes `CONTEXT.md`
-- add other safe new rows and safe enrichments to the relevant repo's `CONTEXT.md` in this command too
+- confirm each of `epic.md`'s `## Candidate Terms` as a row: `new`, `exists (extend with ...)`, `conflict` or `rename-request`
 - do not silently rename existing `CONTEXT.md` terms
 - keep conflicts and rename requests explicit in `epic-architecture.md` and review them with the user at the Step 10 gate
 
@@ -336,18 +332,9 @@ Per conventions `## Write as you go`: read `~/.claude/commands/a-templates/epic-
 
 Present the completed document to the user. On approval, Edit the header's `status` line to `done`.
 
-## Step 14: Update repo terminology
+## Step 14: Hand off repo terminology
 
-Update the relevant repo's `CONTEXT.md` in this command when the findings are durable and safe:
-- add new terms
-- enrich existing rows with confirmed code names, sources, or statuses
-
-Do not:
-- remove rows
-- rename an existing term without explicit user approval
-- persist uncertain conflicts as canonical truth
-
-Edit `## CONTEXT.md Updates Applied` now.
+NEVER write a repo's `CONTEXT.md` here. Each `## Terminology` row with status `new` or `exists (extend with ...)` reaches it later: `a-story` routes it as a finding, and `a-finish` applies it once implementation leaves it standing, per conventions `## Terminology`.
 
 ## Step 15: Present to user
 
@@ -355,7 +342,7 @@ Summarize:
 - key decisions
 - ERD critique and recommended model
 - reuse opportunities
-- `CONTEXT.md` updates applied, per repo
+- `## Terminology` rows bound for `CONTEXT.md`, per repo
 - `CONTEXT.md` conflicts or rename requests still open
 - risks and open questions
 - the assumption ledger: rows verified, invalidated, resolved, and cascaded, with the story each cascade lands in
@@ -379,8 +366,8 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] every assumption this run could settle from the codebase is `verified` or `invalidated`, with its evidence cited
 - [ ] the Step 10 gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<story-number>.md` or `every story-N.md`, never gated here
 - [ ] every gated row this run could not settle was put to the user, and is `resolved`
-- [ ] `epic.md`'s `## Candidate Terms` were confirmed into the relevant repo's `CONTEXT.md`, or left explicit as conflicts for user review
-- [ ] any other safe durable `CONTEXT.md` update was applied, in the correct repo
+- [ ] every one of `epic.md`'s `## Candidate Terms` is a `## Terminology` row, conflicts left explicit for user review
+- [ ] no repo's `CONTEXT.md` was written
 - [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user at the Step 10 gate before the header's `status` was set to `done`
 - [ ] the epic slug is recorded in memory
 

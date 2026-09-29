@@ -16,8 +16,6 @@ disable-model-invocation: true
 | **In** | `$EPIC_DIR/story-<story-number>-ac-*.md` | The parent plans' headers, for the base; every plan's header, for the next ready criteria |
 | **Out** | the criterion worktree, per touched repo | The fixes `simplify` and `code-review` apply, their commits on the criterion branch, and the rebase before push |
 
-`$EPIC_DIR` resolves per `~/.claude/commands/a-templates/conventions.md`.
-
 ## Skills
 
 Global skills used in this command, per conventions `## Skills`: `simplify` in Step 3, `code-review` in Step 4, `run` and `claude-in-chrome` for the `browser` row in Step 5, `ask-user-question` for every question asked to the user.
@@ -40,12 +38,10 @@ Check ONE implemented acceptance criterion, once the user has verified it, on it
 - NEVER broaden scope into unrelated cleanup, opportunistic refactors, or another acceptance criterion
 - NEVER apply a fix that breaks a line of the plan's `## Out Of Scope`
 - Run only the plan's `## Verification` rows, see Step 5
-- NEVER push, and NEVER pass `--no-verify`. The hooks run
 - NEVER mention epic, story, acceptance criteria, AC, or similar workflow jargon in code comments, user-facing copy, or committed implementation text
 - NEVER read or write `story-<story-number>.md` or `story-<story-number>-design.md`. The plan carries everything this command needs
 - NEVER write `epic.md`, `epic-architecture.md`, `epic-progress.md`, or a repo's `CONTEXT.md`; append the finding to the plan's `## Findings` instead, per conventions `## Findings`
 - NEVER auto-chain into the next criterion, and NEVER offer to
-- Interactions in chat stay brief and follow the active output style
 
 ## Step 1: Resolve required inputs
 
@@ -119,8 +115,7 @@ A rung has no `## Verification` row, or its row is `- None` → skip it, and rep
 1. Stage by exact path every file the skill changed. NEVER `git add -A`
 1. After each commit, `git status --porcelain` in that worktree prints nothing. Anything left → commit it, or stop and report it
 1. Follow the repo's own commit message convention, from its `CLAUDE.md` or `CONTRIBUTING.md`. The message follows the workflow-jargon rule above
-1. A hook fails → fix the cause, then commit again. NEVER pass `--no-verify`
-1. NEVER push
+1. A hook fails → fix the cause, then commit again, per conventions `## Git`
 
 ## Step 7: Record findings
 
