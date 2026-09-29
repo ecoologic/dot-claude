@@ -94,7 +94,7 @@ status: draft
 | Section | Rule |
 | --- | --- |
 | Assumptions | Per conventions `## Assumptions` (`A-EPIC-<n>`). This step reads no code: it settles a row only with the user, as `resolved`; every other row stays `open` for `/a-architecture` to inherit |
-| Candidate Terms | `/a-architecture` Step 5 confirms, rejects, or renames each one before it reaches any `CONTEXT.md`, per conventions `## Terminology` |
+| Candidate Terms | `/a-architecture`'s terminology reconciliation confirms, rejects, or renames each one before it reaches any `CONTEXT.md`, per conventions `## Terminology` |
 
 ## Rules
 

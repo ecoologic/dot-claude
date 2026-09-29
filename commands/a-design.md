@@ -68,10 +68,9 @@ Agree ONE story's design with the user, then record it. This command should:
 
 ## Step 1: Resolve required inputs
 
-1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its `## Where a command runs` and, for a planning stage, its `## Selector resolution` order: argument, then memory, then ask.
+1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its `## Where a command runs`, and its `## Selector resolution` for a planning stage.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run.
-1. No story number in `$ARGUMENTS` → memory, then list the story numbers that have a `story-N.md` on disk and ask, using the ask-user-question skill, per conventions `## Skills`.
-1. Record the resolved story number in memory, per conventions `## Memory`.
+1. No story number in `$ARGUMENTS` → resolve it per conventions `## Selector resolution`. Its ask lists the story numbers that have a `story-N.md` on disk.
 
 Read (stop if any are missing):
 - `$EPIC_DIR/story-<story-number>.md`
@@ -87,7 +86,7 @@ When `story-<story-number>.md` or `epic.md` lists UI references, treat them as r
 
 Every confirmed finding read above overrides the text it corrects, per conventions `## Findings`. Design against the finding, never against the text it corrects.
 
-`story-<story-number>.md` carries a row this story's implementation requires still `open` or `cascaded` → STOP, per conventions `## Assumptions`. Report the row and send the user to `/a-edit story <story-number> <guidance>`. A row this story's implementation does not require stays cascaded; it is not a gate here.
+Check `story-<story-number>.md`'s ledger per conventions `### Entry gate`, with `/a-edit story <story-number> <guidance>`. Only a row this story's implementation requires counts. A row it does not require stays cascaded; it is not a gate here.
 
 `story-<story-number>-design.md` already exists → read it. This run revises that document; NEVER start a second one, and NEVER discard an agreed decision without saying so. It has no header → it is legacy; this run's first write adds one, per conventions `## Document header`.
 
@@ -120,7 +119,7 @@ Each result reports paths, symbols, why they matter, and any conflict with `epic
 
 NEVER accept a result without a file and a symbol behind it.
 
-Discover and invoke a repo or package skill about file structure, reuse or contracts per conventions `## Skills`, in each touched repo.
+Discover and invoke a repo or package skill about file structure, reuse or contracts per conventions `## Skills`, in each touched repo. Edit every `SKILL.md` path found into the design's `> Skills:` line now, per its recorded skill paths.
 
 Display the findings, then Edit `story-<story-number>-design.md`'s `## File Structure`, `## Architecture` and `### Reuse Opportunities` sections, per conventions `## Write as you go`. `### Extractions` holds decisions, not findings; it locks in Step 3.
 
@@ -176,7 +175,8 @@ Edit `## Components` now.
 
 The `uml-diagram` agent is the only diagram author. NEVER draw one yourself, and NEVER edit what it returns. The `diagrams` skill belongs to that agent; this command never reads it, per Skills above.
 
-1. Call `Agent` with `subagent_type: "uml-diagram"`, once per diagram section, every time the design changes what that section shows
+1. Once the design is settled, send two `Agent` calls with `subagent_type: "uml-diagram"` in ONE message: one `class`, one `sequence`
+1. A later design change → redraw only the diagram whose section the change touches
 1. The prompt carries these and nothing else:
    1. the mode: `design`, and the form: `sequence` or `class`
    1. the current design text the diagram depends on
@@ -226,11 +226,7 @@ Per conventions `## Assumptions`.
 
 1. Inherit only the rows routed to `story-<story-number>-design.md`, per conventions `## Assumptions`, and reprint each under its original ID. Cite every other settled row by ID; NEVER reprint it
 1. Add a row under `A-STORY-<story-number>-<n>`, continuing that story's numbering, for every claim this design acts on without evidence
-1. Step 2 and Step 8's fourth axis already reported what the codebase proves. Mark each new row `verified` or `invalidated`, citing the file, line or test
-1. Put every row still `open` to the user, one at a time, with what it blocks and what changes if it is false, using the ask-user-question skill, per conventions `## Skills`
-1. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`, in their words, with its impact
-1. The user cannot settle a row → stop. That is a gate: report the row, what it blocks, and the decision needed. NEVER hand `/a-plan` an `open` row
-1. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` also goes to `## Findings`, per Step 10
+1. Settle every new row per conventions `### Settle`. Its evidence is what Step 2 and Step 8's fourth axis report. Its gate protects `/a-plan`. A finding goes in Step 10
 
 Edit `## Assumptions` now.
 
@@ -238,11 +234,7 @@ Edit `## Assumptions` now.
 
 Designing the story against real code uncovers what `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` should eventually reflect: a boundary or contract the epic architecture states wrongly, a dependency that changes the story order, a durable domain name. NEVER write any of those three files from this command.
 
-Append each finding to `story-<story-number>.md`'s `## Findings` section instead, per conventions `## Findings`, capped per conventions `## Size caps`: the target doc, the finding, the suggested change.
-
-A story-order conflict is one of these findings, never a rewrite: target `epic.md`'s `## Story Order`, name the position this story must move to, and name the dependency that forces it.
-
-Append only. NEVER edit a row `/a-story` already wrote, and NEVER touch another section of that file.
+Append each finding to `story-<story-number>.md`'s `## Findings` section instead, per conventions `## Findings`, a story-order conflict included. NEVER touch another section of that file.
 
 `/a-finish` applies whichever findings are still confirmed, once the story's last criterion lands.
 
@@ -283,7 +275,6 @@ The user's final "design is ready" approval → Edit the header's `status` line 
 - [ ] no implementation steps, task packets, waves, or model and effort tables appear in the document
 - [ ] the user was asked to review, and no offer to proceed to `/a-plan` was made
 - [ ] `status` was set to `done` only on the user's final "design is ready" approval
-- [ ] the story number is recorded in memory
 
 ## Error Handling
 

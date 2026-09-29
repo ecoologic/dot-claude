@@ -27,6 +27,7 @@ pr: -
 > Source Story: `$EPIC_DIR/story-<story-number>.md`
 > Source Design: `$EPIC_DIR/story-<story-number>-design.md`
 > Repos: <repo>, <repo>
+> Skills: <repo>/<path>/SKILL.md, <repo>/<path>/SKILL.md, or none
 
 ## Criterion
 

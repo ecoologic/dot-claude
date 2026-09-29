@@ -51,7 +51,7 @@ For every inconsistency:
 
 ## Skills
 
-Discover and invoke project skills per conventions `## Skills`; it also names the global skills for this stage: `grill-me` at the Step 10 gate, `engineering:architecture` for Step 9's decision records, `diagrams` for every mermaid diagram, and `ask-user-question` for every `AskUserQuestion` call. A repo or package skill about naming or pattern validation applies when reconciling terminology.
+Discover and invoke project skills per conventions `## Skills`; it also names the global skills for this stage: `grill-me` at the review gate, `engineering:architecture` for Step 7's decision records, `diagrams` for every mermaid diagram, and `ask-user-question` for every `AskUserQuestion` call. A repo or package skill about naming or pattern validation applies when reconciling terminology.
 
 ## Rules
 
@@ -71,9 +71,9 @@ Discover and invoke project skills per conventions `## Skills`; it also names th
 
 ## Step 1: Resolve required inputs
 
-1. Read conventions.md. This command is a planning stage: follow conventions `## Where a command runs` (stop if started inside a worktree; print a warning if not on the default branch) and its planning-stage selector order — this command's own argument, then memory, then stop and ask.
+1. Read conventions.md. This command is a planning stage: follow conventions `## Where a command runs` (stop if started inside a worktree; print a warning if not on the default branch) and its `## Selector resolution` for a planning stage.
 1. `$ARGUMENTS` = `[<epic-slug>] [instructions-or-suggestions]`. A leading token that names an existing `$PLANNING_ROOT/<token>` folder is the epic slug; everything else is high-priority guidance for this run and never selects the epic.
-1. Resolve `$EPIC_DIR`. Record the resolved epic slug in memory, per conventions `## Memory`.
+1. Resolve `$EPIC_DIR`.
 
 Read (stop if any are missing):
 - `$EPIC_DIR/epic-requirements.md`
@@ -200,17 +200,19 @@ Rules:
 - existing `CONTEXT.md` terms remain canonical unless the user approves a change
 - confirm each of `epic.md`'s `## Candidate Terms` as a row: `new`, `exists (extend with ...)`, `conflict` or `rename-request`
 - do not silently rename existing `CONTEXT.md` terms
-- keep conflicts and rename requests explicit in `epic-architecture.md` and review them with the user at the Step 10 gate
+- keep conflicts and rename requests explicit in `epic-architecture.md` and review them with the user at the review gate
 
 Edit `## Terminology` and `### Key Domain Concepts` now.
 
-## Step 6: Record the inferred ERD
+## Step 6: Record, critique and recommend the domain model
+
+### 6a. Record the inferred ERD
 
 Per Step 2a: include the inferred ERD when evidence is strong enough, labeled as a review artifact, not accepted truth. Evidence too weak → say so explicitly and name what is missing.
 
 Edit `## Diagrams and Model Review` now with this content.
 
-## Step 7: Critique the inferred model
+### 6b. Critique the inferred model
 
 Critique it harshly. Evaluate:
 1. entity and aggregate boundaries
@@ -231,7 +233,7 @@ Say clearly:
 
 Edit `## Diagrams and Model Review` now, continuing after the inferred ERD.
 
-## Step 8: Recommend the domain model
+### 6c. Recommend the domain model
 
 After critique and codebase comparison, propose the model that should guide this epic.
 
@@ -239,7 +241,7 @@ Represent the recommended model in an epic class diagram focused on the entities
 
 Edit `### Recommended Epic Class Diagram` now.
 
-## Step 9: Make architecture decisions
+## Step 7: Make architecture decisions
 
 Organize decisions around change types:
 
@@ -259,11 +261,11 @@ Ground decisions in:
 
 Invoke the `engineering:architecture` skill via `Skill` when drafting each decision record.
 
-If a decision has meaningful tradeoffs, present options with pros and cons; resolve them with the user at the Step 10 gate.
+If a decision has meaningful tradeoffs, present options with pros and cons; resolve them with the user at the review gate.
 
 Edit `## Technical Decisions` and `## Reuse and Extraction Plan` now.
 
-### 9a. Check story order against implementation reality
+### 7a. Check story order against implementation reality
 
 `/a-epic` orders stories by user value alone, before any codebase investigation. Validate that `epic.md`'s `## Story Order` still holds now that real dependencies are known.
 
@@ -277,20 +279,20 @@ Edit `## Technical Decisions` and `## Reuse and Extraction Plan` now.
 8. Update the affected stories' `### Dependencies` too, so the edge that forced the resolution is recorded, not just its outcome
 9. Either way, record the resolution under `## Resolved Source-of-Truth Decisions`, same shape as any other resolved conflict
 
-### 9b. Settle the assumption ledger
+### 7b. Settle the assumption ledger
 
 Inherit every `A-EPIC` row routed here, per conventions `## Assumptions`. Add a row under `A-ARCH-<n>` for every claim this run acted on without evidence: an inferred entity, an unvalidated flow, a guessed boundary, an untested reuse candidate.
 
 1. This run's codebase investigation is the evidence. Settle a row `verified` or `invalidated` the moment it settles, citing the file, line, or test
-2. The inferred ERD, its entities, and its relationships stay assumptions until Step 7's critique settles them; carry them as rows, NEVER as confident prose
-3. A row no architecture decision requires → cascade it straight to the `story-<story-number>.md` whose implementation requires it, or `every story-N.md`, per conventions `## Assumptions`. NEVER gate Step 10 on it. No story requires it either → that is a gate, not a cascade; put it to the user at Step 10 instead
-4. A row an architecture decision requires, still unsettled from code → put it to the user at Step 10, one at a time, with what it affects and what changes if it is false
-5. Still unsettled after Step 10 → cascade it the same way as point 3
-6. An `invalidated` row already baked into `epic.md` → surface its impact at Step 10 and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
+2. The inferred ERD, its entities, and its relationships stay assumptions until Step 6b's critique settles them; carry them as rows, NEVER as confident prose
+3. A row no architecture decision requires → cascade it straight to the `story-<story-number>.md` whose implementation requires it, or `every story-N.md`, per conventions `## Assumptions`. NEVER hold the review gate on it. No story requires it either → that is a gate, not a cascade; put it to the user at the review gate instead
+4. A row an architecture decision requires, still unsettled from code → put it to the user at the review gate, one at a time, with what it affects and what changes if it is false
+5. Still unsettled after the review gate → cascade it the same way as point 3
+6. An `invalidated` row already baked into `epic.md` → surface its impact at the review gate and record the user's decision under `## Resolved Source-of-Truth Decisions`. This command's `epic.md` write permission still stops at `## Story Order` and an absorbed prerequisite
 
 Edit `## Assumptions` now.
 
-## Step 10: Review with the user
+## Step 8: Review gate
 
 Invoke the `grill-me` skill via `Skill` before running this gate.
 
@@ -304,9 +306,9 @@ Present the current architecture direction to the user:
 
 For each conflict or tradeoff, present explicit options, state which option the hierarchy or codebase evidence favors, and explain the downstream impact. Keep each question within conventions `## Size caps`.
 
-Edit `## Resolved Source-of-Truth Decisions` and `### Remaining Input Conflicts and Gaps` now, as each item resolves. Continue to Step 11 only once every item above has the user's response.
+Edit `## Resolved Source-of-Truth Decisions` and `### Remaining Input Conflicts and Gaps` now, as each item resolves. Continue to Step 9 only once every item above has the user's response.
 
-## Step 11: Draw the epic sequence diagrams
+## Step 9: Draw the epic sequence diagrams
 
 Rules:
 - these are required deliverables, separate from the optional inferred ERD
@@ -320,23 +322,25 @@ Rules:
 
 Edit `### Recommended Epic Sequence Diagrams` now.
 
-## Step 12: Build the change inventory
+## Step 10: Build the change inventory
 
 List every new or modified artifact that later story and criterion work will depend on. Map each item to the stories, system areas, and reuse status established above.
 
 Edit `## Change Inventory` and `## Story Mapping` now.
 
-## Step 13: Final check and approval
+## Step 11: Final check, hand-off and presentation
+
+### 11a. Final check and approval
 
 Per conventions `## Write as you go`: read `~/.claude/commands/a-templates/epic-architecture.md` again, check `$EPIC_DIR/epic-architecture.md` against its `## Shape`, and Edit in only the sections still missing. NEVER rewrite a section an earlier step already settled.
 
 Present the completed document to the user. On approval, Edit the header's `status` line to `done`.
 
-## Step 14: Hand off repo terminology
+### 11b. Hand off repo terminology
 
 NEVER write a repo's `CONTEXT.md` here. Each `## Terminology` row with status `new` or `exists (extend with ...)` reaches it later: `a-story` routes it as a finding, and `a-finish` applies it once implementation leaves it standing, per conventions `## Terminology`.
 
-## Step 15: Present to user
+### 11c. Present to user
 
 Summarize:
 - key decisions
@@ -347,7 +351,7 @@ Summarize:
 - risks and open questions
 - the assumption ledger: rows verified, invalidated, resolved, and cascaded, with the story each cascade lands in
 
-Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs; that already happened at Step 10.
+Invite final feedback or corrections before moving to `/a-story`. Do not use this step as the primary discussion gate for conflicts or tradeoffs; that already happened at the review gate.
 
 ## Success Criteria
 
@@ -364,12 +368,11 @@ Invite final feedback or corrections before moving to `/a-story`. Do not use thi
 - [ ] no story number was changed; any reordering was applied to `epic.md`'s `## Story Order` alone
 - [ ] every `A-EPIC` row routed to this doc was inherited into `## Assumptions` under its original ID, per conventions `## Assumptions`
 - [ ] every assumption this run could settle from the codebase is `verified` or `invalidated`, with its evidence cited
-- [ ] the Step 10 gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<story-number>.md` or `every story-N.md`, never gated here
+- [ ] the review gate covered only rows an architecture decision requires, per conventions `## Assumptions`; every other unsettled row was cascaded straight to a named `story-<story-number>.md` or `every story-N.md`, never gated here
 - [ ] every gated row this run could not settle was put to the user, and is `resolved`
 - [ ] every one of `epic.md`'s `## Candidate Terms` is a `## Terminology` row, conflicts left explicit for user review
 - [ ] no repo's `CONTEXT.md` was written
-- [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user at the Step 10 gate before the header's `status` was set to `done`
-- [ ] the epic slug is recorded in memory
+- [ ] blocking conflicts, tradeoffs, and weak assumptions were reviewed with the user at the review gate before the header's `status` was set to `done`
 
 ## Error Handling
 

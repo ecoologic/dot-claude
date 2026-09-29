@@ -5,7 +5,7 @@ disable-model-invocation: true
 
 # Shared `a-*` conventions
 
-Every `a-*` command reads this file as its own step 1 and follows it. A command step that needs a rule below cites the section in one line. NEVER restate a rule from this file in a command.
+Every `a-*` command reads this file as its own step 1 and follows it. A command step that needs a rule below cites the section in one line. NEVER restate a rule from this file in a command. NEVER read this file, or a command file, again once this session has read it. A nested stage skips its own step-1 read of this file.
 
 ## Folder layout
 
@@ -62,7 +62,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 1. A planning stage on a branch other than the default one prints a one-line warning and carries on. The default branch is `git symbolic-ref --short refs/remotes/origin/HEAD` without its `origin/` prefix
 1. `/wt` makes each criterion worktree from `story-N-ac-M.md`'s `branch` header, per `## Criterion branches`, for `a-implement` onwards. `a-cont`, `a-edit` and `a-plan` run from either place
 
-## Selector resolution, in order
+## Selector resolution
 
 | Command | Order |
 | --- | --- |
@@ -95,7 +95,9 @@ metadata:
 - Updated: <updated, per Document header>
 ````
 
-1. A command overwrites this file with its own resolved selector before it finishes. NEVER append, NEVER add prose, history or decisions: those live in the planning docs
+1. Every `a-*` command runs from an empty context, given only its selector. NEVER rely on conversation history
+1. Every command's resolve step overwrites this file with its own resolved selector, before the command finishes. NEVER append, NEVER add prose, history or decisions: those live in the planning docs
+1. A command NEVER restates this write as a step or a `## Success Criteria` item. It names only a value it adds, eg `Criterion: none`
 1. The memory directory's `MEMORY.md` carries one pointer line to this file. Add it when it is missing; NEVER duplicate it
 1. `a-finish` is the last command that needs a selector. The non-`a-*` commands after `a-check` (`/draft-pr`, `/security-review`) key on the current git branch instead
 
@@ -114,9 +116,16 @@ One acceptance criterion, one branch, one worktree and one PR per touched repo. 
 1. Ready: a criterion whose plan is `done` and whose parents all have a `status` starting with `implemented`. Every ready criterion can run `/a-implement` in its own session
 1. The context branch `<epic-slug>/story-<story-number>-context` carries only `a-finish`'s `CONTEXT.md` commits, per its own step
 
-## Cold-start rule
+### Criterion worktree lookup
 
-The user clears and compacts context between stages. Every `a-*` command runs from an empty context, given only its selector: read what it needs from `$EPIC_DIR` and the repo. NEVER rely on conversation history
+Once per touched repo. `<branch>` is the plan's `branch` header. The command names its own outcome for a missing entry.
+
+1. The touched repos are the ones the plan's `> Repos:` line and the Repo column of its `## Verification` name
+1. Each repo resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per `## Folder layout`
+1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the worktree. Use it
+1. No entry → the command's own outcome: STOP, record `none`, or create the worktree
+1. Create: the local `<branch>` exists first, on the base the command names. Read `~/.claude/commands/wt.md` and follow its text from `<dev-root>/<repo>`, with `<branch>` as its argument. It checks out the local branch. Then run `./scripts/setup-worktree.sh` from the new worktree when it exists
+1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
 
 ## Templates
 
@@ -213,20 +222,36 @@ Findings travel up; assumptions travel down. Every stage records what it acted o
 1. A stage inherits only the `open` and `cascaded` rows routed to its own doc, and reprints each under its original ID. NEVER drop a routed row by omission
 1. A settled row is cited by ID, NEVER reprinted
 1. One ID, one truth: the most downstream doc's status wins, in the order `epic.md` → `epic-architecture.md` → `story-N.md` → `story-N-design.md` → `story-N-ac-M.md`. NEVER go back to update the upstream row
-1. A stage settles what its own evidence settles: `verified` when the codebase, a test, or a followed reference proves it; `invalidated` when they disprove it
-1. It cannot settle a row from evidence → put it to the user. Their call is `resolved`, recorded in their words
+1. A stage settles its rows per `### Settle` below
 1. It can settle a row neither way → `cascaded`, naming the doc that inherits it. A cascade is the ONLY way to leave a row unsettled, and a cascade with nowhere left to go is a gate, not a pass
 1. The gate covers only the rows this story's implementation requires. NEVER let such a row reach `/a-design` `open` or `cascaded`. `a-story` is their deadline: it verifies what the codebase can settle, then puts the rest to the user
 1. A routed row this story's implementation does not require is never gated here: cascade it to the doc that does require it (`story-N.md` of a later story, or `every story-N.md`)
-1. The user may settle a row by accepting it as a known risk. That is `resolved`, recorded with the decision and its impact — NEVER a silent pass
-1. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` also becomes a finding, per `## Findings` below
 1. NEVER record an assumption as prose. The table is the ledger; a narrative section may cite an ID, NEVER restate the claim in its place
+
+### Settle
+
+A stage settles its ledger in this order. The command names its ID prefix, its evidence, and the stage its gate protects.
+
+1. Mark each row its own evidence settles: `verified` when the codebase, a test, or a followed reference proves it. `invalidated` when they disprove it. Cite the file, line, test or commit
+1. Put every row still `open` to the user, one at a time, per the `ask-user-question` skill. Name what it blocks and what changes if it is false
+1. NEVER batch rows into one question, unless the user lifts the gate per `## Bulk approval`
+1. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`: record the decision in their words, with its impact. NEVER a silent pass
+1. The user cannot settle a row → stop. That is a gate: report the row, what it blocks, and the decision needed. NEVER hand the next stage an `open` row
+1. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` also becomes a finding, per `## Findings` below
+
+### Entry gate
+
+A stage checks its upstream doc's ledger before any work. The command names its upstream doc, and any row its gate skips.
+
+1. The upstream doc carries a row still `open` or `cascaded` → STOP. The upstream stage was that row's deadline
+1. Report the row, and send the user to `/a-edit` for the upstream doc, with `<guidance>`. NEVER settle it here
 
 ## Findings
 
 A story's own stages touch one planning doc each. None of them write `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` directly.
 
-1. `a-story`, `a-design` and `a-plan` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves: the target doc, the finding, the suggested change. `a-implement` and `a-check` append theirs to their own `story-N-ac-M.md`'s `## Findings`, the same way
+1. `a-story`, `a-design` and `a-plan` each append an incongruity or durable finding to `story-N.md`'s `## Findings` section instead of writing the shared doc themselves. `a-implement` and `a-check` append theirs to their own `story-N-ac-M.md`'s `## Findings`, the same way
+1. A row carries the target doc, the finding, and the suggested change, within `## Size caps`. Append only. NEVER edit an earlier row; only `a-finish`'s mark below changes one
 1. A confirmed finding overrides the shared doc it targets. Every later `a-story`, `a-design` and `a-plan` run reads `## Findings` beside `epic-architecture.md` and acts on the finding, NEVER on the text it corrects. `a-implement` and `a-check` read their plan only
 1. Those three stages also read `## Findings` in every other `story-N.md` of the epic, never its `-design` or `-ac` files, and skips each row whose Suggested Change cell carries `Applied to <doc> on <YYYY-MM-DD>` or `Rejected on <YYYY-MM-DD>: <reason>`
 1. Only `a-finish` marks a row, by appending one of those two marks to its Suggested Change cell
@@ -260,12 +285,55 @@ Repo and package skills:
 1. A repo with no matching skill → carry on without one
 1. A command step that uses a skill names it in one line
 
+Recorded skill paths, from `a-design` onwards:
+
+1. `a-design` runs the lookup above once per touched repo. It records every `SKILL.md` path found in the design's `> Skills:` line, as `<repo>/<path from the repo root>`. Paths only, NEVER skill text. No skill found → `none`
+1. `a-plan` copies the design's `> Skills:` line into each plan's `> Skills:` line
+1. `a-plan`, `a-implement`, `a-check`, and `a-edit` on a design or a plan, read only the paths their input doc's `> Skills:` line lists. NEVER list the skills directories again
+1. `a-implement` and `a-check` resolve each path inside the criterion worktree of its repo
+1. A design or plan with no `> Skills:` line is legacy. Run the lookup above
+
 ## Git
 
 1. `$PLANNING_ROOT` is a git repository. The user commits it by hand; no `a-*` command ever commits in it
 1. Commits in the code repos are allowed everywhere in this flow
 1. NEVER push. Push is explicit, from the user, never from a command
 1. NEVER pass `--no-verify`. The hooks run
+
+### Committing in a criterion worktree
+
+`a-implement` and `a-check` commit this way. The command names the paths it stages.
+
+1. Stage by exact path. NEVER `git add -A`
+1. After each commit, `git status --porcelain` in that worktree prints nothing. Anything left → commit it, or stop and report it
+1. Follow the repo's own commit message convention, from its `CLAUDE.md` or `CONTRIBUTING.md`. The message follows `## Workflow jargon`
+1. A hook fails → fix the cause, then commit again
+
+## Validation
+
+`a-implement` and `a-check` validate with this ladder. Each command adds only its own failure policy.
+
+Run the plan's `## Verification` rows only, in this order:
+
+1. Targeted tests for the changed module, component or endpoint
+1. Targeted lint, format, or type checks
+1. The full test suite
+1. The `browser` row, when the plan has one: invoke the `run` skill to start the app with the row's command. Then invoke the `claude-in-chrome` skill to follow `### Browser` step by step. Record a GIF of the run as evidence
+
+Then:
+
+1. A failure is pre-existing or unrelated → report the command and the failure. Explain why it is out of scope, and do not block completion
+1. A rung has no `## Verification` row, or its row is `- None` → skip it. Report it as a risk in the command's summary step
+1. The Chrome extension is not connected → skip the `browser` rung. Report that the user must check it by hand
+1. No automated validation at all → state this. Review the code against the criterion's _Given_ / _When_ / _Then_ by hand
+
+## Workflow jargon
+
+These rules cover code, comments, user-facing copy, commit messages, and committed implementation text. They NEVER cover the planning docs.
+
+1. NEVER mention epic, story, acceptance criteria, AC, or similar workflow jargon. Use plain language that still makes sense later without process context
+1. NEVER introduce outdated history context in comments or UI. It refers to implementation detail changes, eg the rename of a model
+1. Write only durable comments. A comment describes behaviour or business rules directly. NEVER reference a workflow artefact
 
 ## Terminology
 

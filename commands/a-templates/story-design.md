@@ -21,6 +21,7 @@ status: draft
 
 > Epic: <epic name>
 > Source Story: `$EPIC_DIR/story-<story-number>.md`
+> Skills: <repo>/<path>/SKILL.md, <repo>/<path>/SKILL.md, or none
 
 ## Goal
 - **Problem**: one short paragraph, ELI5

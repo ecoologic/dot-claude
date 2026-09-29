@@ -52,10 +52,9 @@ This command should:
 
 ## Step 1: Resolve the story
 
-1. Read `~/.claude/commands/a-templates/conventions.md`. This is a planning stage: follow `## Where a command runs`, and resolve the selector per `## Selector resolution`'s Planning stages row — this command's own argument, then memory, then ask; never the current branch.
+1. Read `~/.claude/commands/a-templates/conventions.md`. This is a planning stage: follow `## Where a command runs`, and resolve the selector per `## Selector resolution`'s Planning stages row.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. A leading integer is the story number; the rest is high-priority guidance for this run.
 1. No story number in `$ARGUMENTS` → memory holds one for this epic and its `story-N.md` is neither `status: done` nor `status: finished` → use it. Otherwise compute the default: read `epic.md`'s `## Story Order` in its listed sequence, and take the first entry whose `story-N.md` is missing or neither `status: done` nor `status: finished`. Present that number to the user for confirmation, alongside the other available numbers, per the `ask-user-question` skill.
-1. Record the resolved story number in memory now.
 
 Read (stop if any are missing):
 - `$EPIC_DIR/epic.md`
@@ -112,7 +111,7 @@ Each result reports a verdict with a file, a line, or a test behind it. NEVER ac
 Use the results for four things:
 1. informing the acceptance criteria drafted next in Step 3, and revising one the codebase later contradicts, with the user
 2. settling an inherited row: `verified` or `invalidated` when evidence allows; otherwise `open`, when this story's implementation requires it, or `cascaded`, when it does not, per conventions `## Assumptions`
-3. recording a finding, per conventions `## Findings`, the moment it surfaces — including a story-order conflict, which targets `epic.md`'s `## Story Order` and names the dependency forcing the move, never a renumber
+3. recording a finding, per conventions `## Findings`, the moment it surfaces, a story-order conflict included
 4. routing each `new` or `exists (extend with ...)` row of `epic-architecture.md`'s `## Terminology` that this story uses as a finding that targets that repo's `CONTEXT.md`, per conventions `## Terminology`. Skip a term another `story-N.md`'s `## Findings` already carries
 
 Display the findings and the settled assumption rows before proceeding.
@@ -146,12 +145,9 @@ After the last criterion is approved, restate the full numbered list and treat i
 
 ## Step 4: Settle the assumption ledger
 
-Settle every row still `open`, per conventions `## Assumptions`; `/a-story` is their deadline, so none may reach `/a-design` `open`. A row this story does not require was already `cascaded` in Step 2 — never gated here.
+Settle every row still `open`, per conventions `### Settle`; `/a-story` is their deadline, so none may reach `/a-design` `open`. A row this story does not require was already `cascaded` in Step 2 — never gated here.
 
-1. Put every row still `open` to the user, one at a time, using the `ask-user-question` skill, with what it blocks and what changes if it is false. NEVER batch them into one question, unless the user lifts the gate per conventions `## Bulk approval`
-2. The user settles a row by deciding, or by accepting it as a known risk. Either is `resolved`: record their decision in their words, and its impact. NEVER a silent pass
-3. The user cannot settle a row → set `status: blocked` in the header, per conventions `## Document header`, and stop. Report the row, what it blocks, and the decision needed
-4. An `invalidated` row already baked into `epic.md`, `epic-architecture.md`, or a repo's `CONTEXT.md` is also a finding, per Step 2
+1. The user cannot settle a row → also set `status: blocked` in the header, per conventions `## Document header`
 
 Edit `story-<story-number>.md`'s `## Assumptions` section now.
 
@@ -188,7 +184,6 @@ On approval, Edit the header's `status` to `done`, per conventions `## Document 
 - [ ] every assumption the codebase could settle is `verified` or `invalidated`, with a file, line, or test cited
 - [ ] every remaining `open` row was put to the user and is `resolved` in their words; none is left `open`. A row this story does not require was `cascaded` in Step 2 instead, per conventions `## Assumptions`
 - [ ] the user reviewed the output before the pipeline advanced, and the header's `status` is `done`
-- [ ] the story number is recorded in memory
 
 ## Error Handling
 

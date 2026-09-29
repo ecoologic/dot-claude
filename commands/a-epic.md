@@ -125,7 +125,7 @@ When several reasonable splits exist, prefer the smallest user-visible slice and
 1. Read `~/.claude/commands/a-templates/conventions.md`. Follow its `## Path resolution` and `## Where a command runs`.
 1. This is a planning stage: it stops when started inside a worktree, and prints a one-line warning (then continues) on a non-default branch, per conventions `## Where a command runs`.
 1. `$ARGUMENTS` = `<epic-slug> [details]`. `<epic-slug>` names the folder; it is never derived or guessed.
-1. Resolve `<epic-slug>` per conventions `## Selector resolution`'s planning-stage order: the command's own argument, then memory, then stop and ask. Skill: `ask-user-question`.
+1. Resolve `<epic-slug>` per conventions `## Selector resolution`'s planning-stage row. Skill: `ask-user-question`.
 1. `<epic-slug>` is new (no matching folder exists yet) → confirm it with the user before `$EPIC_DIR` is created, per conventions `## Selector resolution`. Skill: `ask-user-question`.
 1. Resolve `$EPIC_DIR` = `$PLANNING_ROOT/<epic-slug>`. Print it. Create it when it does not exist.
 1. `$EPIC_DIR/epic-requirements.md` exists → read it whole. Missing and `[details]` was given → create it from `~/.claude/commands/a-templates/epic-requirements.md`, with `[details]` verbatim as the idea. Missing and no `[details]` → stop, print the exact path `$EPIC_DIR/epic-requirements.md`, and ask for the idea. Skill: `ask-user-question`.
@@ -148,7 +148,7 @@ UI references found: <list or none>
 1. Each named repo must exist as a sibling of `$PLANNING_ROOT`, at `<PLANNING_ROOT's parent>/<repo>`. A repo that does not exist there → stop and ask again. Skill: `ask-user-question`.
 1. Read `./CONTEXT.md` in each confirmed repo, when present, to reuse existing terms instead of coining new ones.
 1. Edit `epic.md`'s `## Repos` with the confirmed list.
-1. Record the epic slug and the confirmed repos in memory now, per conventions `## Memory`, so every later command defaults to them.
+1. Record the confirmed repos in memory now, per conventions `## Memory`, so every later command defaults to them.
 
 ## Step 2: Create personas
 
@@ -212,7 +212,7 @@ Edit into `epic.md`, one section at a time as each settles:
 
 ## Step 7: Record candidate terms
 
-This step never reads or investigates the codebase, so it never confirms a term against a repo's `CONTEXT.md`; that is `/a-architecture` Step 5's job, per conventions `## Terminology`.
+This step never reads or investigates the codebase, so it never confirms a term against a repo's `CONTEXT.md`; that is `/a-architecture`'s terminology reconciliation job, per conventions `## Terminology`.
 
 Edit `epic.md`'s `## Candidate Terms` with every durable product term this run coined that is not yet confirmed in a touched repo's `CONTEXT.md`, one bullet each with a short definition. No such term → `- None`.
 
@@ -255,7 +255,7 @@ On the user's approval, Edit `epic.md`'s header to `status: done`, per conventio
 - [ ] no synonyms were introduced
 - [ ] the user reviewed the proposed story set and the assumption ledger before scope was confirmed
 - [ ] every claim this step acted on without evidence is a row in `epic.md`'s `## Assumptions`, with an `A-EPIC-<n>` ID, a status, and no prose restating it
-- [ ] the epic slug and the confirmed repos are recorded in memory, per conventions `## Memory`
+- [ ] the confirmed repos are recorded in memory, per conventions `## Memory`
 - [ ] each doc was created from its template at first write and Edited section by section as it settled; the final step checked all three docs against their templates and set `status: done` on `epic.md` only on the user's approval
 
 ## Error Handling

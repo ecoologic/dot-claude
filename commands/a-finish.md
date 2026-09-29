@@ -50,14 +50,18 @@ Close ONE story once every criterion is checked. This command should:
 1. Run from the main repo root. Started inside a worktree → stop and say so, per conventions `## Where a command runs`. A worktree cannot remove itself.
 1. `$ARGUMENTS` = `[<story-number>] [details]`. The first integer is the story number; the rest is high-priority guidance for this run.
 1. No story number in `$ARGUMENTS` → fall through selector resolution, per conventions `## Selector resolution`.
-1. Record the resolved story number in memory, with `Criterion: none`.
+1. Memory records `Criterion: none`, per conventions `## Memory`.
 
-Read (stop if any are missing):
-- `$EPIC_DIR/story-<story-number>.md`
-- `$EPIC_DIR/story-<story-number>-design.md`
+Read, with Grep or a ranged Read (stop if any are missing):
+- `$EPIC_DIR/story-<story-number>.md`: its header, `#` title, `## Acceptance Criteria` and `## Findings`
 - every `$EPIC_DIR/story-<story-number>-ac-*.md`: its header and its `## Findings`
+
+Check that these exist with Glob, and NEVER read them here:
+- `$EPIC_DIR/story-<story-number>-design.md`
 - `$EPIC_DIR/epic.md`
 - `$EPIC_DIR/epic-architecture.md`
+
+A later step reads one of them only when it needs it, and only the section it names: Step 4 a finding's target section, Step 5 the design's `## File Structure` and `epic-architecture.md`'s `## Change Inventory` and `## Story Mapping`, Step 7 `epic.md`'s `## Story Order`.
 
 Gates:
 1. `story-<story-number>.md` reads `status: finished` → report it, and stop. This story is closed
@@ -75,16 +79,15 @@ Findings: <count not yet marked Applied or Rejected, in story-<story-number>.md 
 
 ## Step 2: Locate the criterion worktrees
 
-The repos are every plan's `> Repos:` line. Each resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per conventions `## Folder layout`. Each plan's `branch` header is its criterion branch, per conventions `## Criterion branches`.
+Find each criterion worktree per conventions `### Criterion worktree lookup`, with these batching rules:
 
-Once per plan, per repo it touches:
-1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the criterion worktree
+1. Run `git -C <dev-root>/<repo> worktree list --porcelain` once per repo, NEVER once per plan. Match every plan's `branch` in that one output
+1. Run `git status --porcelain` once per worktree found. Step 6 reuses it
 1. No entry → record `none` for that plan and repo
-1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
 
 ## Step 3: Set each plan's `pr`
 
-Per plan, per repo it touches, run `gh pr list --head <branch> --state all --json number,state` from `<dev-root>/<repo>`.
+Per plan, per repo it touches, run `gh pr list --head <branch> --state all --json number,state` from `<dev-root>/<repo>`. Send every call in ONE message, as parallel Bash calls.
 
 1. Set `pr` in each `story-<story-number>-ac-*.md` header: `<repo>#<number>` per repo, comma-separated, else `none`. One Edit per plan, per conventions `## Document header`. Refresh `updated`
 1. `gh` is missing or unauthenticated → leave `pr` as it is, and report it as a risk
@@ -92,7 +95,7 @@ Per plan, per repo it touches, run `gh pr list --head <branch> --state all --jso
 
 ## Step 4: Apply the findings
 
-Read `## Findings` in `story-<story-number>.md` and in every `story-<story-number>-ac-*.md`. Skip every row whose Suggested Change already carries `Applied to <doc> on <YYYY-MM-DD>` or `Rejected on <YYYY-MM-DD>: <reason>`, per conventions `## Findings`.
+Use the `## Findings` rows Step 1 read, in `story-<story-number>.md` and in every `story-<story-number>-ac-*.md`. Skip every row already marked, per conventions `## Findings`.
 
 1. Put the remaining rows to the user one at a time: apply, reject with a reason, or leave for later. The user may lift this gate, per conventions `## Bulk approval`
 1. Apply each confirmed row to its target doc, with Edit on the section it names:
@@ -100,13 +103,13 @@ Read `## Findings` in `story-<story-number>.md` and in every `story-<story-numbe
    - `epic-architecture.md` → the section the finding names
    - `<repo>/CONTEXT.md` → the copy in the context worktree below, per conventions `## Terminology`
 1. Refresh the target doc's `updated`, and keep its `status`
-1. Append ` Applied to <doc> on <YYYY-MM-DD>` to the row's Suggested Change cell, in the file that holds the row, now, with one Edit. A rejected row gets ` Rejected on <YYYY-MM-DD>: <reason>`
+1. Append the row's mark to its Suggested Change cell, per conventions `## Findings`. Use one Edit, now, in the file that holds the row
 1. A left row stays as it is. It blocks nothing; a later stage reads it, per conventions `## Findings`
 
 Per repo with a confirmed `CONTEXT.md` row, before its first Edit there, enter the context worktree, on the context branch `<epic-slug>/story-<story-number>-context`, per conventions `## Criterion branches`:
 1. A worktree holds the context branch → use it
 1. No local context branch → run `git -C <dev-root>/<repo> fetch origin <default-branch>`, then `git -C <dev-root>/<repo> branch <context-branch> origin/<default-branch>`
-1. No worktree → follow `~/.claude/commands/wt.md` as `a-implement` Step 2 does
+1. No worktree → create it on the context branch, per conventions `### Criterion worktree lookup`'s create rule
 
 Commit every `CONTEXT.md` change in the context worktree. Stage it by exact path; follow the repo's own commit message convention.
 
@@ -122,7 +125,7 @@ Compare what the story shipped with what `story-<story-number>-design.md` said.
 ## Step 6: Remove the worktrees
 
 Once per criterion worktree, and per context worktree Step 4 created:
-1. Run `git -C <worktree> status --porcelain` and `git -C <worktree> rev-list --count @{u}..HEAD`
+1. Run `git -C <worktree> rev-list --count @{u}..HEAD`. Reuse Step 2's `git status --porcelain` for a criterion worktree. Run it for a context worktree only
 1. The branch is merged, per conventions `## Criterion branches`, and the tree is clean → it is safe, even with no upstream left
 1. Otherwise: uncommitted changes, no upstream, or a count above `0` → do not remove it. Report why, and the exact line to run once it is pushed: `git -C <dev-root>/<repo> worktree remove <worktree>`
 1. Clean and pushed → print the worktree path, then ask the user to confirm the removal. Anything but a yes → keep it, and report the line above
@@ -156,7 +159,6 @@ Then stop. NEVER start the next story, and NEVER offer to.
 - [ ] `story-<story-number>.md` reads `status: finished`, and only its header and its `## Findings` cells changed; in each plan, only the `pr` header and `## Findings` cells changed
 - [ ] the next story was named from `## Story Order`, never by incrementing the number
 - [ ] `epic-progress.md` did not change
-- [ ] the story number is recorded in memory
 
 ## Error Handling
 

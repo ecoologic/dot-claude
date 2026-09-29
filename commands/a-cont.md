@@ -23,11 +23,10 @@ Run the next unticked stage of one epic, then stop. `/a-epic` owns the epic and 
 
 ## Step 0: Resolve the epic
 
-1. Read `~/.claude/commands/a-templates/conventions.md`. `a-cont` is not a planning stage: resolve the epic slug per conventions `## Selector resolution`'s "every other `a-*` command" row (argument → branch → memory → ask), and per `## Where a command runs`, run from the main repo or a worktree — the stage it runs enforces its own rule
+1. Read `~/.claude/commands/a-templates/conventions.md`. `a-cont` is not a planning stage: resolve the epic slug per conventions `## Selector resolution`'s "every other `a-*` command" row, and per `## Where a command runs`, run from the main repo or a worktree — the stage it runs enforces its own rule
 1. `$ARGUMENTS` = `[<epic-slug>] [details]`. A leading token naming an existing `$PLANNING_ROOT/<token>` folder is the epic slug; the rest is `details`, passed verbatim to whichever command runs this turn
 1. No slug resolves → stop and ask. NEVER guess, NEVER create `$EPIC_DIR`
 1. `$EPIC_DIR/epic.md` is missing → stop. `/a-epic` has not produced its output yet
-1. Record the resolved epic slug in memory
 
 ## Step 1: Seed or extend `epic-progress.md`
 
@@ -41,7 +40,10 @@ Read `~/.claude/commands/a-templates/epic-progress.md` and follow its `## Row sh
 
 Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row from its artefact's header, so this command stays idempotent no matter how it drifted.
 
-1. Every row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md` for the `a-story` and `a-finish` rows, `story-N-design.md`, `story-N-ac-M.md` for the `a-implement` and `a-check` rows and a legacy `a-plan <n-m>` row, every `story-N-ac-*.md` for an `a-plan <n>` row) → Read only each header, `limit: 6`, never the whole file, never `shasum`
+1. Every row's Artefact is a doc (`epic.md`, `epic-architecture.md`, `story-N.md` for the `a-story` and `a-finish` rows, `story-N-design.md`, `story-N-ac-M.md` for the `a-implement` and `a-check` rows and a legacy `a-plan <n-m>` row, every `story-N-ac-*.md` for an `a-plan <n>` row) → read every header with ONE Grep tool call: path `$EPIC_DIR`, glob `*.md`, pattern `^((updated|status|branch|pr):|# )`, output mode `content`, with line numbers. Each line carries its file name
+1. Take each file's first match per key, within its first 6 lines. A later key match is body text
+1. A file whose only match is its `#` title has no header. A file with no match is missing from disk
+1. NEVER Read an artefact here, NEVER run Bash `head` or `grep`, NEVER `shasum`
 1. The header's `updated` matches the row's Updated cell → the row is current, leave Status and Updated alone
 1. It differs, or the row has no Updated yet → copy `status` and `updated` from the header into the row
 1. No header at all → the artefact is legacy: Status becomes `legacy`, Updated `-`. Keep any tick the row already had; NEVER newly tick a legacy row
@@ -49,7 +51,7 @@ Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row
 1. Branch comes from a header, once it sets one: an `a-implement` or `a-check` row copies its criterion's `story-N-ac-M.md` `branch`; every other row keeps `-`
 1. Tick a row `[x]` only when its refreshed Status ticks it, per the Done rule in the template's `## Columns`. NEVER downgrade or remove a tick already present
 1. A row refreshed here, or newly ticked, triggers the same `## Row shape` appends a tick in Step 4 triggers. Append those rows, then reconcile them too
-1. Repeat until a pass changes nothing further
+1. Repeat against that same Grep output until a pass changes nothing further. NEVER grep again in this step
 
 ## Step 3: Find the next stage
 
@@ -62,7 +64,8 @@ Stages also run outside `/a-cont`. Before trusting the matrix, refresh every row
 ## Step 4: Run the stage
 
 1. Read `~/.claude/commands/<stage>.md`. Follow its text in THIS session, with the row's selector and `[details]` from Step 0 as its `$ARGUMENTS`. Never `a-epic` — Step 3 gates before any such row reaches here
-1. It finishes and reports its output → re-read the artefact's header, per Step 2, and refresh the row from it. Tick only if Status now ticks it, per the Done rule in the template's `## Columns`. Empty `## Blocked` if it held an earlier gate, then go to Step 6
+1. The stage skips its step-1 read of `conventions.md`. Step 0 already read it, per conventions' opening rule
+1. It finishes and reports its output → re-read only the header of the artefact this stage wrote: one Grep with Step 2's pattern, over that artefact's path, or over `story-N-ac-*.md` for an `a-plan <n>` row. Refresh the row from it. Tick only if Status now ticks it, per the Done rule in the template's `## Columns`. Empty `## Blocked` if it held an earlier gate, then go to Step 6
 1. It stops or asks the user something → that is a gate, not a failure. Go to Step 5
 
 ## Step 5: Gate

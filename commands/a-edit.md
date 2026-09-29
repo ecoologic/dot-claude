@@ -12,7 +12,8 @@ disable-model-invocation: true
 | Direction | File | Description |
 | --------- | ---- | ----------- |
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
-| **In** | `~/.claude/commands/<owner-command>.md` | The `a-*` command that owns the target artifact: its contract, required inputs, and allowed writes |
+| **In** | `~/.claude/commands/<owner-command>.md` | The `a-*` command that owns the target artifact: its Pipeline I/O, `## Success Criteria`, and the sections that write the touched parts |
+| **Conditional In** | `~/.claude/commands/a-templates/plan-procedure.md` | For a `plan` target only: the procedure steps that write each plan section |
 | **In** | the owner command's own required inputs | The same inputs the owner command reads for that artifact |
 | **In/Out** | the target artifact under `$EPIC_DIR` | The one artifact this run revises |
 | **Conditional In** | codebase | Read only when the owner command is code-informed, and only around the guidance |
@@ -55,13 +56,13 @@ This command should:
 
 - NEVER edit more than one target artifact per run
 - NEVER regenerate the artifact from scratch unless the current one is unusable
-- NEVER bypass the owner contract; read the owner command file first
+- NEVER bypass the owner contract; read its sections first, per Step 2
 - NEVER write application code, create commits, or write files outside `$EPIC_DIR` and whatever the owner command is itself allowed to write
 - NEVER write `epic-progress.md`
 - NEVER write a file the owner command is forbidden to write. Revising `story-<story-number>.md` or `story-<story-number>-design.md` carries the same ban on `epic.md`, `epic-architecture.md`, and a repo's `CONTEXT.md`; record the change in `story-<story-number>.md`'s `## Findings` instead, per conventions `## Findings`
-- NEVER edit any section of `story-<story-number>.md` except `## Findings` while revising `story-<story-number>-design.md` or `story-<story-number>-ac-<criterion-number>.md`; `/a-design` and `/a-plan` are bound by the same rule
+- NEVER edit any section of `story-<story-number>.md` except `## Findings` while revising `story-<story-number>-design.md` or `story-<story-number>-ac-<criterion-number>.md`
 - NEVER edit `story-<story-number>-design.md` while revising `story-<story-number>-ac-<criterion-number>.md`; a design gap is revised with `/a-edit design <story-number>` first, then the plan is revised against it
-- A plan revision follows `/a-plan`'s `## Per-criterion procedure` for the sections it touches, its P7 verification commands included. It runs in the main session, so it may ask the user
+- ALWAYS follow the owner command's procedure for the touched sections, per `## Supported Targets`. A revision runs in the main session, so it may ask the user
 - NEVER change a story number. Sequencing guidance rewrites `epic.md`'s `## Story Order`, per conventions.md
 - NEVER drop, renumber, or silently re-status a row in `## Assumptions`, per conventions.md's Assumptions rule
 - NEVER collapse a canonical _As a_ / _I want_ / _So that_ or _Given_ / _When_ / _Then_ block, per conventions.md's Canonical blocks rule
@@ -80,21 +81,22 @@ This command should:
 1. `$ARGUMENTS` = `<artifact-type> [selector] <instructions-or-suggestions>`. Parse left to right: the artifact type, its selector when the target takes one, then the guidance text.
 1. Empty guidance text → stop and ask what to revise.
 1. Unsupported artifact type → print the Supported Targets table and stop.
-1. `story` or `design` with no selector → fall through selector resolution: the current branch, then memory, then list the story numbers on disk and ask.
+1. `story` or `design` with no selector → resolve it per conventions `## Selector resolution`. Its ask lists the story numbers on disk.
 1. `plan` takes two numbers. Missing the story number → resolve it as above. Missing the criterion number → list the `story-<story-number>-ac-*.md` files on disk and ask which one to revise.
-1. Resolve `$EPIC_DIR`. Record the resolved selector in memory.
+1. Resolve `$EPIC_DIR`.
 
 ## Step 2: Load the owner contract and the artifact
 
-1. Read `~/.claude/commands/<owner-command>.md` in full, before reading the artifact.
+1. Before reading the artifact, list the owner command's headings with ONE Grep tool call: pattern `^#{2,3} `, output mode `content`, with line numbers.
+1. Read only its `### Pipeline I/O`, its `## Success Criteria`, and each section that writes a part the guidance touches. Use Read with `offset` and `limit`, from one heading to the next.
+1. A `plan` target → its section-writing steps live in `~/.claude/commands/a-templates/plan-procedure.md`. List and read them the same way.
 1. Read the target artifact.
 1. The artifact does not exist → report the exact absolute path checked, name the owner command that must produce it, and stop.
 
-Extract from the owner command:
-- its Pipeline I/O contract and required inputs
-- its followed-reference requirements
-- the artifact sections it owns, and the order it writes them in
-- every file it is allowed to write, and every file it is forbidden to write
+Extract from those sections:
+- its required inputs: the Pipeline I/O **In** rows
+- the artifact sections it owns, and the order it writes them in: the section-writing steps
+- every file it is allowed to write: the **Out** and **In/Out** rows; every file it is forbidden to write: their `NEVER` cells and its success criteria
 - its own success criteria, which this revision must still satisfy afterwards
 
 Resolve any section, story, criterion, or assumption ID the guidance names by reading the artifact. Ask for clarification only when the artifact does not contain it, when several matches remain, or when the guidance conflicts with the owner contract.
@@ -110,7 +112,7 @@ Guidance: <one-line summary>
 
 ## Step 3: Reload the owner's inputs
 
-Reload exactly what the owner command's Pipeline I/O lists as **In** for this artifact, and follow the references it requires. Derive the list from the contract, never from the user's prompt.
+Reload exactly what the owner command's Pipeline I/O lists as **In** for this artifact, and follow every reference those inputs cite. Derive the list from the contract, never from the user's prompt.
 
 1. Any required input or followed reference missing or unreadable → stop and print the exact absolute path or reference
 1. Owner command is code-informed → explore only around the guidance, never the whole repo
@@ -188,7 +190,7 @@ Ask the user to review the revision before advancing the pipeline again.
 ## Success Criteria
 
 - [ ] the target resolved to a supported artifact type whose owner command file exists
-- [ ] `conventions.md` and the owner command file were both read before the artifact was revised
+- [ ] `conventions.md`, and the owner command's Pipeline I/O, `## Success Criteria` and touched sections, were read before the artifact was revised
 - [ ] the owner command's required inputs and followed references were reloaded, or the run stopped with an exact path
 - [ ] the guidance was addressed without broad regeneration
 - [ ] no file the owner command is forbidden to write was written, and `epic-progress.md` was not touched
