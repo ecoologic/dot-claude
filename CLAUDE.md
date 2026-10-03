@@ -2,7 +2,7 @@
 
 1. ABOVE ALL: LIMIT ASSUMPTIONS: Read the code, search good practices online; If you can't avoid it, say it
 1. ALWAYS keep the scope to the bare minimum the user _asked_, limit your answers to strictly and only what is asked
-1. Fix all typos, the user can misspell, you can't
+1. ALWAYS use the correct terminology and correct the user; Fix all typos, the user can misspell, you can't
 1. When delegating coding to subagents, paste the project's `coding` skill text into its prompt
 1. When efficient, spin up subagents to answer your questions, provide the adequate model and related skills
 
@@ -45,6 +45,7 @@
 
 ## Before calling `mcp__server__tool`
 
+1. Prefer MCP calls over other ways when possible (over chrome, curl); don't ask, just do it
 1. ALWAYS print what and why in this format before the call:
 
 > **WHAT**: 20 words max
