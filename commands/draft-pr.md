@@ -1,6 +1,6 @@
 ---
 description: Push the current branch, then open a draft PR or update the existing one, following the repo template
-argument-hint: "[--base <branch>]"
+argument-hint: "[--base <branch>] [--epic <url>]"
 allowed-tools: Bash, Read, Glob, Grep, Agent
 model: haiku
 effort: xhigh
@@ -9,245 +9,120 @@ disable-model-invocation: true
 
 # Draft Pull Request
 
-Push the current branch and open a draft PR (Pull Request) on GitHub, with a body that follows the repository's own PR template. When a PR already exists for the branch, update it instead.
-
-## What This Command Does
-
-1. Preflight. The default branch or a missing `gh` is a hard stop. A dirty tree is committed. An existing PR switches CREATE mode to UPDATE mode.
-2. Gather context from the branch name and the commit subjects -- never the diff.
-3. Find the repository's PR template.
-4. Write the title, and the description as a numbered TLDR.
-5. Read the diff ONCE, and only as deeply as its size warrants.
-6. Add `### APIs` and `### Migrations` when the branch moves an interface.
-7. Ask a subagent for a UML diagram when the change is large; it lands as `### Changes`.
-8. Complete the rest of the template mechanically -- the checklists.
-9. Push, then create the draft PR or update the existing one.
-10. Report.
-
-Steps 4 to 7 write INSIDE the template's description section, and nowhere else. Step 8 is the ONLY step that touches anything outside it.
+Push the current branch with `/push`. Then open a draft PR (Pull Request), or update the existing one. The body fills `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## Implementation Steps
 
-### 1. Preflight checks
+### 1. Preflight
 
-Run all of these BEFORE anything that writes. Stop at the first failure and report the exact reason.
+Run all checks BEFORE anything that writes. Stop at the first failure. Report the exact reason.
 
-1. Inside a git repository:
+Shell variables do not survive between `Bash` calls. Write the resolved values literally in every later command, or redefine them in the same call.
+
+1. Resolve the values:
 
 ```bash
 git rev-parse --show-toplevel
-```
-
-2. Resolve `BRANCH` and `DEFAULT_BRANCH`:
-
-```bash
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')"
-DEFAULT_BRANCH="${DEFAULT_BRANCH:-$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)}"
+DEFAULT_BRANCH="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)"
 ```
 
-3. Working tree dirty:
+2. `BRANCH` is `DEFAULT_BRANCH` → STOP
+3. `gh auth status` fails → STOP
+4. `.github/PULL_REQUEST_TEMPLATE.md` is missing → STOP
+5. `BASE_BRANCH`: the value after `--base` in `$ARGUMENTS`, else `DEFAULT_BRANCH`. `git rev-parse --verify "origin/$BASE_BRANCH"` fails → STOP
+6. `BASE_BRANCH` is not `DEFAULT_BRANCH` and `gh pr list --head "$BASE_BRANCH" --state merged --json number` prints a PR → STOP. The branch needs a rebase onto `DEFAULT_BRANCH`
+7. `EPIC_URL`: the value after `--epic` in `$ARGUMENTS`, else none
+8. `gh pr view --json url -q .url` prints a URL → record `PR_URL`, UPDATE mode. Else CREATE mode
+
+### 2. Push
+
+1. `git status --porcelain` is not empty → commit it, per the repo's commit convention. NEVER stash
+2. Call the `Agent` tool ONCE, `model: "haiku"`, with this prompt:
+
+```text
+Read ~/.claude/commands/push.md and follow it literally in <REPO_ROOT>.
+You cannot dispatch the conflict agent of its step 3: on a rebase conflict, run `git rebase --abort` and stop.
+Report: its step 6 report, or the failed command and its error.
+```
+
+3. Verify. `git rev-parse HEAD` MUST equal `git rev-parse "origin/$BRANCH"`. Else STOP, print the agent's report, and tell the user to run `/push`
+4. `HEAD` never moves after this step
+
+### 3. Write the title and the TLDR
+
+Sources: the branch name and `git log --oneline "origin/$BASE_BRANCH..HEAD"`. NEVER the diff.
+
+1. Title: telegraphic, a few words, led by the branch name. NO conventional-commit prefix. Connected PRs in different repos share one prefix
+2. TLDR: 6 numbered items max, 100 words max in total. HARD limits
+3. Each item: what changes for the user or the developer, or why it matters. A decision between real alternatives gets its reason as one clause, inside the limit
+4. NEVER repeat the title. NEVER name files or symbols
+5. The TLDR replaces the template's empty `-` stub under its description header
+
+### 4. Read the diff once
+
+The ONLY step that reads diff content. EVERY `git diff` carries these excludes:
 
 ```bash
-git status --porcelain
+EXCLUDES=(':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' ':(exclude)**/*.snap' ':(exclude)**/*.generated.*')
 ```
 
-If the output is not empty, commit it once every check below passes. Follow the repo's commit convention. Do NOT stash.
+1. `git diff --shortstat "origin/$BASE_BRANCH...HEAD" -- . "${EXCLUDES[@]}"`. Insertions plus deletions is `DIFF_TOTAL`
+2. `DIFF_TOTAL` above 100 → read the full diff: `git diff "origin/$BASE_BRANCH...HEAD" -- . "${EXCLUDES[@]}"`
+3. `DIFF_TOTAL` of 100 or less → list paths with `--name-only`. Keep only interface paths: routes and controllers, public entry points (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`), migrations (`migrations/`, `db/migrate/`, `prisma/schema.prisma`, `alembic/versions/`). Read the diff of those paths only. None → skip step 5
 
-4. `BRANCH` is not `DEFAULT_BRANCH`. If it is, STOP.
+### 5. APIs and Migrations
 
-5. Resolve `BASE_BRANCH`: the branch after `--base` in `$ARGUMENTS`, else `DEFAULT_BRANCH`. A `BASE_BRANCH` other than `DEFAULT_BRANCH` makes this PR a layer of a GitHub stack. It must exist on the remote:
+Subsections after the TLDR, in this order: `### APIs`, `### Migrations`, `### Changes`. Every line points at a diff line from step 4, else it is not listed.
 
-```bash
-git rev-parse --verify "origin/$BASE_BRANCH"
-```
-
-If it fails, STOP. The branch below has not been pushed.
-
-A `BASE_BRANCH` other than `DEFAULT_BRANCH` whose own PR is merged (`gh pr list --head "$BASE_BRANCH" --state merged --json number` prints one) → STOP. Report that the branch needs a rebase onto `DEFAULT_BRANCH` first.
-
-6. `gh` (GitHub CLI) is installed and authenticated:
-
-```bash
-gh auth status
-```
-
-7. An existing PR on the branch selects the mode:
-
-```bash
-gh pr view --json url -q .url
-```
-
-If it prints a URL, record it as `PR_URL` and run in UPDATE mode. Otherwise run in CREATE mode. Every other step is the same in both modes.
-
-### 2. Gather context
-
-```bash
-git log --oneline "origin/$BASE_BRANCH..HEAD"
-```
-
-The branch name and these commit subjects are the ONLY sources for the title (step 4) and the description's numbered list (step 4). Do NOT read the diff here -- it is read once, in step 5, and it feeds steps 6 and 7 alone.
-
-### 3. Find the PR template
-
-Look in this order, first hit wins: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/`, `docs/`, the repository root.
-
-Read it whole before writing anything. Its headers, its order and its comments are the contract: you fill it in, you do not redesign it. When there is no template, write a minimal body -- a `## Description` section and nothing else -- and say so in the report.
-
-### 4. Write the title and the description
-
-#### Title rules
-
-1. NO conventional-commit prefix.
-2. Telegraphic, a few words, taking its lead from the branch name.
-3. Connected PRs in different repos share one prefix.
-
-#### Description rules
-
-1. Think of it as a TLDR. Write it in the active output style.
-2. A numbered list of telegraphic sentences: what changes for the user, what changes for the developer, or why it matters.
-3. NEVER repeat the title verbatim. NEVER name files or symbols.
-4. The template asks you to justify your decisions: where the branch chose between real alternatives, give the reason in one clause. Nothing more.
-5. Replace the template's empty `-` stub with your list. Never leave it sitting above or below it.
-
-### 5. Read the change once
-
-This is the ONLY place in the command that reads diff content. Steps 6 and 7 draw on what this step reads -- never call `git diff` for hunk content anywhere else. The step 7 subagent is the one exception: it reads the diff again, in its own context.
-
-EVERY `git diff` in this command carries the exclude pathspecs below, so lockfiles, snapshots and generated files never reach a diff, a measurement, or a section.
-
-1. Measure the change, so that a dependency bump cannot trigger a diagram:
-
-```bash
-git diff --shortstat "origin/$BASE_BRANCH...HEAD" -- . \
-  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
-  ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
-```
-
-Add insertions + deletions into `DIFF_TOTAL`.
-
-2. `DIFF_TOTAL` above 100: read the full diff.
-
-```bash
-git diff "origin/$BASE_BRANCH...HEAD" -- . \
-  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
-  ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
-```
-
-3. `DIFF_TOTAL` of 100 or less: narrow before reading any content. List the changed paths first:
-
-```bash
-git diff --name-only "origin/$BASE_BRANCH...HEAD" -- . \
-  ':(exclude)**/*.lock' ':(exclude)**/pnpm-lock.yaml' \
-  ':(exclude)**/*.snap' ':(exclude)**/*.generated.*'
-```
-
-Keep only the paths that can carry an interface change -- route and controller files, a package's declared public entry point (`package.json` `exports`/`main`/`types`, `src/index.*`, `__init__.py`, `mod.rs`), and migrations (`migrations/`, `db/migrate/`, `prisma/schema.prisma`, `alembic/versions/`). When nothing matches, there is no interface change: skip to step 7 with nothing to report. Otherwise read only those paths:
-
-```bash
-git diff "origin/$BASE_BRANCH...HEAD" -- $CANDIDATE_PATHS
-```
-
-4. A `DIFF_TOTAL` of 300 or less means step 7 draws no diagram, whatever step 6 found.
-
-### 6. The APIs and Migrations subsections
-
-Build these from the diff read in step 5 -- NEVER from commit subjects or guesswork.
-
-1. Method uppercase; the path exactly as it resolves at runtime, mount prefix included, NOT the fragment written in the handler file. When a route file's mount point isn't in the diff, `grep` for where it is mounted before printing the path.
-2. Path params in `{braces}`, whatever the framework wrote: `:id`, `<int:id>`, `[id]`, `{id}` all become `{id}`.
-3. `Body:` and query params appear ONLY when they changed; follow the **api** skill's endpoint usage format.
-4. Mark every line `+` added, `~` changed, `-` removed. `~` is for a method and path that survive while the contract moves: request body, query params, response shape, status codes, auth.
-5. A handler whose internals changed with no interface change is NOT listed.
-6. Changed public package exports go in a second fenced block, language-tagged to the source, same `+ ~ -` markers. Only symbols reachable from a declared public entry point qualify -- an internal helper is never listed, even when it happens to be exported.
-7. Migrations: canonical DDL, one statement per line, `;` terminated, forward direction only. Express ORM schema edits (Prisma, Alembic, ActiveRecord) as the equivalent DDL.
-8. OMIT an empty block, and OMIT the whole subsection when every block in it would be empty. NEVER write `N/A` or `No API changes`.
-9. NEVER list an endpoint, an export, or a statement you cannot point at a diff line for.
-
-They are SUBSECTIONS of the description, after its numbered list, in this order: `### APIs`, `### Migrations`, then `### Changes` from step 7.
+1. Endpoints: method uppercase. Path as it resolves at runtime, mount prefix included; `grep` for the mount when the diff lacks it
+2. Path params in `{braces}`: `:id`, `<int:id>`, `[id]` all become `{id}`
+3. `Body:` and query params ONLY when they changed, per the **api** skill's endpoint format
+4. Markers: `+` added, `~` contract changed (body, query, response, status, auth), `-` removed. Internals-only changes are NOT listed
+5. Public exports: a second fenced block, tagged with the source language, same markers. Only symbols reachable from a public entry point
+6. Migrations: canonical DDL, one `;`-terminated statement per line, forward only. ORM schema edits become the equivalent DDL
+7. OMIT an empty block. OMIT an empty subsection. NEVER write `N/A`
 
 ````markdown
 ## Description
 
 1. Users export their own data as CSV from the account page.
-2. Adds one endpoint and one table; existing exports are untouched.
+2. One new endpoint and table; existing exports untouched.
 
 ### APIs
 
 ```sh
 + POST /users/{id}/exports Body: { "format": "csv" }
 ~ GET /users?filter[status]="active"
-- DELETE /users/{id}/export
-```
-
-```ts
-+ export function toCsv(rows: Row[]): string
-~ export type ExportOptions = { format: 'csv' | 'json' }
-- export function legacyExport(): void
 ```
 
 ### Migrations
 
 ```sql
--- The branch's migrations, verbatim, in this one block
+CREATE TABLE exports (id uuid PRIMARY KEY, user_id uuid NOT NULL);
 ```
 ````
 
-### 7. Diagram the change when it is large
+### 6. Diagram when large
 
-1. A `DIFF_TOTAL` of 300 or less: no diagram. Skip this step.
-2. Record the SHA the diagram's permalinks will point at, BEFORE calling the agent:
+1. `DIFF_TOTAL` of 300 or less → skip
+2. Call the `Agent` tool ONCE, `subagent_type: "uml-diagram"`, with the branch context and `SHA="$(git rev-parse HEAD)"`
+3. Paste its `### Changes` section VERBATIM as the last subsection. Undiagrammable → omit it
 
-```bash
-SHA="$(git rev-parse HEAD)"
-```
+### 7. Fill the rest of the template
 
-3. Call the `Agent` tool ONCE, `subagent_type: "uml-diagram"`, with the grand context and `SHA`.
-4. The agent returns a `### Changes` section. Paste it VERBATIM as the last subsection of the description.
-5. When the agent reports the change is undiagrammable, omit the section and say why in one clause in the report.
+Steps 3 to 6 write ONLY inside the description section. Outside it, fill only what the diff answers mechanically. An untouched item beats a guess.
 
-### 8. Complete the rest of the template
+1. Obey the template's instruction comments
+2. NEVER delete a section, comment, legend or footer
+3. NEVER touch tickets, documentation links, screenshots or testing prose. These belong to the author
+4. Tick `[x]` only what the diff shows, eg `.env.template` changed. Mark `[N/A]` only when the diff proves the condition absent, eg no endpoint change
+5. NEVER tick an action outside this repo (Postman, 1Password, a Terraform PR). Leave it `[ ]`
+6. A tests question: `👍 Yes` when the diff changes test files; `🙅 No, they aren't needed` when it touches no executable code. Else leave it unticked
 
-Everything steps 4 to 7 AUTHOR lives inside the description section. NEVER add a prose section of your own anywhere else.
+### 8. Create or update
 
-Outside the description, fill the template in ONLY where the change answers it mechanically. Obey the template's own instruction comments -- they define its notation. Leave verbatim every item you cannot point at evidence for: an untouched template beats a guess. NEVER delete a section, an instruction comment, a legend, or a footer the template ships.
-
-Section by section, for the current Propel template:
-
-1. `## Tickets & Documentation` -- NEVER touch it. Linking a ticket is the author's to add.
-2. `## Visual Comparison/Preview (if applicable)` -- NEVER touch it. A screenshot, a GIF or a video is the author's to add.
-3. `## Testing` -- NEVER write its prose; the testing a person performed is theirs to describe. Under `#### Have tests been added/updated?`, tick `👍 Yes` when the diff adds or changes test files, or `🙅 No, they aren't needed` when the branch touches no executable code at all. Anything else: leave all three unticked.
-4. `## Checklist` -- mark an item `[N/A]` when the diff proves its condition absent: no endpoint change makes the Postman item N/A, no envar change makes the 1Password, `.env.template` and Terraform items N/A. Mark `[x]` ONLY for what the diff itself shows, e.g. `.env.template` really did change. NEVER tick an action that happens outside this repository -- a Postman collection, a 1Password entry, a companion Terraform PR -- leave it `[ ]` for the author.
-
-A repo whose template has other sections still obeys the paragraph above: fill what the change answers, leave the rest.
-
-### 9. Push, then create or update
-
-Write the body to a temporary file, `BODY_FILE`, first, so quoting cannot mangle it.
-
-#### Push
-
-1. `HEAD` never moves here, so the step 7 permalinks stay valid.
-2. A branch whose history was rewritten before this command ran needs `--force-with-lease`. Test it:
-
-```bash
-git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1 \
-  && git merge-base --is-ancestor "origin/$BRANCH" "$BRANCH"
-```
-
-3. It succeeds, or the remote branch does not exist yet -- push plainly:
-
-```bash
-git push -u origin "$BRANCH"
-```
-
-4. It fails -- the remote branch exists and is not an ancestor, so the history was rewritten:
-
-```bash
-git push -u origin "$BRANCH" --force-with-lease
-```
-
-5. A rejected push is a hard stop. Report it.
+Write the body to a temporary `BODY_FILE`.
 
 #### CREATE mode
 
@@ -255,57 +130,41 @@ git push -u origin "$BRANCH" --force-with-lease
 gh pr create --draft --base "$BASE_BRANCH" --title "$TITLE" --body-file "$BODY_FILE"
 ```
 
-`BASE_BRANCH` is not `DEFAULT_BRANCH` → link the new PR onto the PR of the branch below, bottom first. Pass PR numbers only: a branch-name argument makes `gh stack link` push it:
+`BASE_BRANCH` is not `DEFAULT_BRANCH` → link the stack, bottom first, by PR number only (a branch name makes `gh stack link` push):
 
 ```bash
 gh stack link "$(gh pr view "$BASE_BRANCH" --json number -q .number)" "$(gh pr view --json number -q .number)"
 ```
 
-`gh stack` is missing (`gh extension list` does not show `github/gh-stack`) → skip the link, and report `gh extension install github/gh-stack`. The PR still targets `BASE_BRANCH`.
+`gh extension list` lacks `github/gh-stack` → skip the link. Report `gh extension install github/gh-stack`.
 
 #### UPDATE mode
 
-MERGE into the body that is already there, never overwrite it. Read it first:
+MERGE into the existing body. NEVER overwrite it.
 
-```bash
-gh pr view "$PR_URL" --json body -q .body > "$OLD_BODY_FILE"
-```
+1. `gh pr view "$PR_URL" --json body -q .body > "$OLD_BODY_FILE"`
+2. Replace the description section, down to the next header of its level, with the new one
+3. No description section → add the new one first
+4. Keep EVERY other section byte for byte. Step 7 fills only unresolved items
+5. `gh pr edit "$PR_URL" --body-file "$BODY_FILE"`
+6. NEVER pass `--title`, `--draft` or `--ready`
+7. Pass `--base "$BASE_BRANCH"` ONLY when `--base` differs from the PR's `baseRefName`, or the PR's base has a merged PR
 
-Build `$BODY_FILE` from `$OLD_BODY_FILE` with these rules:
+### 9. Report
 
-1. Replace the description section -- its header down to the next header of the same level -- with the one you wrote. Its `### APIs`, `### Migrations` and `### Changes` subsections go with it.
-2. When the old body has no description section, add yours as the first section and change nothing else.
-3. Keep EVERY other section byte for byte: resolved checklist items, review notes, sections a person added by hand. Step 8 fills the template items still left unresolved, and only those.
-
-Then edit the PR:
-
-```bash
-gh pr edit "$PR_URL" --body-file "$BODY_FILE"
-```
-
-1. NEVER pass `--title`. A person may have renamed the PR. Report your derived title when it differs.
-2. Retarget only when `--base` was passed and differs from the PR's base (`gh pr view "$PR_URL" --json baseRefName -q .baseRefName`), or when the PR's base has a merged PR of its own: then also pass `--base "$BASE_BRANCH"`. A rebased layer moves to `DEFAULT_BRANCH` this way. NEVER retarget otherwise
-3. NEVER pass `--draft` or `--ready`. The PR keeps the state it has.
-
-### 10. Report
-
-1. Print the PR URL. Say whether the command created the PR or updated it.
-2. Print the base, and whether the PR was linked into a stack or retargeted.
-3. Say whether the push was plain or `--force-with-lease`.
-4. Name the template items step 8 filled, and any it left for the author. In UPDATE mode, name the sections you replaced, and print your derived title alongside the PR's when they differ.
-5. When no template was found, add: `No PR template found in this repo -- wrote a minimal body`.
-6. When `DIFF_TOTAL` was above 300 and no diagram was drawn, add one clause saying why.
+1. The PR URL, and created or updated
+2. `EPIC_URL` set → `Epic: <EPIC_URL>`
+3. The base, and stack link or retarget
+4. The push agent's report
+5. Template items filled, and items left for the author
+6. UPDATE mode: the derived title, when it differs from the PR's
+7. `DIFF_TOTAL` above 300 and no diagram → one clause on why
 
 ## Important Notes
 
-3. **NEVER** mark the PR ready for review. A new PR stays a draft; an existing PR keeps the state it has.
-4. **DO NOT** do anything beyond pushing the branch and opening or updating the draft PR.
+1. **NEVER** mark the PR ready for review
+2. **DO NOT** do anything beyond the push and the draft PR
 
 ## Error Handling
 
-If any step fails:
-
-1. Report the specific command that failed.
-2. Show the error message.
-3. Stop immediately.
-4. Do not retry automatically.
+A failed step: report the command and its error. Stop. Do not retry.

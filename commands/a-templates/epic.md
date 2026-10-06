@@ -15,6 +15,8 @@ The document is these H2 sections, in this order.
 ---
 updated: <date>
 status: draft
+issue-key: <issue key, or PROP-0>
+epic-url: <URL, or none>
 ---
 
 # <Epic Name> (<epic-slug>)

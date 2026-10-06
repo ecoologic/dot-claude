@@ -17,7 +17,7 @@ The document is these H2 sections, in this order.
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
-branch: checkout-flow/story-1-ac-1-guest-email
+branch: PROP-123/story-1-ac-1-guest-email
 pr: -
 ---
 

@@ -1,126 +1,55 @@
 ---
-description: Create a sibling git worktree named <project-initials>-<sanitised-branch>
+description: Create a sibling git worktree named <project>--<branch-last-segment>, off an updated main
 argument-hint: <branch-name>
 model: haiku
 ---
 
 # Create Git Worktree
 
-Create a git worktree as a sibling of the current project using the folder name `{project-initials}-{sanitised-branch}`. `project-initials` means the initials of the main project (the primary repository the worktree belongs to, not the folder you happen to be running from), and `sanitised-branch` means the branch name with `/` replaced by `-`. After creation, continue work from that new folder.
+Create a git worktree as a sibling of the main repository, in the folder `{project}--{branch-last-segment}`.
 
-## What This Command Does
+Examples, project folder `product`:
 
-1. Resolve the main repository root (not the current worktree's own root) and its folder name.
-2. Build the sibling worktree path as `{project-initials}-{sanitised-branch}`, where the project initials come from the main repository's folder name and the sanitised branch replaces `/` with `-`.
-3. Create the worktree for the existing local branch, or create the branch from `origin/<branch>` when that remote branch exists, otherwise from `origin/main`.
-4. Report the new path and treat that folder as the working directory from that point on.
+| Command | Folder | Branch |
+| --- | --- | --- |
+| `/wt login` | `product--login` | `login` |
+| `/wt PROP-123/story-1-ac-2-email-format` | `product--story-1-ac-2-email-format` | `PROP-123/story-1-ac-2-email-format` |
 
-## Usage
+## Steps
 
-```bash
-/wt my-feature-branch
-```
+### 1. Resolve the paths
 
-Example: if the project folder is `foo-bar` and the branch is `feature/main`, the sibling worktree folder should be `fb-feature-main`.
-
-## Implementation Steps
-
-When this command is invoked with `<branch-name>`:
-
-### 1. Validate arguments and repository state
-
-1. Require `<branch-name>`. Ignore anything after it.
-2. If no branch name is provided, stop and ask for it.
-3. Run:
+1. Require `<branch-name>`. No branch name → stop and ask for it.
+1. Run the block below. It fails → the current directory is not in a git repository. Stop.
 
 ```bash
-git rev-parse --show-toplevel
-```
-
-4. If that command fails, report that the current directory is not inside a git repository and stop.
-
-### 2. Resolve the sibling worktree path
-
-1. Resolve the main repository root as `MAIN_REPO_DIR`, the parent of the shared `.git` directory — not `git rev-parse --show-toplevel`, which returns the *current* worktree's own path when run from inside a linked worktree:
-
-```bash
+BRANCH="<branch-name>"
 MAIN_REPO_DIR="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+WORKTREE_DIR="$(dirname "$MAIN_REPO_DIR")/$(basename "$MAIN_REPO_DIR")--${BRANCH##*/}"
 ```
 
-2. Compute `PROJECT_NAME` as the basename of `MAIN_REPO_DIR`.
-3. Compute `PROJECT_PREFIX` as the initials of `PROJECT_NAME`. Example: `foo-bar` becomes `fb`.
-4. Treat the command argument as `BRANCH` exactly as passed. Do not shorten it. Do not rewrite it. Do not prefix it.
-5. Compute `SANITISED_BRANCH` by replacing every `/` in `BRANCH` with `-`.
-6. Compute the worktree path as a sibling of `MAIN_REPO_DIR`:
+1. `WORKTREE_DIR` exists → report it and stop. NEVER overwrite it.
+1. Print `WORKTREE_DIR` and `BRANCH`. Ask the user to confirm. Anything but a yes → stop.
 
-```bash
-PROJECT_PREFIX="$(printf '%s' "$PROJECT_NAME" | tr '-' '\n' | sed '/^$/d; s/^\(.\).*$/\1/' | tr -d '\n')"
-SANITISED_BRANCH="${BRANCH//\//-}"
-WORKTREE_DIR="$(dirname "$MAIN_REPO_DIR")/${PROJECT_PREFIX}-${SANITISED_BRANCH}"
-```
+### 2. Update main
 
-7. If `WORKTREE_DIR` already exists, report the path and stop. Do not overwrite it.
-8. Print `WORKTREE_DIR` and `BRANCH`, then ask the user to confirm before step 3. Anything but a yes → stop.
+1. Run `git -C "$MAIN_REPO_DIR" fetch origin`.
+1. `git -C "$MAIN_REPO_DIR" branch --show-current` prints `main` → run `git -C "$MAIN_REPO_DIR" merge --ff-only origin/main`.
+1. Otherwise → run `git -C "$MAIN_REPO_DIR" fetch origin main:main`.
 
 ### 3. Create the worktree
 
-1. Check whether the branch already exists locally:
+1. The local branch exists (`git -C "$MAIN_REPO_DIR" show-ref --verify --quiet "refs/heads/$BRANCH"`) → run `git -C "$MAIN_REPO_DIR" worktree add "$WORKTREE_DIR" "$BRANCH"`.
+1. Otherwise → run `git -C "$MAIN_REPO_DIR" worktree add -b "$BRANCH" "$WORKTREE_DIR" main`.
 
-```bash
-git show-ref --verify --quiet "refs/heads/$BRANCH"
-```
+### 4. Report
 
-2. If the branch already exists locally, run:
+1. Print `WORKTREE_DIR` and `BRANCH`.
+1. Print `/cd <WORKTREE_DIR>` for the user to type. `/cd` is a harness built-in. NEVER claim you ran it.
+1. `$WORKTREE_DIR/scripts/setup-worktree.sh` exists → offer to run it from `WORKTREE_DIR`.
 
-```bash
-git worktree add -f "$WORKTREE_DIR" "$BRANCH"
-```
+## Rules
 
-3. Otherwise, check whether the branch exists on `origin`:
-
-```bash
-git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"
-```
-
-4. If `origin/$BRANCH` exists, create the local branch from that remote branch while creating the worktree:
-
-```bash
-git worktree add -b "$BRANCH" "$WORKTREE_DIR" "origin/$BRANCH"
-```
-
-5. Otherwise, create the local branch from `origin/main` while creating the worktree:
-
-```bash
-git worktree add -b "$BRANCH" "$WORKTREE_DIR" "origin/main"
-```
-
-6. Use `-f` for existing local branches so the command also works when `BRANCH` is the current branch or is already checked out in another worktree.
-
-### 4. Report the result and continue from the new folder
-
-1. Report:
-
-```text
-Worktree created:
-  dir:    <WORKTREE_DIR>
-  branch: <BRANCH>
-```
-
-2. Switch to that folder (using the `/cd` command)
-3. Offer the user to run `./scripts/setup-worktree.sh` and state the working directory
-
-
-## Important Notes
-
-1. **NEVER** create the worktree inside the repository. Always create it as a sibling directory.
-2. **DO NOT** create symlinks, copy files, run setup steps, or clean anything up.
-3. **DO NOT** do anything beyond creating the worktree and reporting it.
-
-## Error Handling
-
-If any step fails:
-
-1. Report the specific command that failed.
-2. Show the error message.
-3. Stop immediately.
-4. Do not retry automatically.
+1. NEVER create symlinks, copy files, or clean anything up.
+1. NEVER run the setup script without the user's yes.
+1. A command fails → report the command and its error. Stop. NEVER retry.

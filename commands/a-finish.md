@@ -106,7 +106,7 @@ Use the `## Findings` rows Step 1 read, in `story-<story-number>.md` and in ever
 1. Append the row's mark to its Suggested Change cell, per conventions `## Findings`. Use one Edit, now, in the file that holds the row
 1. A left row stays as it is. It blocks nothing; a later stage reads it, per conventions `## Findings`
 
-Per repo with a confirmed `CONTEXT.md` row, before its first Edit there, enter the context worktree, on the context branch `<epic-slug>/story-<story-number>-context`, per conventions `## Criterion branches`:
+Per repo with a confirmed `CONTEXT.md` row, before its first Edit there, enter the context worktree, on the context branch `<issue-key>/story-<story-number>-context`, per conventions `## Criterion branches`:
 1. A worktree holds the context branch → use it
 1. No local context branch → run `git -C <dev-root>/<repo> fetch origin <default-branch>`, then `git -C <dev-root>/<repo> branch <context-branch> origin/<default-branch>`
 1. No worktree → create it on the context branch, per conventions `### Criterion worktree lookup`'s create rule

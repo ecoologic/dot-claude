@@ -1,6 +1,6 @@
 ---
 description: Print session info
-allowed-tools: [Bash(cd:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(gh pr status:*), Bash(ls:*), Bash(git fetch:*), Bash(git rev-list:*)]
+allowed-tools: [Bash(cd:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(gh pr status:*), Bash(ls:*), Bash(grep:*), Bash(git fetch:*), Bash(git rev-list:*)]
 model: haiku
 ---
 
@@ -12,7 +12,7 @@ model: haiku
 1. In the same message, right after that line, make two Bash calls in parallel. NEVER use a subagent:
    1. `cd <path> && git rev-parse --path-format=absolute --show-toplevel --git-common-dir && git branch --show-current && gh pr status --json url --jq '.currentBranch.url // "none"'`
    1. `cd <path> && git fetch -q origin main && git rev-list --left-right --count HEAD...origin/main`
-1. Only when the branch matches `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`: `ls <main parent>/planning/<epic-slug>/epic*.md <main parent>/planning/<epic-slug>/story-<story-number>.md <main parent>/planning/<epic-slug>/story-<story-number>-*.md`
+1. Only when the branch matches `<issue-key>/story-<story-number>-ac-<criterion-number>-<ac-slug>`: `grep -l '^issue-key: <issue-key>$' <main parent>/planning/*/epic.md`. Exactly one hit → its folder is `<epic-dir>`: `ls <epic-dir>/epic*.md <epic-dir>/story-<story-number>.md <epic-dir>/story-<story-number>-*.md`
 1. When the calls return, print this list, `~`-prefixed paths, `none` when empty. NOTHING else:
 
    - Plan: <this session's plan-mode file; NEVER guess from `~/.claude/plans/`>

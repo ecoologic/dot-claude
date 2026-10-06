@@ -12,7 +12,7 @@ Every `a-*` command reads this file as its own step 1 and follows it. A command 
 ```text
 <dev-root>/
 ├── foo-bar/                                  # main repo, tracks ./CONTEXT.md
-├── fb-checkout-flow-story-1-ac-1-guest-email/ # /wt worktree, sibling, per criterion
+├── foo-bar--story-1-ac-1-guest-email/        # /wt worktree, sibling, per criterion
 └── planning/                                 # git repo, the user commits it by hand
     └── checkout-flow/                        # epic slug
         ├── epic-architecture.md              # /a-architecture
@@ -67,7 +67,7 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir   # not --show-t
 | Command | Order |
 | --- | --- |
 | Planning stages | 1. The command's own argument 2. Memory 3. Stop and ask |
-| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, and `$EPIC_DIR` exists 3. Memory 4. Stop and ask |
+| Every other `a-*` command | 1. The command's own argument 2. The current branch, when it matches `<issue-key>/story-<story-number>-ac-<criterion-number>-<ac-slug>` and exactly one `$PLANNING_ROOT/*/epic.md` carries that `issue-key` header 3. Memory 4. Stop and ask |
 
 1. `$ARGUMENTS` never carries an epic slug. The epic resolves per this table
 1. NEVER guess, NEVER create `$EPIC_DIR` from a guess
@@ -83,12 +83,13 @@ One file holds the current position, keyed on the main repo path so it is the sa
 ````md
 ---
 name: a-pipeline-current-position
-description: "The a-* pipeline's current position: epic slug, story, criterion, and the repos the epic touches"
+description: "The a-* pipeline's current position: epic slug and description, story, criterion, and the repos the epic touches"
 metadata:
   type: project
 ---
 
 - Epic: <epic-slug>
+- Description: <the `> Epic:` summary line of epic.md>
 - Story: <n, or none>
 - Criterion: <m, or none>
 - Repos: <repo>, <repo>
@@ -105,7 +106,7 @@ metadata:
 
 One acceptance criterion, one branch, one worktree and one PR per touched repo. Main is the base whenever it can be; a stack only bridges an unmerged parent criterion. Criteria with no unmerged parent run in parallel.
 
-1. The criterion branch is `<epic-slug>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, eg `checkout-flow/story-1-ac-2-email-format`. Criterion code lands only there
+1. The criterion branch is `<issue-key>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, where `<issue-key>` is `epic.md`'s `issue-key` header, eg `PROP-123/story-1-ac-2-email-format`. Criterion code lands only there
 1. The parents are the `AC <criterion-number>` lines of the plan's `### Dependencies`. A parent may carry a higher number than its child. The parent branch is the parent plan's `branch` header
 1. Merged: `gh pr list --head <branch> --state merged --json number` prints a PR. NEVER test ancestry; a squash merge leaves none
 1. Base: no parent, or every parent merged → `origin/<default-branch>`, the default branch per `## Where a command runs`. Exactly one unmerged parent that exists locally → that parent branch. More than one unmerged parent → STOP, and name the parents to merge first
@@ -114,7 +115,7 @@ One acceptance criterion, one branch, one worktree and one PR per touched repo. 
 1. Rebase before push: stacked and the parent branch is merged → `git rebase --onto origin/<default-branch> <fork-point>`. A conflict → `git rebase --abort`, report the files, and stop. NEVER resolve it by guessing
 1. The PR targets the base. A base other than the default branch is a GitHub stack: `/draft-pr --base <parent-branch>`
 1. Ready: a criterion whose plan is `done` and whose parents all have a `status` starting with `implemented`. Every ready criterion can run `/a-implement` in its own session
-1. The context branch `<epic-slug>/story-<story-number>-context` carries only `a-finish`'s `CONTEXT.md` commits, per its own step
+1. The context branch `<issue-key>/story-<story-number>-context` carries only `a-finish`'s `CONTEXT.md` commits, per its own step
 
 ### Criterion worktree lookup
 
@@ -124,7 +125,7 @@ Once per touched repo. `<branch>` is the plan's `branch` header. The command nam
 1. Each repo resolves to `<dev-root>/<repo>`, the sibling of `$PLANNING_ROOT`, per `## Folder layout`
 1. Run `git -C <dev-root>/<repo> worktree list --porcelain`. The `branch refs/heads/<branch>` entry's `worktree` line is the worktree. Use it
 1. No entry → the command's own outcome: STOP, record `none`, or create the worktree
-1. Create: the local `<branch>` exists first, on the base the command names. Read `~/.claude/commands/wt.md` and follow its text from `<dev-root>/<repo>`, with `<branch>` as its argument. It checks out the local branch. Then run `./scripts/setup-worktree.sh` from the new worktree when it exists
+1. Create: the local `<branch>` exists first, on the base the command names. Read `~/.claude/commands/wt.md` and follow its text from `<dev-root>/<repo>`, with `<branch>` as its argument, eg `PROP-123/story-1-ac-2-email-format`. It checks out the local branch. Then run `./scripts/setup-worktree.sh` from the new worktree when it exists
 1. Run `git -C <worktree> status --porcelain`. Uncommitted changes → STOP. Report them. NEVER stash, reset or discard them
 
 ## Templates
@@ -141,7 +142,7 @@ Every planning doc starts with YAML frontmatter, above its `#` title:
 ---
 updated: 2026-09-23T14:05+1000
 status: draft
-branch: checkout-flow/story-1-ac-1-guest-email
+branch: PROP-123/story-1-ac-1-guest-email
 pr: foo-bar#123
 ---
 ```
@@ -150,6 +151,8 @@ pr: foo-bar#123
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
 | `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-ac-M.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-ac-M.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
+| `issue-key` | `epic.md` only | The epic's Jira issue key from `epic-requirements.md`, eg `PROP-123`; `PROP-0` when it names none. Set by `a-epic` |
+| `epic-url` | `epic.md` only | The epic's Jira URL, eg `https://propel-health-ai.atlassian.net/browse/PROP-123`; `none` for `PROP-0`. Set by `a-epic` |
 | `branch` | `story-N-ac-M.md` only | The criterion branch, set by `a-plan` on its first write. Per `## Criterion branches` |
 | `pr` | `story-N-ac-M.md` only | `<repo>#<number>` per repo with a PR for the criterion branch, comma-separated, else `none`. Set by `a-implement`, refreshed by `a-finish` |
 
