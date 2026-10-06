@@ -1,7 +1,7 @@
 ---
 description: Break down an idea into personas and actionable user stories
 argument-hint: "<epic-slug> [details]"
-allowed-tools: [Read, Write, Edit, AskUserQuestion, Skill, Bash(git rev-parse:*), Bash(date:*), Bash(git symbolic-ref:*), Bash(git branch:*), mcp__claude_ai_Atlassian__getAccessibleAtlassianResources]
+allowed-tools: [Read, Write, Edit, AskUserQuestion, Skill, Bash(git rev-parse:*), Bash(date:*), Bash(git symbolic-ref:*), Bash(git branch:*)]
 disable-model-invocation: true
 ---
 
@@ -129,9 +129,8 @@ When several reasonable splits exist, prefer the smallest user-visible slice and
 1. `<epic-slug>` is new (no matching folder exists yet) → confirm it with the user before `$EPIC_DIR` is created, per conventions `## Selector resolution`. Skill: `ask-user-question`.
 1. Resolve `$EPIC_DIR` = `$PLANNING_ROOT/<epic-slug>`. Print it. Create it when it does not exist.
 1. `$EPIC_DIR/epic-requirements.md` exists → read it whole. Missing and `[details]` was given → create it from `~/.claude/commands/a-templates/epic-requirements.md`, with `[details]` verbatim as the idea. Missing and no `[details]` → stop, print the exact path `$EPIC_DIR/epic-requirements.md`, and ask for the idea. Skill: `ask-user-question`.
-1. Resolve the issue key from `epic-requirements.md`'s `Issue key:` line. NEVER ask for it. No line → `PROP-0`. A value that fails `^[A-Z][A-Z0-9]+-[0-9]+$` → stop and report it.
-1. Resolve the epic URL. `PROP-0` → `none`. Otherwise `https://<site>/browse/<issue key>`, where `<site>` is the Jira site from `mcp__claude_ai_Atlassian__getAccessibleAtlassianResources`.
-1. `epic.md` does not yet exist → create it from `~/.claude/commands/a-templates/epic.md`. It exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit it only from here on; NEVER recreate it. Edit its `issue-key` and `epic-url` header lines with the values above.
+1. Resolve the issue key from `epic-requirements.md`'s `Issue key:` line. NEVER ask for it. No line → `none`. A value that fails `^[A-Z][A-Z0-9]+-[0-9]+$` → stop and report it.
+1. `epic.md` does not yet exist → create it from `~/.claude/commands/a-templates/epic.md`. It exists but carries no header → add one now, per conventions `## Document header`. Either way, Edit it only from here on; NEVER recreate it. Edit its `issue-key` header line with the value above.
 1. Follow `epic-requirements.md`'s references to supporting materials. An unreadable reference → report it and Edit a new `open` row into `epic.md`'s `## Assumptions`.
 1. Identify UI-facing referenced artifacts. Edit them into `epic.md`'s `## UI Design References`, or `- None`.
 
@@ -139,8 +138,7 @@ Output:
 ```text
 Epic slug: <epic-slug>
 Epic dir: <EPIC_DIR>
-Issue key: <issue key; PROP-0 when epic-requirements.md names none>
-Epic URL: <URL or none>
+Issue key: <issue key; none when epic-requirements.md names none>
 Idea source: <written from details | read from epic-requirements.md>
 Referenced artifacts: <list or none>
 UI references found: <list or none>

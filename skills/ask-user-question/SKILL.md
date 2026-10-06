@@ -3,8 +3,6 @@ name: ask-user-question
 description: MUST use when choosing between options, offering the user a choice, or asking which approach to take, and before every `AskUserQuestion` call; ALWAYS research the options first
 ---
 
-NOTE: The user can answer with the number of the option and add details, eg: `n1 and also...` (chooses the first option with caveat)
-
 # How to ask the user a question
 
 1. ONE question per call. NEVER pass more than one, even though the tool accepts four

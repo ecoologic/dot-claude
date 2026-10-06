@@ -106,7 +106,7 @@ metadata:
 
 One acceptance criterion, one branch, one worktree and one PR per touched repo. Main is the base whenever it can be; a stack only bridges an unmerged parent criterion. Criteria with no unmerged parent run in parallel.
 
-1. The criterion branch is `<issue-key>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, where `<issue-key>` is `epic.md`'s `issue-key` header, eg `PROP-123/story-1-ac-2-email-format`. Criterion code lands only there
+1. The criterion branch is `<issue-key>/story-<story-number>-ac-<criterion-number>-<ac-slug>`, where `<issue-key>` is `epic.md`'s `issue-key` header, eg `PROP-123/story-1-ac-2-email-format`. `issue-key` is `none` → every branch in this section drops its `<issue-key>/` prefix, eg `story-1-ac-2-email-format`. Criterion code lands only there
 1. The parents are the `AC <criterion-number>` lines of the plan's `### Dependencies`. A parent may carry a higher number than its child. The parent branch is the parent plan's `branch` header
 1. Merged: `gh pr list --head <branch> --state merged --json number` prints a PR. NEVER test ancestry; a squash merge leaves none
 1. Base: no parent, or every parent merged → `origin/<default-branch>`, the default branch per `## Where a command runs`. Exactly one unmerged parent that exists locally → that parent branch. More than one unmerged parent → STOP, and name the parents to merge first
@@ -151,8 +151,7 @@ pr: foo-bar#123
 | --- | --- | --- |
 | `updated` | every doc | The time of the last write, from `date +%Y-%m-%dT%H:%M%z`. Every write refreshes it |
 | `status` | the stage's primary doc: `epic.md`, `epic-architecture.md`, `story-N.md`, `story-N-design.md`, `story-N-ac-M.md` | `draft` while being written. `done` only once the user gives final approval. `blocked` with the reason in the doc's `## Findings` or `## Assumptions`. `finished` on `story-N.md` only, set by `a-finish` once the story closes. On `story-N-ac-M.md` only, after `done`: `implemented`, set by `a-implement` once the criterion is committed; then `implemented, simplified` and `implemented, simplified, reviewed`, each appended by `a-check` |
-| `issue-key` | `epic.md` only | The epic's Jira issue key from `epic-requirements.md`, eg `PROP-123`; `PROP-0` when it names none. Set by `a-epic` |
-| `epic-url` | `epic.md` only | The epic's Jira URL, eg `https://propel-health-ai.atlassian.net/browse/PROP-123`; `none` for `PROP-0`. Set by `a-epic` |
+| `issue-key` | `epic.md` only | The epic's Jira issue key from `epic-requirements.md`, eg `PROP-123`; `none` when it names none. Set by `a-epic` |
 | `branch` | `story-N-ac-M.md` only | The criterion branch, set by `a-plan` on its first write. Per `## Criterion branches` |
 | `pr` | `story-N-ac-M.md` only | `<repo>#<number>` per repo with a PR for the criterion branch, comma-separated, else `none`. Set by `a-implement`, refreshed by `a-finish` |
 

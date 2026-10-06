@@ -14,15 +14,20 @@
 1. **Avoid prose** when possible, keep it _telegraphic_ if strictly necessary; prefer numbered lists and tables
 1. Question and verify the user! They are new to the codebase and can make costly assumptions
 1. ALWAYS call the `/rtd` command first
+1. I LOVE diagrams and visual representations, use diagrams in docs and ASCII charts in chat (mermaid doesn't render in chat)
 
 ### Plan mode
 
 1. ALWAYS print the folder and the plan path just before EOM (even if repeated somewhere else):
+1. Plan for a rollback/disaster recovery when reasonable (eg: not just git work, but moving cloud files, api/mcp destructive calls etc)
 
 ```
 **Plan <implemented>** <empty or ~/full/path>
      <~/working/folder> | <branch-name>
 ```
+
+1. All plans have a clear and specific verification logic list
+1. Mark plan completed after first implementation finishes (in the plan file too)
 
 ### Before calling `mcp__server__tool`
 
@@ -35,7 +40,7 @@
 ## Git branches
 
 1. ALWAYS `/wt` before editing code
-1. NEVER push a branch
+1. NEVER push a branch of your own decision
 
 ## Opus model specific
 

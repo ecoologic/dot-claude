@@ -14,7 +14,6 @@ disable-model-invocation: true
 | **In** | `~/.claude/commands/a-templates/conventions.md` | Shared path resolution, selector resolution, and repo conventions |
 | **In/Out** | `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md` | The implemented plan, the only planning doc this command writes. Read its header, `> Skills:` line, `### Dependencies`, `## Verification` and `## Out Of Scope`. Append to the header's `status` and to `## Findings` only. NEVER change any other section |
 | **In** | `$EPIC_DIR/story-<story-number>-ac-*.md` | The parent plans' headers, for the base; every plan's header, for the next ready criteria |
-| **In** | `$EPIC_DIR/epic.md` | Its `epic-url` header only, for the `/draft-pr` line |
 | **Out** | the criterion worktree, per touched repo | The fixes `simplify` and `code-review` apply, their commits on the criterion branch, and the rebase before push |
 
 ## Skills
@@ -54,7 +53,6 @@ Check ONE implemented acceptance criterion, once the user has verified it, on it
 Read (stop if any are missing):
 - `$EPIC_DIR/story-<story-number>-ac-<criterion-number>.md`: its header, `> Skills:` line, `### Dependencies`, `## Verification` and `## Out Of Scope`
 - each parent plan named by an `AC <criterion-number>` line of its `### Dependencies`: its header only
-- `$EPIC_DIR/epic.md`: its `epic-url` header only
 
 Gates, before any change:
 1. `status` is `implemented, simplified, reviewed` → skip Steps 3 to 7. Only the rebase, Step 8, runs
@@ -139,7 +137,7 @@ Summarize:
 6. findings appended to the plan
 7. the rebase, and the base, per worktree
 
-Then name the next commands, in each worktree: `/draft-pr`, or `/draft-pr --base <parent-branch>` when the base is the parent branch, plus `--epic <epic-url>` when `epic.md`'s `epic-url` header is not `none`, then `/security-review` (optional). Then `/clear`, and `/a-implement <story-number> <criterion-number>` for every ready criterion, per conventions `## Criterion branches`, one session each. No criterion left without `implemented, simplified, reviewed` → `/a-finish <story-number>` from the main repo root. Then stop. NEVER start them, and NEVER offer to.
+Then name the next commands, in each worktree: `/draft-pr`, or `/draft-pr --base <parent-branch>` when the base is the parent branch, then `/security-review` (optional). Then `/clear`, and `/a-implement <story-number> <criterion-number>` for every ready criterion, per conventions `## Criterion branches`, one session each. No criterion left without `implemented, simplified, reviewed` → `/a-finish <story-number>` from the main repo root. Then stop. NEVER start them, and NEVER offer to.
 
 ## Success Criteria
 

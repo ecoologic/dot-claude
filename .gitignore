@@ -13,6 +13,7 @@
 !commands/**
 !skills/
 !skills/**
+skills/.trash/**
 !output-styles/
 !output-styles/**
 

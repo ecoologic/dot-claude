@@ -1,6 +1,6 @@
 ---
 description: Push the current branch, then open a draft PR or update the existing one, following the repo template
-argument-hint: "[--base <branch>] [--epic <url>]"
+argument-hint: "[--base <branch>]"
 allowed-tools: Bash, Read, Glob, Grep, Agent
 model: haiku
 effort: xhigh
@@ -32,7 +32,7 @@ DEFAULT_BRANCH="$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name
 4. `.github/PULL_REQUEST_TEMPLATE.md` is missing → STOP
 5. `BASE_BRANCH`: the value after `--base` in `$ARGUMENTS`, else `DEFAULT_BRANCH`. `git rev-parse --verify "origin/$BASE_BRANCH"` fails → STOP
 6. `BASE_BRANCH` is not `DEFAULT_BRANCH` and `gh pr list --head "$BASE_BRANCH" --state merged --json number` prints a PR → STOP. The branch needs a rebase onto `DEFAULT_BRANCH`
-7. `EPIC_URL`: the value after `--epic` in `$ARGUMENTS`, else none
+7. `ISSUE_KEY`: the part of `BRANCH` before its first `/`, when it matches `^[A-Z][A-Z0-9]+-[0-9]+$`. Else none
 8. `gh pr view --json url -q .url` prints a URL → record `PR_URL`, UPDATE mode. Else CREATE mode
 
 ### 2. Push
@@ -111,14 +111,15 @@ CREATE TABLE exports (id uuid PRIMARY KEY, user_id uuid NOT NULL);
 
 ### 7. Fill the rest of the template
 
-Steps 3 to 6 write ONLY inside the description section. Outside it, fill only what the diff answers mechanically. An untouched item beats a guess.
+Steps 3 to 6 write ONLY inside the description section. Outside it, fill only what the diff or the branch name answers mechanically. An untouched item beats a guess.
 
 1. Obey the template's instruction comments
 2. NEVER delete a section, comment, legend or footer
-3. NEVER touch tickets, documentation links, screenshots or testing prose. These belong to the author
-4. Tick `[x]` only what the diff shows, eg `.env.template` changed. Mark `[N/A]` only when the diff proves the condition absent, eg no endpoint change
-5. NEVER tick an action outside this repo (Postman, 1Password, a Terraform PR). Leave it `[ ]`
-6. A tests question: `👍 Yes` when the diff changes test files; `🙅 No, they aren't needed` when it touches no executable code. Else leave it unticked
+3. `ISSUE_KEY` set and the ticket slot empty → fill it. The slot is the line after a comment that shows a ticket URL, else the empty `-` item under the tickets header. Write the URL in the format the template shows, else the bare `ISSUE_KEY`
+4. NEVER touch other tickets, documentation links, screenshots or testing prose. These belong to the author
+5. Tick `[x]` only what the diff shows, eg `.env.template` changed. Mark `[N/A]` only when the diff proves the condition absent, eg no endpoint change
+6. NEVER tick an action outside this repo (Postman, 1Password, a Terraform PR). Leave it `[ ]`
+7. A tests question: `👍 Yes` when the diff changes test files; `🙅 No, they aren't needed` when it touches no executable code. Else leave it unticked
 
 ### 8. Create or update
 
@@ -153,7 +154,7 @@ MERGE into the existing body. NEVER overwrite it.
 ### 9. Report
 
 1. The PR URL, and created or updated
-2. `EPIC_URL` set → `Epic: <EPIC_URL>`
+2. `ISSUE_KEY` set → the ticket slot filled, or why not
 3. The base, and stack link or retarget
 4. The push agent's report
 5. Template items filled, and items left for the author
